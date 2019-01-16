@@ -123,10 +123,6 @@ extension Section /* Helpers */ {
     
 }
 
-public protocol RuleTypeExt: RuleType {
-    func isValidExt(row: BaseRow, value: RowValueType?) -> ValidationError?
-}
-
 public struct RulePhone_US<T: Equatable>: RuleType {
     
     public init(id: String? = nil) {
