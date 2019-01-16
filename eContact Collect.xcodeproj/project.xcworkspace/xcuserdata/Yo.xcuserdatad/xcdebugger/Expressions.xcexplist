@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "FieldHandler.initialize():FieldHandler.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "(_TtC16eContact_Collect12RecFieldDefs *)((_TtC16eContact_Collect12RecFieldDefs *)0x0000600001b4b3c0)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>

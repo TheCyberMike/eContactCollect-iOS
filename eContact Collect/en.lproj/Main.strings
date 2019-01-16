@@ -1,0 +1,567 @@
+
+/* Class = "UIViewController"; title = "First Time"; ObjectID = "0D1-as-LYu"; */
+"0D1-as-LYu.title" = "First Time";
+
+/* Class = "UISegmentedControl"; 0M8-Pw-e9c.segmentTitles[0] = "First then Last Name"; ObjectID = "0M8-Pw-e9c"; */
+"0M8-Pw-e9c.segmentTitles[0]" = "First then Last Name";
+
+/* Class = "UISegmentedControl"; 0M8-Pw-e9c.segmentTitles[1] = "Full Name"; ObjectID = "0M8-Pw-e9c"; */
+"0M8-Pw-e9c.segmentTitles[1]" = "Full Name";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "0NW-yJ-2wl"; */
+"0NW-yJ-2wl.title" = "Organization Title";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "0OP-Tj-o4A"; */
+"0OP-Tj-o4A.title" = "Cancel";
+
+/* Class = "UILabel"; accessibilityHint = "Enter contact's importance dialog box."; ObjectID = "0vo-qj-uHh"; */
+"0vo-qj-uHh.accessibilityHint" = "Enter contact's importance dialog box.";
+
+/* Class = "UILabel"; text = "Contact's Importance"; ObjectID = "0vo-qj-uHh"; */
+"0vo-qj-uHh.text" = "Contact's Importance";
+
+/* Class = "UILabel"; accessibilityHint = "Enter the pin below."; ObjectID = "0zp-M9-sIS"; */
+"0zp-M9-sIS.accessibilityHint" = "Enter the pin below.";
+
+/* Class = "UILabel"; accessibilityLabel = "Pin?"; ObjectID = "0zp-M9-sIS"; */
+"0zp-M9-sIS.accessibilityLabel" = "Pin?";
+
+/* Class = "UILabel"; text = "PIN?"; ObjectID = "0zp-M9-sIS"; */
+"0zp-M9-sIS.text" = "PIN?";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "1GC-jH-25N"; */
+"1GC-jH-25N.title" = "Next";
+
+/* Class = "UINavigationItem"; title = "Add/Edit Org"; ObjectID = "2Jh-Vc-84Y"; */
+"2Jh-Vc-84Y.title" = "Add/Edit Org";
+
+/* Class = "UINavigationItem"; title = "Manage Orgs"; ObjectID = "38K-ID-sWx"; */
+"38K-ID-sWx.title" = "Manage Orgs";
+
+/* Class = "UIViewController"; title = "Contacts Mgmt"; ObjectID = "3b8-v0-Y76"; */
+"3b8-v0-Y76.title" = "Contacts Mgmt";
+
+/* Class = "UIViewController"; title = "Form Define 3"; ObjectID = "404-5N-oam"; */
+"404-5N-oam.title" = "Form Define 3";
+
+/* Class = "UITabBarController"; title = "Main TabBar"; ObjectID = "49e-Tb-3d3"; */
+"49e-Tb-3d3.title" = "Main TabBar";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "4x4-zX-Bh4"; */
+"4x4-zX-Bh4.title" = "Cancel";
+
+/* Class = "UILabel"; text = "Yes"; ObjectID = "53C-3w-0jl"; */
+"53C-3w-0jl.text" = "Yes";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "59h-KU-pWi"; */
+"59h-KU-pWi.title" = "Organization Title";
+
+/* Class = "UILabel"; accessibilityHint = "Indicates the event where information is being collected."; ObjectID = "5Ep-MO-5nE"; */
+"5Ep-MO-5nE.accessibilityHint" = "Indicates the event where information is being collected.";
+
+/* Class = "UILabel"; accessibilityLabel = "At Event"; ObjectID = "5Ep-MO-5nE"; */
+"5Ep-MO-5nE.accessibilityLabel" = "At Event";
+
+/* Class = "UIViewController"; title = "Org Define 6"; ObjectID = "5LQ-Lh-TkA"; */
+"5LQ-Lh-TkA.title" = "Org Define 6";
+
+/* Class = "UIButton"; accessibilityHint = "Submits your entered information."; ObjectID = "5Pn-GH-aGd"; */
+"5Pn-GH-aGd.accessibilityHint" = "Submits your entered information.";
+
+/* Class = "UIButton"; accessibilityLabel = "Submit"; ObjectID = "5Pn-GH-aGd"; */
+"5Pn-GH-aGd.accessibilityLabel" = "Submit";
+
+/* Class = "UIButton"; normalTitle = "Submit"; ObjectID = "5Pn-GH-aGd"; */
+"5Pn-GH-aGd.normalTitle" = "Submit";
+
+/* Class = "UILabel"; text = "If you have an exported Organization file that either you created or was provided to you, please go the the App (such as Email or iMessage or Files) where it is stored and open it from there.\n\nOr if the file is stored in your Files App, press the button below to import it."; ObjectID = "5V4-6k-sgI"; */
+"5V4-6k-sgI.text" = "If you have an exported Organization file that either you created or was provided to you, please go the the App (such as Email or iMessage or Files) where it is stored and open it from there.\n\nOr if the file is stored in your Files App, press the button below to import it.";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "5ck-za-0ZX"; */
+"5ck-za-0ZX.title" = "Organization Title";
+
+/* Class = "UINavigationItem"; title = "Define Org 2"; ObjectID = "5dJ-Eo-vVP"; */
+"5dJ-Eo-vVP.title" = "Define Org 2";
+
+/* Class = "UIViewController"; title = "Usage Notes"; ObjectID = "5mi-85-SZU"; */
+"5mi-85-SZU.title" = "Usage Notes";
+
+/* Class = "UITableViewController"; title = "Alerts Mgmt"; ObjectID = "63U-rf-4d2"; */
+"63U-rf-4d2.title" = "Alerts Mgmt";
+
+/* Class = "UINavigationItem"; title = "Usage Notes"; ObjectID = "6CV-7d-8Bf"; */
+"6CV-7d-8Bf.title" = "Usage Notes";
+
+/* Class = "UIButton"; accessibilityHint = "Submits the entered pin."; ObjectID = "7Gy-Fb-5EF"; */
+"7Gy-Fb-5EF.accessibilityHint" = "Submits the entered pin.";
+
+/* Class = "UIButton"; accessibilityLabel = "Enter"; ObjectID = "7Gy-Fb-5EF"; */
+"7Gy-Fb-5EF.accessibilityLabel" = "Enter";
+
+/* Class = "UIButton"; normalTitle = ">"; ObjectID = "7Gy-Fb-5EF"; */
+"7Gy-Fb-5EF.normalTitle" = ">";
+
+/* Class = "UILabel"; text = "Install the logo by pressing the Add Image button below.  You can immediately change the logo by pressing the logo image itself.  You can delete the logo using the trash can button."; ObjectID = "7UP-Ln-NGj"; */
+"7UP-Ln-NGj.text" = "Install the logo by pressing the Add Image button below.  You can immediately change the logo by pressing the logo image itself.  You can delete the logo using the trash can button.";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "7XK-nN-3S3"; */
+"7XK-nN-3S3.title" = "Next";
+
+/* Class = "UILabel"; text = "Form Chooser"; ObjectID = "80n-9A-Wa4"; */
+"80n-9A-Wa4.text" = "Form Chooser";
+
+/* Class = "UIViewController"; title = "Org Define 1"; ObjectID = "8S3-Gq-ZBW"; */
+"8S3-Gq-ZBW.title" = "Org Define 1";
+
+/* Class = "UITextField"; accessibilityHint = "Event's short code name for the database."; ObjectID = "8f0-4g-NJz"; */
+"8f0-4g-NJz.accessibilityHint" = "Event's short code name for the database.";
+
+/* Class = "UITextField"; accessibilityLabel = "Event short code name"; ObjectID = "8f0-4g-NJz"; */
+"8f0-4g-NJz.accessibilityLabel" = "Event short code name";
+
+/* Class = "UINavigationItem"; title = "Define Org 5"; ObjectID = "9dd-2E-TbD"; */
+"9dd-2E-TbD.title" = "Define Org 5";
+
+/* Class = "UIViewController"; title = "Entry"; ObjectID = "9pv-A4-QxB"; */
+"9pv-A4-QxB.title" = "Entry";
+
+/* Class = "UIViewController"; title = "First Time"; ObjectID = "9rW-PA-R6x"; */
+"9rW-PA-R6x.title" = "First Time";
+
+/* Class = "UIButton"; normalTitle = "2. Press here if you would like to fully configure the App with your Organization and Form via a series of setup Wizards."; ObjectID = "ANz-pU-n0i"; */
+"ANz-pU-n0i.normalTitle" = "2. Press here if you would like to fully configure the App with your Organization and Form via a series of setup Wizards.";
+
+/* Class = "UIViewController"; title = "Form Define 4"; ObjectID = "Aa2-Tz-6Cm"; */
+"Aa2-Tz-6Cm.title" = "Form Define 4";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "AoI-qI-e9u"; */
+"AoI-qI-e9u.title" = "Next";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "Bb3-UA-Asu"; */
+"Bb3-UA-Asu.title" = "Cancel";
+
+/* Class = "UIViewController"; title = "Send Contacts"; ObjectID = "BnG-sD-pGU"; */
+"BnG-sD-pGU.title" = "Send Contacts";
+
+/* Class = "UIViewController"; title = "Enter Event"; ObjectID = "Bs9-vD-Zpk"; */
+"Bs9-vD-Zpk.title" = "Enter Event";
+
+/* Class = "UILabel"; accessibilityHint = "Enter event information dialog box."; ObjectID = "C7g-iX-tTd"; */
+"C7g-iX-tTd.accessibilityHint" = "Enter event information dialog box.";
+
+/* Class = "UILabel"; text = "Enter Event"; ObjectID = "C7g-iX-tTd"; */
+"C7g-iX-tTd.text" = "Enter Event";
+
+/* Class = "UIBarButtonItem"; title = "Done"; ObjectID = "CKT-w8-T87"; */
+"CKT-w8-T87.title" = "Done";
+
+/* Class = "UIButton"; normalTitle = "Cancel"; ObjectID = "D8o-3q-uO3"; */
+"D8o-3q-uO3.normalTitle" = "Cancel";
+
+/* Class = "UIButton"; normalTitle = "3. Press here if you have an Organization-configuration file to import."; ObjectID = "DQ1-A6-bTw"; */
+"DQ1-A6-bTw.normalTitle" = "3. Press here if you have an Organization-configuration file to import.";
+
+/* Class = "UIViewController"; title = "Support/About"; ObjectID = "DQz-p7-hVj"; */
+"DQz-p7-hVj.title" = "Support/About";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "DSb-Rq-79D"; */
+"DSb-Rq-79D.title" = "Organization Title";
+
+/* Class = "UIButton"; normalTitle = "Org Short Name"; ObjectID = "Dl5-rq-Qrg"; */
+"Dl5-rq-Qrg.normalTitle" = "Org Short Name";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "Dpi-30-oK5"; */
+"Dpi-30-oK5.title" = "Organization Title";
+
+/* Class = "UIViewController"; title = "Forms Mgmt"; ObjectID = "FSi-8S-t6L"; */
+"FSi-8S-t6L.title" = "Forms Mgmt";
+
+/* Class = "UIViewController"; title = "Org Define 7"; ObjectID = "GUr-yc-Nub"; */
+"GUr-yc-Nub.title" = "Org Define 7";
+
+/* Class = "UIButton"; normalTitle = "Organization Setup Wizard >"; ObjectID = "Gfj-ar-BLV"; */
+"Gfj-ar-BLV.normalTitle" = "Organization Setup Wizard >";
+
+/* Class = "UIButton"; accessibilityHint = "Shows more available languages."; ObjectID = "GmN-kn-Eno"; */
+"GmN-kn-Eno.accessibilityHint" = "Shows more available languages.";
+
+/* Class = "UIButton"; accessibilityLabel = "More Languages"; ObjectID = "GmN-kn-Eno"; */
+"GmN-kn-Eno.accessibilityLabel" = "More Languages";
+
+/* Class = "UIButton"; normalTitle = "..."; ObjectID = "GmN-kn-Eno"; */
+"GmN-kn-Eno.normalTitle" = "...";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "HLB-GA-DbO"; */
+"HLB-GA-DbO.title" = "Next";
+
+/* Class = "UILabel"; text = "Cloned Form's New Short Name"; ObjectID = "Ha4-qX-UtZ"; */
+"Ha4-qX-UtZ.text" = "Cloned Form's New Short Name";
+
+/* Class = "UILabel"; text = "Address Components (Country, Street, City, StateCode, ZIP)"; ObjectID = "Hov-cc-rWr"; */
+"Hov-cc-rWr.text" = "Address Components (Country, Street, City, StateCode, ZIP)";
+
+/* Class = "UINavigationItem"; title = "Define Org 6"; ObjectID = "I8e-UW-MFB"; */
+"I8e-UW-MFB.title" = "Define Org 6";
+
+/* Class = "UILabel"; text = "Interested in: Volunteering, Donating, Newsletter"; ObjectID = "ID2-kV-C1e"; */
+"ID2-kV-C1e.text" = "Interested in: Volunteering, Donating, Newsletter";
+
+/* Class = "UIViewController"; title = "Org Define 4"; ObjectID = "Iny-BR-iL7"; */
+"Iny-BR-iL7.title" = "Org Define 4";
+
+/* Class = "UIViewController"; title = "Language Note"; ObjectID = "Itu-Tq-5w2"; */
+"Itu-Tq-5w2.title" = "Language Note";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "Ixb-bN-2L7"; */
+"Ixb-bN-2L7.title" = "Cancel";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "J1u-YS-R9m"; */
+"J1u-YS-R9m.title" = "Organization Title";
+
+/* Class = "UIViewController"; title = "Settings Menu"; ObjectID = "JGB-L5-rZK"; */
+"JGB-L5-rZK.title" = "Settings Menu";
+
+/* Class = "UIButton"; normalTitle = "Choose"; ObjectID = "JaQ-Wm-Y1w"; */
+"JaQ-Wm-Y1w.normalTitle" = "Choose";
+
+/* Class = "UIViewController"; title = "Add/Edit Form"; ObjectID = "Jed-qL-8ee"; */
+"Jed-qL-8ee.title" = "Add/Edit Form";
+
+/* Class = "UILabel"; text = "Fortunately, you can still use eContact Collect in your primary language.  You can enter in your Organization's title, field names, column headers, option alternatives, Submit button, etc all in your primary language even though the App itself does not show your primary language in the Wizards and in the Settings."; ObjectID = "KWp-2E-S39"; */
+"KWp-2E-S39.text" = "Fortunately, you can still use eContact Collect in your primary language.  You can enter in your Organization's title, field names, column headers, option alternatives, Submit button, etc all in your primary language even though the App itself does not show your primary language in the Wizards and in the Settings.";
+
+/* Class = "UILabel"; text = "Collector's Notes"; ObjectID = "Kwg-iJ-Jn1"; */
+"Kwg-iJ-Jn1.text" = "Collector's Notes";
+
+/* Class = "UIViewController"; title = "Define PIN"; ObjectID = "L53-vJ-OxW"; */
+"L53-vJ-OxW.title" = "Define PIN";
+
+/* Class = "UILabel"; text = "Welcome first time user of eContact Collect.  As you know, this app is designed to collect contact information, then move those contacts into your organization's spreadsheets, databases, or customer management software via email or iPhone sharing.  This app does NOT offer the ability to manage or use the collected contacts on your device.\n\nIn addition, this app uses only the device's basic security measures to store data, and only un-encrypted email to send information.  So this app cannot provide sufficient security for sensitive personal information like credit card numbers, national or state ID numbers, medical/ health information, etc.  Please do not attempt to use this app to collect any type of information that requires strong end-to-end encryption protections."; ObjectID = "LBp-Pn-k1W"; */
+"LBp-Pn-k1W.text" = "Welcome first time user of eContact Collect.  As you know, this app is designed to collect contact information, then move those contacts into your organization's spreadsheets, databases, or customer management software via email or iPhone sharing.  This app does NOT offer the ability to manage or use the collected contacts on your device.\n\nIn addition, this app uses only the device's basic security measures to store data, and only un-encrypted email to send information.  So this app cannot provide sufficient security for sensitive personal information like credit card numbers, national or state ID numbers, medical/ health information, etc.  Please do not attempt to use this app to collect any type of information that requires strong end-to-end encryption protections.";
+
+/* Class = "UILabel"; accessibilityHint = "Shows the alert information."; ObjectID = "LrS-pz-k3Y"; */
+"LrS-pz-k3Y.accessibilityHint" = "Shows the alert information.";
+
+/* Class = "UILabel"; accessibilityLabel = "Alert Message"; ObjectID = "LrS-pz-k3Y"; */
+"LrS-pz-k3Y.accessibilityLabel" = "Alert Message";
+
+/* Class = "UILabel"; text = "Alert message"; ObjectID = "LrS-pz-k3Y"; */
+"LrS-pz-k3Y.text" = "Alert message";
+
+/* Class = "UINavigationController"; title = "Wizard"; ObjectID = "M8z-Fs-Z1x"; */
+"M8z-Fs-Z1x.title" = "Wizard";
+
+/* Class = "UIViewController"; title = "Clone a Form"; ObjectID = "MEE-9t-4ew"; */
+"MEE-9t-4ew.title" = "Clone a Form";
+
+/* Class = "UINavigationItem"; title = "Def Form 1"; ObjectID = "MT6-Un-vo9"; */
+"MT6-Un-vo9.title" = "Def Form 1";
+
+/* Class = "UIViewController"; title = "Org Define 3"; ObjectID = "Mkk-ud-ECG"; */
+"Mkk-ud-ECG.title" = "Org Define 3";
+
+/* Class = "UITabBarItem"; title = "Settings"; ObjectID = "Mr0-3u-ufp"; */
+"Mr0-3u-ufp.title" = "Settings";
+
+/* Class = "UILabel"; text = "Do you have a logo for the Organization that you also want to show to people, and is available on your iPhone or iPad now?  (You can always add the logo later)"; ObjectID = "Mtu-uf-mEl"; */
+"Mtu-uf-mEl.text" = "Do you have a logo for the Organization that you also want to show to people, and is available on your iPhone or iPad now?  (You can always add the logo later)";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "N3U-qf-3tX"; */
+"N3U-qf-3tX.title" = "Organization Title";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "N7f-rE-Jt4"; */
+"N7f-rE-Jt4.title" = "Organization Title";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "O2G-c3-Jc8"; */
+"O2G-c3-Jc8.title" = "Cancel";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "O7i-zx-5mt"; */
+"O7i-zx-5mt.title" = "Cancel";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "OHK-3a-NFP"; */
+"OHK-3a-NFP.title" = "Organization Title";
+
+/* Class = "UINavigationItem"; title = "Def Form 3"; ObjectID = "P8E-om-iBB"; */
+"P8E-om-iBB.title" = "Def Form 3";
+
+/* Class = "UIViewController"; title = "Preferences"; ObjectID = "Pq7-Zb-mXC"; */
+"Pq7-Zb-mXC.title" = "Preferences";
+
+/* Class = "UIViewController"; title = "Collector Notes"; ObjectID = "Q2i-x2-hUd"; */
+"Q2i-x2-hUd.title" = "Collector Notes";
+
+/* Class = "UILabel"; text = "Event's name shown"; ObjectID = "Q33-Ds-mQB"; */
+"Q33-Ds-mQB.text" = "Event's name shown";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "Q87-nm-OJu"; */
+"Q87-nm-OJu.title" = "Next";
+
+/* Class = "UINavigationItem"; title = "Def Form 2"; ObjectID = "QW5-SD-bfm"; */
+"QW5-SD-bfm.title" = "Def Form 2";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "Qfd-Cj-ZqG"; */
+"Qfd-Cj-ZqG.title" = "Next";
+
+/* Class = "UINavigationItem"; title = "First Time"; ObjectID = "RCt-es-G1r"; */
+"RCt-es-G1r.title" = "First Time";
+
+/* Class = "UIButton"; normalTitle = "Import File"; ObjectID = "RiB-Qu-yOj"; */
+"RiB-Qu-yOj.normalTitle" = "Import File";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "SyR-pn-tK7"; */
+"SyR-pn-tK7.title" = "Next";
+
+/* Class = "UIButton"; normalTitle = "Done"; ObjectID = "TEO-Wr-TWv"; */
+"TEO-Wr-TWv.normalTitle" = "Done";
+
+/* Class = "UIButton"; normalTitle = "Cancel"; ObjectID = "Tfq-Y9-WH8"; */
+"Tfq-Y9-WH8.normalTitle" = "Cancel";
+
+/* Class = "UIViewController"; title = "Organizational Title"; ObjectID = "U6O-gy-eHM"; */
+"U6O-gy-eHM.title" = "Organizational Title";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "UBa-Rt-ZlH"; */
+"UBa-Rt-ZlH.title" = "Cancel";
+
+/* Class = "UILabel"; text = "Email Address"; ObjectID = "UKG-6F-9UG"; */
+"UKG-6F-9UG.text" = "Email Address";
+
+/* Class = "UILabel"; text = "People do not like filling out long forms requiring alot of information just to provide their contact information.  This app provides definitions for many possible data fields, and you can create custom data fields.  But it is best to pick only 4 or 5 data fields per form.  \n\nBelow, please choose some typical fields you want to appear on this form.  You can edit the form later to add, remove, customize, or create new fields, and re-order the fields."; ObjectID = "Ub9-QD-MO5"; */
+"Ub9-QD-MO5.text" = "People do not like filling out long forms requiring alot of information just to provide their contact information.  This app provides definitions for many possible data fields, and you can create custom data fields.  But it is best to pick only 4 or 5 data fields per form.  \n\nBelow, please choose some typical fields you want to appear on this form.  You can edit the form later to add, remove, customize, or create new fields, and re-order the fields.";
+
+/* Class = "UINavigationItem"; title = "Manage Alerts"; ObjectID = "VNB-qG-rui"; */
+"VNB-qG-rui.title" = "Manage Alerts";
+
+/* Class = "UIButton"; normalTitle = "Done"; ObjectID = "VfR-i8-Cuc"; */
+"VfR-i8-Cuc.normalTitle" = "Done";
+
+/* Class = "UIViewController"; title = "Add/Edit Org"; ObjectID = "Vkh-Vq-eme"; */
+"Vkh-Vq-eme.title" = "Add/Edit Org";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "Vr4-gC-kW2"; */
+"Vr4-gC-kW2.title" = "Cancel";
+
+/* Class = "UIButton"; accessibilityLabel = "Delete"; ObjectID = "Vrr-q0-1Ca"; */
+"Vrr-q0-1Ca.accessibilityLabel" = "Delete";
+
+/* Class = "UIViewController"; title = "Choose Form"; ObjectID = "Vry-4c-SXJ"; */
+"Vry-4c-SXJ.title" = "Choose Form";
+
+/* Class = "UIButton"; normalTitle = "Done"; ObjectID = "Vuy-Ub-8U4"; */
+"Vuy-Ub-8U4.normalTitle" = "Done";
+
+/* Class = "UILabel"; text = "Enter a short 'nickname' for yourself; usually a last name will do; this name will be inserted as a column in every contact that you collect; you can change it at any time in the Settings -> Preferences"; ObjectID = "VwM-41-1Up"; */
+"VwM-41-1Up.text" = "Enter a short 'nickname' for yourself; usually a last name will do; this name will be inserted as a column in every contact that you collect; you can change it at any time in the Settings -> Preferences";
+
+/* Class = "UITabBarItem"; title = "Wizard"; ObjectID = "WCO-3h-e3g"; */
+"WCO-3h-e3g.title" = "Wizard";
+
+/* Class = "UILabel"; text = "Event's short code for the database"; ObjectID = "WJS-xY-D7G"; */
+"WJS-xY-D7G.text" = "Event's short code for the database";
+
+/* Class = "UIBarButtonItem"; title = "Save"; ObjectID = "WMx-lB-keb"; */
+"WMx-lB-keb.title" = "Save";
+
+/* Class = "UILabel"; text = "Clone a Form"; ObjectID = "XJv-he-JqE"; */
+"XJv-he-JqE.text" = "Clone a Form";
+
+/* Class = "UIButton"; normalTitle = "Cancel"; ObjectID = "XNL-F7-2FX"; */
+"XNL-F7-2FX.normalTitle" = "Cancel";
+
+/* Class = "UINavigationItem"; title = "Define Org 1"; ObjectID = "XT4-5l-Blz"; */
+"XT4-5l-Blz.title" = "Define Org 1";
+
+/* Class = "UIViewController"; title = "Entry Form"; ObjectID = "Xnl-if-Bx1"; */
+"Xnl-if-Bx1.title" = "Entry Form";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "Xp2-Zj-X1N"; */
+"Xp2-Zj-X1N.title" = "Cancel";
+
+/* Class = "UINavigationItem"; title = "Language Note"; ObjectID = "Xqm-rK-IgK"; */
+"Xqm-rK-IgK.title" = "Language Note";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "YmP-CI-OMA"; */
+"YmP-CI-OMA.title" = "Next";
+
+/* Class = "UIBarButtonItem"; title = "Done"; ObjectID = "ZhU-w0-SrC"; */
+"ZhU-w0-SrC.title" = "Done";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "aK9-eU-4zP"; */
+"aK9-eU-4zP.title" = "Organization Title";
+
+/* Class = "UITabBarItem"; title = "Entry"; ObjectID = "acW-dT-cKf"; */
+"acW-dT-cKf.title" = "Entry";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "aid-9X-3h9"; */
+"aid-9X-3h9.title" = "Organization Title";
+
+/* Class = "UIButton"; normalTitle = "Cancel"; ObjectID = "b6E-dr-b5p"; */
+"b6E-dr-b5p.normalTitle" = "Cancel";
+
+/* Class = "UILabel"; text = "Press one option below:"; ObjectID = "bQ7-gK-d15"; */
+"bQ7-gK-d15.text" = "Press one option below:";
+
+/* Class = "UILabel"; text = "No"; ObjectID = "bfx-Sh-uoA"; */
+"bfx-Sh-uoA.text" = "No";
+
+/* Class = "UIBarButtonItem"; title = "Preview"; ObjectID = "bg7-T9-uyh"; */
+"bg7-T9-uyh.title" = "Preview";
+
+/* Class = "UIViewController"; title = "Wizard Menu"; ObjectID = "ciZ-9c-woR"; */
+"ciZ-9c-woR.title" = "Wizard Menu";
+
+/* Class = "UINavigationItem"; title = "Define Nickname"; ObjectID = "cqH-nz-Azc"; */
+"cqH-nz-Azc.title" = "Define Nickname";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "crj-BO-Sgr"; */
+"crj-BO-Sgr.title" = "Next";
+
+/* Class = "UILabel"; text = "Language Chooser"; ObjectID = "cvr-nT-C9T"; */
+"cvr-nT-C9T.text" = "Language Chooser";
+
+/* Class = "UINavigationItem"; title = "Define Org 3"; ObjectID = "dSb-gm-uUh"; */
+"dSb-gm-uUh.title" = "Define Org 3";
+
+/* Class = "UIViewController"; title = "PIN Entry"; ObjectID = "dUF-fs-oyg"; */
+"dUF-fs-oyg.title" = "PIN Entry";
+
+/* Class = "UIButton"; accessibilityLabel = "Delete"; ObjectID = "e0N-S5-cP9"; */
+"e0N-S5-cP9.accessibilityLabel" = "Delete";
+
+/* Class = "UINavigationItem"; title = "Define PIN"; ObjectID = "eCV-JN-vUQ"; */
+"eCV-JN-vUQ.title" = "Define PIN";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "eH5-jK-ar3"; */
+"eH5-jK-ar3.title" = "Next";
+
+/* Class = "UIButton"; normalTitle = "Form Setup Wizard >"; ObjectID = "eTV-9X-HCE"; */
+"eTV-9X-HCE.normalTitle" = "Form Setup Wizard >";
+
+/* Class = "UIButton"; normalTitle = "Done"; ObjectID = "eW3-u3-zy7"; */
+"eW3-u3-zy7.normalTitle" = "Done";
+
+/* Class = "UIViewController"; title = "Admin Menu Form"; ObjectID = "ed7-jo-jgA"; */
+"ed7-jo-jgA.title" = "Admin Menu Form";
+
+/* Class = "UIViewController"; title = "Form Define 1"; ObjectID = "fIf-WW-Gt4"; */
+"fIf-WW-Gt4.title" = "Form Define 1";
+
+/* Class = "UIButton"; normalTitle = "Choose"; ObjectID = "fKg-jb-V3y"; */
+"fKg-jb-V3y.normalTitle" = "Choose";
+
+/* Class = "UIBarButtonItem"; title = "Done"; ObjectID = "fYD-RS-z7M"; */
+"fYD-RS-z7M.title" = "Done";
+
+/* Class = "UIViewController"; title = "Choose Organization"; ObjectID = "fm5-1f-uSq"; */
+"fm5-1f-uSq.title" = "Choose Organization";
+
+/* Class = "UILabel"; text = "Before we setup your Organization, some usage notes:\n1.  You may collect contacts for more than one Organization.  Each Organization's contacts are kept separate.\n2.  You may choose to have more than one collection form per Organization.  Say for a kids sports team: (a) one form to gather the child's player info, and (b) another form used to gather info on a parent that wants to be a volunteer or donor to the team.\n3.  You can optionally set an \"event\" code and shown event title.  The event code will be included with every contact collected at that event.\n4.  You (the collector) can after-the-fact flag the importance of particular contacts, or add notes about a particular contact.\n5,  You can create bi-lingual and multi-lingual forms.  However, you likely will need to provide all translations for the form's field titles and choice attributes."; ObjectID = "h46-Rx-OtH"; */
+"h46-Rx-OtH.text" = "Before we setup your Organization, some usage notes:\n1.  You may collect contacts for more than one Organization.  Each Organization's contacts are kept separate.\n2.  You may choose to have more than one collection form per Organization.  Say for a kids sports team: (a) one form to gather the child's player info, and (b) another form used to gather info on a parent that wants to be a volunteer or donor to the team.\n3.  You can optionally set an \"event\" code and shown event title.  The event code will be included with every contact collected at that event.\n4.  You (the collector) can after-the-fact flag the importance of particular contacts, or add notes about a particular contact.\n5,  You can create bi-lingual and multi-lingual forms.  However, you likely will need to provide all translations for the form's field titles and choice attributes.";
+
+/* Class = "UILabel"; text = "Welcome First Time User"; ObjectID = "hYu-69-qAi"; */
+"hYu-69-qAi.text" = "Welcome First Time User";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "iwV-sT-xiL"; */
+"iwV-sT-xiL.title" = "Cancel";
+
+/* Class = "UILabel"; text = "Organization Chooser"; ObjectID = "jfV-V3-PyU"; */
+"jfV-V3-PyU.text" = "Organization Chooser";
+
+/* Class = "UIButton"; normalTitle = "Cancel"; ObjectID = "js3-Q7-srM"; */
+"js3-Q7-srM.normalTitle" = "Cancel";
+
+/* Class = "UIButton"; normalTitle = "First Time-Wizard >"; ObjectID = "jst-zf-Xbx"; */
+"jst-zf-Xbx.normalTitle" = "First Time-Wizard >";
+
+/* Class = "UIViewController"; title = "Add/Edit Org Form"; ObjectID = "kIf-sy-PC0"; */
+"kIf-sy-PC0.title" = "Add/Edit Org Form";
+
+/* Class = "UIButton"; normalTitle = "Form Short Name"; ObjectID = "keM-J1-iRE"; */
+"keM-J1-iRE.normalTitle" = "Form Short Name";
+
+/* Class = "UIViewController"; title = "Form Define 2"; ObjectID = "m9D-y6-OCJ"; */
+"m9D-y6-OCJ.title" = "Form Define 2";
+
+/* Class = "UITextField"; accessibilityHint = "Enter the pin here."; ObjectID = "md5-uu-TTX"; */
+"md5-uu-TTX.accessibilityHint" = "Enter the pin here.";
+
+/* Class = "UITextField"; accessibilityLabel = "Pin"; ObjectID = "md5-uu-TTX"; */
+"md5-uu-TTX.accessibilityLabel" = "Pin";
+
+/* Class = "UIViewController"; title = "Organization Title"; ObjectID = "mqh-Bu-OXb"; */
+"mqh-Bu-OXb.title" = "Organization Title";
+
+/* Class = "UIButton"; accessibilityLabel = "Delete"; ObjectID = "neQ-2C-vp8"; */
+"neQ-2C-vp8.accessibilityLabel" = "Delete";
+
+/* Class = "UINavigationController"; title = "Settings"; ObjectID = "nzD-VZ-OxX"; */
+"nzD-VZ-OxX.title" = "Settings";
+
+/* Class = "UIButton"; normalTitle = "1. Press here to immediately start using the App with a default Form that you can customize later."; ObjectID = "ojw-7s-rBY"; */
+"ojw-7s-rBY.normalTitle" = "1. Press here to immediately start using the App with a default Form that you can customize later.";
+
+/* Class = "UILabel"; text = "Label"; ObjectID = "on7-7w-EWa"; */
+"on7-7w-EWa.text" = "Label";
+
+/* Class = "UINavigationItem"; title = "Manage Forms"; ObjectID = "pLk-Tb-5cb"; */
+"pLk-Tb-5cb.title" = "Manage Forms";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "pVK-oV-SVo"; */
+"pVK-oV-SVo.title" = "Cancel";
+
+/* Class = "UINavigationItem"; title = "Define Org 7"; ObjectID = "pbg-o2-yKl"; */
+"pbg-o2-yKl.title" = "Define Org 7";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "plu-G0-gIl"; */
+"plu-G0-gIl.title" = "Next";
+
+/* Class = "UILabel"; text = "Label"; ObjectID = "rda-e4-mSm"; */
+"rda-e4-mSm.text" = "Label";
+
+/* Class = "UIViewController"; title = "Org Define 5"; ObjectID = "riV-9z-DQL"; */
+"riV-9z-DQL.title" = "Org Define 5";
+
+/* Class = "UINavigationItem"; title = "Add/Edit Form"; ObjectID = "sI2-7G-EXn"; */
+"sI2-7G-EXn.title" = "Add/Edit Form";
+
+/* Class = "UIViewController"; title = "Choose Rating"; ObjectID = "tLg-ab-K2e"; */
+"tLg-ab-K2e.title" = "Choose Rating";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "v2f-ej-zb2"; */
+"v2f-ej-zb2.title" = "Next";
+
+/* Class = "UILabel"; text = "Phone Number"; ObjectID = "vKx-LP-HmJ"; */
+"vKx-LP-HmJ.text" = "Phone Number";
+
+/* Class = "UIBarButtonItem"; title = "Next"; ObjectID = "vQ9-6A-BG1"; */
+"vQ9-6A-BG1.title" = "Next";
+
+/* Class = "UILabel"; text = "Pick one or more ratings"; ObjectID = "vZM-vN-yDq"; */
+"vZM-vN-yDq.text" = "Pick one or more ratings";
+
+/* Class = "UIButton"; normalTitle = "Cancel"; ObjectID = "w3k-Me-KyS"; */
+"w3k-Me-KyS.normalTitle" = "Cancel";
+
+/* Class = "UINavigationItem"; title = "Def Form 4"; ObjectID = "w8d-TQ-Fpg"; */
+"w8d-TQ-Fpg.title" = "Def Form 4";
+
+/* Class = "UIBarButtonItem"; title = "Cancel"; ObjectID = "wi7-Wg-vrK"; */
+"wi7-Wg-vrK.title" = "Cancel";
+
+/* Class = "UINavigationItem"; title = "Define Org 4"; ObjectID = "wtb-xH-0TW"; */
+"wtb-xH-0TW.title" = "Define Org 4";
+
+/* Class = "UITableViewController"; title = "Manage Orgs"; ObjectID = "xr8-zx-Aeb"; */
+"xr8-zx-Aeb.title" = "Manage Orgs";
+
+/* Class = "UIViewController"; title = "Org Define 2"; ObjectID = "yhT-h1-I5m"; */
+"yhT-h1-I5m.title" = "Org Define 2";
+
+/* Class = "UIButton"; normalTitle = "Cancel"; ObjectID = "yla-KR-70i"; */
+"yla-KR-70i.normalTitle" = "Cancel";
+
+/* Class = "UIViewController"; title = "Define Nickname"; ObjectID = "zip-kC-yWa"; */
+"zip-kC-yWa.title" = "Define Nickname";
+
+/* Class = "UIButton"; normalTitle = "Choose"; ObjectID = "ztj-49-qQj"; */
+"ztj-49-qQj.normalTitle" = "Choose";

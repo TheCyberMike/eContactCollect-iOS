@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14460.20"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <tabBar contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="2sn-DR-gAm">
+                                <rect key="frame" x="0.0" y="618" width="375" height="49"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <items>
+                                    <tabBarItem title="Entry" image="Notepad Entry" id="KSO-Uh-Tp8"/>
+                                    <tabBarItem title="Settings" image="Gear Admin" id="Yax-mr-5Lz"/>
+                                    <tabBarItem enabled="NO" title="Wizard" image="Wizard" id="Nhq-Qm-OB4"/>
+                                </items>
+                            </tabBar>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="sa7-iF-Q92" userLabel="OrgTitleView">
+                                <rect key="frame" x="0.0" y="64" width="375" height="50"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="50" id="oYC-js-RAx"/>
+                                </constraints>
+                            </view>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="wordWrap" translatesAutoresizingMaskIntoConstraints="NO" id="gY2-zB-cWi" userLabel="Button Submit">
+                                <rect key="frame" x="0.0" y="139" width="125" height="48"/>
+                                <color key="backgroundColor" red="0.99414316570000005" green="1" blue="0.72996377960000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <accessibility key="accessibilityConfiguration" hint="Submits your entered information." label="Submit">
+                                    <accessibilityTraits key="traits" button="YES" staticText="YES"/>
+                                </accessibility>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="125" id="8MF-NM-KFM"/>
+                                    <constraint firstAttribute="height" constant="48" id="Fz4-Yj-Rk2"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" style="UICTFontTextStyleHeadline"/>
+                                <state key="normal" image="Check Submit">
+                                    <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                </state>
+                            </button>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ifk-of-DtK" userLabel="FormView">
+                                <rect key="frame" x="0.0" y="187" width="375" height="431"/>
+                                <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                            </view>
+                            <navigationBar contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="V1E-t0-UXd">
+                                <rect key="frame" x="0.0" y="20" width="375" height="44"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <items>
+                                    <navigationItem id="Yyw-Bt-Zfh"/>
+                                </items>
+                            </navigationBar>
+                        </subviews>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="sa7-iF-Q92" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="39J-jP-odT"/>
+                            <constraint firstItem="gY2-zB-cWi" firstAttribute="top" secondItem="sa7-iF-Q92" secondAttribute="bottom" constant="25" id="4T8-tH-dkz"/>
+                            <constraint firstItem="Ifk-of-DtK" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="7Wk-ZW-dfZ"/>
+                            <constraint firstItem="2sn-DR-gAm" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="8DK-rn-4RK"/>
+                            <constraint firstItem="sa7-iF-Q92" firstAttribute="top" secondItem="V1E-t0-UXd" secondAttribute="bottom" id="8qM-On-apd"/>
+                            <constraint firstItem="2sn-DR-gAm" firstAttribute="top" secondItem="Ifk-of-DtK" secondAttribute="bottom" id="CdP-vf-2Qi"/>
+                            <constraint firstItem="2sn-DR-gAm" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="EdO-oi-pq6"/>
+                            <constraint firstItem="V1E-t0-UXd" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="NNW-dG-1Bz"/>
+                            <constraint firstItem="V1E-t0-UXd" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="WIl-Yb-mjE"/>
+                            <constraint firstItem="Ifk-of-DtK" firstAttribute="top" secondItem="gY2-zB-cWi" secondAttribute="bottom" id="ayh-bV-2fl"/>
+                            <constraint firstItem="Ifk-of-DtK" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="dcK-T6-6my"/>
+                            <constraint firstItem="V1E-t0-UXd" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="e3T-bH-hyE"/>
+                            <constraint firstItem="sa7-iF-Q92" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="iXW-3H-fUv"/>
+                            <constraint firstItem="2sn-DR-gAm" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="j6R-wg-JmX"/>
+                            <constraint firstItem="gY2-zB-cWi" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="mkZ-u8-sMM"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="52" y="374.66266866566718"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="Check Submit" width="25" height="25"/>
+        <image name="Gear Admin" width="25" height="25"/>
+        <image name="Notepad Entry" width="25" height="25"/>
+        <image name="Wizard" width="25" height="25"/>
+    </resources>
+</document>
