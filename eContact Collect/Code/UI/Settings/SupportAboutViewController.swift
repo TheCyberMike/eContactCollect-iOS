@@ -209,8 +209,11 @@ class SupportAboutViewController: FormViewController {
     }
 }
 
-class SupportOptionsViewController: FormViewController, MFMailComposeViewControllerDelegate {
+class SupportOptionsViewController: FormViewController, UIActivityItemSource, MFMailComposeViewControllerDelegate {
     // member variables
+    private var mSharedFileURL:URL? = nil
+    private var mSharedFileUTI:String? = nil
+    private var mSharedFileName:String? = nil
     
     // member constants and other static content
     private let mCTAG:String = "VCSSAO"
@@ -294,19 +297,8 @@ class SupportOptionsViewController: FormViewController, MFMailComposeViewControl
                 UIApplication.shared.open(NSURL(string:"https://stackoverflow.com/questions/tagged/econtactcollect")! as URL)
         }
         section1 <<< ButtonRow() {
-            $0.tag = "sendEmail"
-            $0.title = NSLocalizedString("Send to Developer: email", comment:"")
-            }.cellUpdate { cell, row in
-                cell.textLabel?.textAlignment = .left
-                cell.textLabel?.font = .systemFont(ofSize: 15.0)
-                cell.textLabel?.textColor = UIColor.black
-                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-            }.onCellSelection { [weak self] cell, row in
-                self!.emailDeveloper(includeErrorLog: false)
-        }
-        section1 <<< ButtonRow() {
-            $0.tag = "sendErrorLog"
-            $0.title = NSLocalizedString("Send to Developer:", comment:"") + " error.log"
+            $0.tag = "sendEmailLog"
+            $0.title = NSLocalizedString("Send email to Developer", comment:"") + ": theCyberMike@yahoo.com"
             }.cellUpdate { cell, row in
                 cell.textLabel?.textAlignment = .left
                 cell.textLabel?.font = .systemFont(ofSize: 15.0)
@@ -314,6 +306,17 @@ class SupportOptionsViewController: FormViewController, MFMailComposeViewControl
                 cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
             }.onCellSelection { [weak self] cell, row in
                 self!.emailDeveloper(includeErrorLog: true)
+        }
+        section1 <<< ButtonRow() {
+            $0.tag = "shareLog"
+            $0.title = NSLocalizedString("Share to Developer", comment:"") + ": theCyberMike@yahoo.com"
+            }.cellUpdate { cell, row in
+                cell.textLabel?.textAlignment = .left
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.textColor = UIColor.black
+                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
+            }.onCellSelection { [weak self] cell, row in
+                self!.shareDeveloper(selfViewAnchorRect: cell.frame)
         }
     }
 
@@ -352,6 +355,53 @@ class SupportOptionsViewController: FormViewController, MFMailComposeViewControl
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("iOS eMail Error", comment:""), message: msg, buttonText: NSLocalizedString("Okay", comment:""))
         }
         controller.dismiss(animated: true, completion: nil)
+    }
+    
+    // share the SV-File
+    private func shareDeveloper(selfViewAnchorRect:CGRect) {
+        // determine the mime type
+        self.mSharedFileUTI = String(kUTTypePlainText)         // text/plain
+        self.mSharedFileURL = URL(fileURLWithPath: AppDelegate.getErrorLogFullPath())
+        self.mSharedFileName = "error.log"
+        let avc = UIActivityViewController(activityItems: [self], applicationActivities: [])
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.pad) {
+            avc.modalPresentationStyle = UIModalPresentationStyle.popover
+            avc.preferredContentSize = CGSize(width: 0, height: 0)
+            avc.popoverPresentationController?.sourceView = self.view
+            avc.popoverPresentationController?.sourceRect = selfViewAnchorRect
+        }
+        self.present(avc, animated: true, completion: nil)
+    }
+    
+    ///////////////////////////////////////////////////////////////////
+    // Methods related UIActivityViewController and UIActivityItemSource
+    ///////////////////////////////////////////////////////////////////
+    
+    // placeholder so UIActivityViewController knows in general what is going to be shared
+    func activityViewControllerPlaceholderItem(_ activityViewController:UIActivityViewController) -> Any {
+        //debugPrint("\(self.mCTAG).activityViewControllerPlaceholderItem STARTED")
+        return self.mSharedFileURL!
+    }
+    
+    // return the actual content to be shared (e.g. the body of the email)
+    func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
+        //debugPrint("\(self.mCTAG).activityViewController.itemForActivityType STARTED")
+        return self.mSharedFileURL!
+    }
+    
+    // return the UTI if asked for
+    func activityViewController(_ activityViewController: UIActivityViewController, dataTypeIdentifierForActivityType activityType: UIActivity.ActivityType?) -> String {
+        //debugPrint("\(self.mCTAG).activityViewController.dataTypeIdentifierForActivityType STARTED")
+        return self.mSharedFileUTI!
+    }
+    
+    // return a Subject line for the likes of email
+    func activityViewController(_ activityViewController: UIActivityViewController, subjectForActivityType activityType: UIActivity.ActivityType?) -> String {
+        //debugPrint("\(self.mCTAG).activityViewController.subjectForActivityType STARTED")
+        if activityType == .mail {
+            return "eContactCollect error.log"
+        }
+        return "eContactCollect error.log"
     }
 }
 

@@ -126,8 +126,8 @@
 "Submit Issues/Bugs/Requests at" = "Submit Issues/Bugs/Requests at";
 "Submit Questions at" = "Submit Questions at";
 "\nPlease include tag:" = "\nPlease include tag:";
-"Send to Developer: email" = "Send to Developer: email";
-"Send to Developer:" = "Send to Developer:";
+"Send email to Developer" = "Send email to Developer";
+"Share to Developer" = "Share to Developer";
 "Email the Developer" = "Email the Developer";
 "iOS eMail Error" = "iOS eMail Error";
 "Error was returned from the iOS eMail System" = "Error was returned from the iOS eMail System";
