@@ -713,6 +713,20 @@ public class PhoneComponentsCell: Cell<[String:String?]>, CellType, UITextFieldD
 // custom international phone formatter
 public class PhoneInternationalPrefixFormatter: Formatter {
     
+    /// Returns a InputString:String from the given FormattedString:String
+    /// - Parameter obj: Pointer to FormattedString object
+    /// - Return: A String object that textually represents object for display; return nil if object is not of the correct class
+    override open func string(for obj: Any?) -> String? {
+        if obj == nil { return nil }
+        let str:String? = obj! as? String
+        return str
+    }
+    
+    /// Creates a FormattedString:String from the given InputString:String
+    /// - Parameter obj: Pointer to FormattedString object to assign
+    /// - Parameter for: InputString with raw phone# input
+    /// - Parameter errorDescription: Pointer to place to store an error message string
+    /// - Return:  true if the conversion from string to cell content object was successful, otherwise false
     override open func getObjectValue(_ obj: AutoreleasingUnsafeMutablePointer<AnyObject?>?, for string: String, errorDescription error: AutoreleasingUnsafeMutablePointer<NSString?>?) -> Bool {
         
         if obj == nil { return false }
@@ -730,28 +744,65 @@ public class PhoneInternationalPrefixFormatter: Formatter {
 // custom phone formatter for US phones
 public class PhoneFormatter_US: Formatter {
     
+    /// Returns a InputString:String from the given FormattedString:String
+    /// - Parameter obj: Pointer to FormattedString object
+    /// - Return: A String object that textually represents object for display; return nil if object is not of the correct class
+    override open func string(for obj: Any?) -> String? {
+        if obj == nil { return nil }
+        let str:String? = obj! as? String
+        return str
+    }
+    
+    /// Creates a FormattedString:String from the given InputString:String
+    /// - Parameter obj: Pointer to FormattedString object to assign
+    /// - Parameter for: InputString with raw phone# input
+    /// - Parameter errorDescription: Pointer to place to store an error message string
+    /// - Return:  true if the conversion from string to cell content object was successful, otherwise false
     override open func getObjectValue(_ obj: AutoreleasingUnsafeMutablePointer<AnyObject?>?, for string: String, errorDescription error: AutoreleasingUnsafeMutablePointer<NSString?>?) -> Bool {
         
         if obj == nil { return false }
         if string.isEmpty { return true }
         
-        let digitChars:CharacterSet = CharacterSet(charactersIn:"1234567890")
-        var result:String = ""
-
-        if string.rangeOfCharacter(from: digitChars) != nil {
-            // has only digits
-            if string.count == 7 {
-                let first3EndIndex = string.index(string.startIndex, offsetBy: 2)
-                let last4StartIndex = string.index(string.endIndex, offsetBy: -4)
-                result = string[...first3EndIndex] + "-" + string[last4StartIndex...]
-            } else if string.count == 10 {
-                let first3EndIndex = string.index(string.startIndex, offsetBy: 2)
-                let mid3StartIndex = string.index(string.startIndex, offsetBy: 3)
-                let mid3EndIndex = string.index(string.endIndex, offsetBy: -5)
-                let last4StartIndex = string.index(string.endIndex, offsetBy: -4)
-                result = "(" + string[...first3EndIndex] + ")" + string[mid3StartIndex...mid3EndIndex] + "-" + string[last4StartIndex...]
+        // first remove all unacceptable characters and place each character into a string array
+        var hasFormatting:Bool = false
+        var workStringComps:[Character] = []
+        for char in string {
+            if char >= "0" && char <= "9" {
+                workStringComps.append(char)
+            } else if char == "(" || char == ")" || char == "-" {
+                workStringComps.append(char)
+                hasFormatting = true
             }
         }
+        
+        // now look at formatting
+        if !hasFormatting {
+            // has only digits
+            if workStringComps.count == 7 {
+                workStringComps.insert("-", at: 3)
+            } else if workStringComps.count == 10 {
+                workStringComps.insert("-", at: 6)
+                workStringComps.insert(")", at: 3)
+                workStringComps.insert("(", at: 0)
+            }
+        } else {
+            // has formatting present
+            if workStringComps.count >= 9 {
+                if workStringComps[3] == "-"  {
+                    workStringComps.remove(at: 3)
+                    workStringComps.insert("-", at: 6)
+                    workStringComps.insert(")", at: 3)
+                    workStringComps.insert("(", at: 0)
+                }
+            }
+        }
+        
+        // convert back into a string
+        var result:String = ""
+        for char in workStringComps {
+            result.append(char)
+        }
+
         if !result.isEmpty {
             obj!.pointee = result as AnyObject
             return true
