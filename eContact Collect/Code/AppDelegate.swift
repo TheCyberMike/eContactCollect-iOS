@@ -256,7 +256,7 @@ internal class AppDelegate: UIResponder, UIApplicationDelegate {
         gAppDelegate = self
         
         // activate the global unhandled exception handler in this main thread
-        NSSetUncaughtExceptionHandler(globalExceptionHandler)
+        //NSSetUncaughtExceptionHandler(globalExceptionHandler)
         
         // initialize everything that should be done even when doing Unit Testing
         self.initialize()
