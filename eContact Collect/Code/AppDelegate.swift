@@ -277,29 +277,26 @@ debugPrint("\(AppDelegate.mCTAG).initialize STARTED")
 #endif
         
         // this App supports multi-languages even aside from automatic Localization
-        // get device locale information from iOS
+        // get device locale information from iOS; iOS allows setting both preferred Languagess w/Region, and a separate Region
         AppDelegate.mDeviceLanguage = AppDelegate.getLangOnly(fromLangRegion: NSLocale.preferredLanguages[0])
         let value2:String? = (Locale.current as NSLocale).object(forKey: .countryCode) as? String
         if value2 != nil { AppDelegate.mDeviceRegion = value2! }
-        AppDelegate.mDeviceLangRegion = AppDelegate.mDeviceLanguage
-        if !AppDelegate.mDeviceRegion.isEmpty {
-            AppDelegate.mDeviceLangRegion = AppDelegate.mDeviceLangRegion + "-" + AppDelegate.mDeviceRegion
-            if AppDelegate.mDeviceLangRegion == "en-US" { AppDelegate.mDeviceLangRegion = "en" }
-        }
+        AppDelegate.mDeviceLangRegion = NSLocale.preferredLanguages[0]
+        if AppDelegate.mDeviceLangRegion == "en-US" { AppDelegate.mDeviceLangRegion = "en" }
         
-        // get App's active locale from the Bundle
-        let plistPath:String? = Bundle.main.path(forResource: "Fields", ofType: "plist")
+        // get App's active locale from the Bundle; really want the localization directory in-use
+        let filePath:String? = Bundle.main.path(forResource: "FieldLocales", ofType: "json")
         AppDelegate.mAppLangRegion = "en"
-        if plistPath != nil {
-            let pathComponents = plistPath!.components(separatedBy: "/")
+        if filePath != nil {
+            let pathComponents = filePath!.components(separatedBy: "/")
             let langFolder = pathComponents[pathComponents.count - 2]
             AppDelegate.mAppLangRegion = langFolder.components(separatedBy: ".")[0]
         } else {
             AppDelegate.mAppLangRegion = Bundle.main.preferredLocalizations.first!
             if AppDelegate.mAppLangRegion.contains("_") {
                 AppDelegate.mAppLangRegion = AppDelegate.mAppLangRegion.replacingOccurrences(of: "_", with: "-")
-                if AppDelegate.mAppLangRegion == "en-US" { AppDelegate.mAppLangRegion = "en" }
             }
+            if AppDelegate.mAppLangRegion == "en-US" { AppDelegate.mAppLangRegion = "en" }
         }
         
         // get timezone information from iOS
@@ -1330,7 +1327,7 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             outputStream.open()
             var str = "Local DateTime: \(mydateFormatter.string(from: Date())), TimezoneOffset_min: \(AppDelegate.mDeviceTimezoneOffsetMS / 60000) (\(AppDelegate.mDeviceTimezone))\n"
             outputStream.write(str, maxLength:str.count)
-            str = "iOS App \(appName) [\(appCode)], AppVersionString \(appVer), AppBuildCode \(appBuild), BuildDateTime: \(buildDate)\n"
+            str = "iOS App \(appName) [\(appCode)], AppVersionString \(appVer), AppBuildCode \(appBuild), BuildDateTime \(buildDate)\n"
             outputStream.write(str, maxLength:str.count)
             if AppDelegate.mDatabaseHandler != nil {
                 str = "DBHandler State \(AppDelegate.mDatabaseHandler!.mDBstatus_state), DBver \(AppDelegate.mDatabaseHandler!.getVersioning())\n"
@@ -1356,7 +1353,7 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             outputStream.write(str, maxLength:str.count)
             str = "App Language-Region \(AppDelegate.mAppLangRegion)\n"
             outputStream.write(str, maxLength:str.count)
-            str = "Platform Manf Apple Model \(model)\n"
+            str = "Platform Manf Apple, Model \(model)\n"
             outputStream.write(str, maxLength:str.count)
             str = "Platform Screen Orientation X,Y \(screenSize.width),\(screenSize.height); Orient=\(orient); Density=\(UIScreen.main.scale)\n"
             outputStream.write(str, maxLength:str.count)
