@@ -106,6 +106,12 @@ class SupportAboutViewController: FormViewController {
             }.onCellSelection { [weak self] cell, row in
                 let msg:String = NSLocalizedString("I recommend this free Contact Info Collection iOS App.", comment:"") + " https://sites.google.com/view/econtactcollect"
                 let activityVC = UIActivityViewController(activityItems:[msg], applicationActivities:nil)
+                if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.pad) {
+                    activityVC.modalPresentationStyle = UIModalPresentationStyle.popover
+                    activityVC.preferredContentSize = CGSize(width: 0, height: 0)
+                    activityVC.popoverPresentationController?.sourceView = self!.view
+                    activityVC.popoverPresentationController?.sourceRect = cell.frame
+                }
                 self!.present(activityVC, animated:true, completion:nil)
         }
         section1 <<< ButtonRow() {
