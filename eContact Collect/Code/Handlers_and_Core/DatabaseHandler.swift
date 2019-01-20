@@ -697,8 +697,8 @@ public class DatabaseHandler {
         
         // convert the entire JSON object structure to a serialized textual file
         var filename:String
-        if forFormShortName == nil { filename = "org_config_for_\(forOrgShortName).eContactCollectConfig" }
-        else { filename = "form_config_for_\(forOrgShortName)_of_\(forFormShortName!).eContactCollectConfig" }
+        if forFormShortName == nil { filename = "org_\(forOrgShortName).eContactCollectConfig" }
+        else { filename = "form_\(forFormShortName!)_of_\(forOrgShortName).eContactCollectConfig" }
         let path = "\(AppDelegate.mDocsApp)/\(filename)"
         let stream = OutputStream(toFileAtPath: path, append: false)
         if stream == nil {

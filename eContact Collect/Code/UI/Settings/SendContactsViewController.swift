@@ -324,7 +324,7 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
     // email the SV-File:  prep it and place it into an email
     private func emailSVfile(filePath:String, fileName:String) {
 //debugPrint("\(self.mCTAG).emailSVfile STARTED")
-        // obtain the Org and Form records
+        // obtain the Org and Form records; assumes the SVFile's name is composed in a certain order
         let splits:[String] = fileName.components(separatedBy: "_")
         if splits.count < 4 {
             AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"fileName.components(separatedBy:)", errorMessage:"Filename mis-composed", extra:fileName)
