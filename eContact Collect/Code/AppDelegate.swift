@@ -396,11 +396,11 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
 
     // called when the end-user has requested that one of our files be opened; return true if the request was successfully handled
     // end-user has indicated that it wants one of our app's files opened;
-    // presently, only the "eContactsCollectOrgConfig" file extension of mimetype "application/json" is defined as openable
+    // presently, only the "eContactsCollectConfig" file extension of mimetype "application/json" is defined as openable
     // first three lines need to be:
     //      "$schema":"http://json-schema.org/draft-04/schema#"
     //      "apiVersion":"1.0"
-    //      "method":"eContactCollect.db.org.export"
+    //      "method":"eContactCollect.db.org.export" or "method":"eContactCollect.db.form.export"
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
 //debugPrint("\(AppDelegate.mCTAG).openURL STARTED PATH=\(url.path)")
         // is it the correct extension?
