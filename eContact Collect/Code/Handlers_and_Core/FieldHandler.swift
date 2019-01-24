@@ -8,7 +8,9 @@
 import SQLite
 import Eureka
 
-// base handler class for the all the database handlers
+// base handler class for Form Fields;
+//  combines the JSON file factory defaults with custom fields in the database;
+//  also handles building of Form Field datasets with Language options
 public class FieldHandler {
     // member variables
     public var mFHstatus_state:HandlerStatusStates = .Unknown

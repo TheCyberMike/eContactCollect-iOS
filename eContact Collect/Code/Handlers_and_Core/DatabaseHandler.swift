@@ -18,7 +18,7 @@ extension Connection {
     }
 }
 
-// base handler class for the all the database handlers
+// handler class for the database
 public class DatabaseHandler {
     // member variables
     public var mDB:Connection? = nil
