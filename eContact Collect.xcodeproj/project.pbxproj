@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		D71FF33121D4452C00C4A370 /* UIHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D71FF33021D4452C00C4A370 /* UIHelpers.swift */; };
+		D7416EAE21F78A9D004850C6 /* ContactsReviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7416EAD21F78A9D004850C6 /* ContactsReviewViewController.swift */; };
 		D7BA6B4221EED9F400F45AFC /* Eureka.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; };
 		D7BA6B4321EED9F400F45AFC /* Eureka.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D7BA6B6021EEDA6300F45AFC /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; };
@@ -199,6 +200,7 @@
 
 /* Begin PBXFileReference section */
 		D71FF33021D4452C00C4A370 /* UIHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIHelpers.swift; sourceTree = "<group>"; };
+		D7416EAD21F78A9D004850C6 /* ContactsReviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsReviewViewController.swift; sourceTree = "<group>"; };
 		D7BA6B3621EED9BC00F45AFC /* Eureka.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Eureka.xcodeproj; path = "../SubModules/Eureka-master/Eureka.xcodeproj"; sourceTree = "<group>"; };
 		D7BA6B4821EEDA4F00F45AFC /* SQLite.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SQLite.xcodeproj; path = "../SubModules/SQLite.swift-master/SQLite.xcodeproj"; sourceTree = "<group>"; };
 		D7BA6C0121EF901500F45AFC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
@@ -425,6 +427,7 @@
 				D92ACAD0216EBDCB00F8B556 /* FormsMgmtViewController.swift */,
 				D92ACAD2216EC09300F8B556 /* FormEditViewController.swift */,
 				D9042EC12176B6DB0088CF7A /* ContactsMgmtViewController.swift */,
+				D7416EAD21F78A9D004850C6 /* ContactsReviewViewController.swift */,
 				D939A0CA21724F4100D57B11 /* SendContactsViewController.swift */,
 			);
 			path = Settings;
@@ -840,6 +843,7 @@
 				D7D852F221C9724200948408 /* PopupFirstTimeViewController.swift in Sources */,
 				D94CFCF12155A6D8009CE207 /* AppDelegate.swift in Sources */,
 				D9254B3521597572006FDBF8 /* RecOrgFormFieldDefs.swift in Sources */,
+				D7416EAE21F78A9D004850C6 /* ContactsReviewViewController.swift in Sources */,
 				D9E74A87217FA9D60049D844 /* AdminPrefsViewController.swift in Sources */,
 				D7D87FD621E67B7B002847DE /* ChooserLangRegionViewController.swift in Sources */,
 				D94CDF7121626F1200ABB052 /* OrgTitleViewController.swift in Sources */,

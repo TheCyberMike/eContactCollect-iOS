@@ -641,6 +641,7 @@ open class MultiSelectionSegmentedControl: UIControl {      // !!! MMM
         let index = segment
         
         if _items == nil { _items = [] }
+        if _images == nil { _images = [] }
         if _segmentButtons == nil { _segmentButtons = [] }
         
         if index > _items!.count {

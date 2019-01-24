@@ -274,6 +274,10 @@ class FormsMgmtViewController: UIViewController, UITableViewDataSource, UITableV
     }
 }
 
+///////////////////////////////////////////////////
+// class definition for FormsMgmtTableViewCell
+///////////////////////////////////////////////////
+
 class FormsMgmtTableViewCell: UITableViewCell {
     // member variables
     public weak var mTableViewDelegate:FormsMgmtViewController? = nil

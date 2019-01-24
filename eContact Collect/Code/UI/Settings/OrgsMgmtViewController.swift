@@ -215,11 +215,15 @@ class OrgsMgmtViewController: UITableViewController, OEVC_Delegate {
     // a cell row was tapped; setup for editing it;
     // for some reason I cannot get this method to be invoked anymore despite alot of Googling and different texts;
     // so I implemented a text button instead of a label for each row
-        override func tableView(_ tableView:UITableView, didSelectRowAt indexPath:IndexPath) {
+    override func tableView(_ tableView:UITableView, didSelectRowAt indexPath:IndexPath) {
 //debugPrint("\(self.mCTAG).didSelectRowAtIndexPath STARTED")
         self.doEdit(indexPath: indexPath)
     }
 }
+
+///////////////////////////////////////////////////
+// class definition for OrgsMgmtTableViewCell
+///////////////////////////////////////////////////
 
 class OrgsMgmtTableViewCell: UITableViewCell {
     // member variables

@@ -212,10 +212,15 @@ open class SegmentedCellExt<Tb: Hashable, T: Hashable> : Cell<T>, CellType {
                 }
             }
         } else if let iRow = row as? SegmentedRowExt<UIImage> {
-            //iRow.options?.forEach {
-                // ???
-                //inx = inx + 1
-            //}
+            if iRow.options?.count != segmentedControl!.numberOfSegments { needRelayout = true }
+            else if segmentedControl!.numberOfSegments > 0 {
+                iRow.options?.forEach {
+                    let wantImage:UIImage = $0
+                    let hasImage:UIImage = segmentedControl!.imageForSegment(at: inx)!
+                    if hasImage != wantImage { needRelayout = true }
+                    inx = inx + 1
+                }
+            }
         }
 
         if needRelayout {

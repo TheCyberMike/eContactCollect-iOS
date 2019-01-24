@@ -1179,11 +1179,65 @@ Or if the file is stored in your Files App, press the button below to import it.
                     </view>
                     <connections>
                         <outlet property="tableview_contacts_list" destination="ejD-dx-Red" id="v7f-xt-9A0"/>
+                        <segue destination="Ibg-XE-ExW" kind="show" identifier="Segue CCMgmt_CCReview" id="0o6-lE-FCq"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="WBx-9M-tTZ" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="4282.608695652174" y="1638.5869565217392"/>
+        </scene>
+        <!--VC ContactsEdit-->
+        <scene sceneID="JQw-M2-yRl">
+            <objects>
+                <viewController storyboardIdentifier="VC ContactsReview" title="Contacts Review" id="Ibg-XE-ExW" userLabel="VC ContactsEdit" customClass="ContactsReviewViewController" customModule="eContact_Collect" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="QP9-jN-WBg">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <containerView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="YMY-pm-6SK">
+                                <rect key="frame" x="0.0" y="64" width="414" height="50"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="50" id="fX3-vT-gpP"/>
+                                </constraints>
+                                <connections>
+                                    <segue destination="ar3-2n-iR7" kind="embed" id="PFZ-Rg-XcP"/>
+                                </connections>
+                            </containerView>
+                            <containerView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="UZo-0j-ixy">
+                                <rect key="frame" x="0.0" y="114" width="414" height="529"/>
+                                <connections>
+                                    <segue destination="pGB-uq-gzj" kind="embed" id="KJW-mq-90v"/>
+                                </connections>
+                            </containerView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="UZo-0j-ixy" firstAttribute="bottom" secondItem="11C-Kh-aZn" secondAttribute="bottom" id="BqJ-PA-s1C"/>
+                            <constraint firstItem="YMY-pm-6SK" firstAttribute="top" secondItem="11C-Kh-aZn" secondAttribute="top" id="Cu8-Wk-qKz"/>
+                            <constraint firstItem="UZo-0j-ixy" firstAttribute="trailing" secondItem="11C-Kh-aZn" secondAttribute="trailing" id="FbQ-Lo-ZSp"/>
+                            <constraint firstItem="YMY-pm-6SK" firstAttribute="trailing" secondItem="11C-Kh-aZn" secondAttribute="trailing" id="Gyt-K7-oZp"/>
+                            <constraint firstItem="YMY-pm-6SK" firstAttribute="leading" secondItem="11C-Kh-aZn" secondAttribute="leading" id="Qxq-fg-BPy"/>
+                            <constraint firstItem="UZo-0j-ixy" firstAttribute="top" secondItem="YMY-pm-6SK" secondAttribute="bottom" id="VYh-zb-NXJ"/>
+                            <constraint firstItem="UZo-0j-ixy" firstAttribute="leading" secondItem="11C-Kh-aZn" secondAttribute="leading" id="fqq-rG-Qxr"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="11C-Kh-aZn"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Contact Review" id="aVD-hN-3Cb">
+                        <barButtonItem key="leftBarButtonItem" title="&lt; Back" id="hcm-hv-GpG">
+                            <connections>
+                                <action selector="button_back_pressed:" destination="Ibg-XE-ExW" id="fwN-rZ-fgV"/>
+                            </connections>
+                        </barButtonItem>
+                        <barButtonItem key="rightBarButtonItem" title="Delete" image="Trashcan Delete" id="Dzf-bl-mW8">
+                            <connections>
+                                <action selector="button_delete_pressed:" destination="Ibg-XE-ExW" id="TwU-8i-pJ8"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="snV-AB-kir" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5171.0144927536239" y="1641.8478260869567"/>
         </scene>
         <!--Send Contacts-->
         <scene sceneID="ueL-o8-jcy">
@@ -2451,6 +2505,7 @@ Below, please choose some typical fields you want to appear on this form.  You c
                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bv9-vN-RhT" userLabel="multi-segctrl" customClass="MultiSelectionSegmentedControl" customModule="Eureka">
                                         <rect key="frame" x="8" y="100" width="320" height="29"/>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <color key="tintColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="29" id="g62-k4-gx0"/>
                                             <constraint firstAttribute="width" constant="320" id="our-B6-j6N"/>
@@ -3110,6 +3165,36 @@ Below, please choose some typical fields you want to appear on this form.  You c
                 <placeholder placeholderIdentifier="IBFirstResponder" id="456-iH-Evc" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1335" y="-818"/>
+        </scene>
+        <!--VC OrgTitle for VC ContactsReview-->
+        <scene sceneID="99r-yu-qCN">
+            <objects>
+                <viewController storyboardIdentifier="VC OrgTitle for VC ContactsReview" id="ar3-2n-iR7" userLabel="VC OrgTitle for VC ContactsReview" customClass="OrgTitleViewController" customModule="eContact_Collect" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="3sk-Em-Fcz">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="50"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="hCM-DV-FgG"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Q2S-GD-Xm4" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5171" y="1254"/>
+        </scene>
+        <!--VC ContactsReviewForm-->
+        <scene sceneID="Vz1-9v-eLb">
+            <objects>
+                <viewController storyboardIdentifier="VC ContactsReviewForm" title="Contacts Review Form" id="pGB-uq-gzj" userLabel="VC ContactsReviewForm" customClass="ContactsReviewFormViewController" customModule="eContact_Collect" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="ioa-kp-fyw">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="529"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="ml4-rc-ywp"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="EH3-kI-cRq" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5171" y="2232"/>
         </scene>
     </scenes>
     <resources>

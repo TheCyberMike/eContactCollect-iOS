@@ -8,7 +8,7 @@
 import UIKit
 import SQLite
 
-class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, CNVC_Delegate, CRVC_Delegate {
+class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, CNVC_Delegate, CRVC_Delegate, CCRVC_Delegate {
     // member variables
     private var mContacts_database_List:NSMutableArray = NSMutableArray()
     
@@ -17,6 +17,11 @@ class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITab
 
     // outlets to screen controls
     @IBOutlet weak var tableview_contacts_list: UITableView!
+    
+    // called when the object instance is being destroyed
+    deinit {
+//debugPrint("\(mCTAG).deinit STARTED")
+    }
     
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
     // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
@@ -27,10 +32,6 @@ class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITab
         // setups
         self.tableview_contacts_list.delegate = self
     }
-    // called when the object instance is being destroyed
-    deinit {
-//debugPrint("\(mCTAG).deinit STARTED")
-    }
     
     // called by the framework when the view will *re-appear* (first time, from popovers, etc)
     // parent and all children are now available
@@ -38,7 +39,31 @@ class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITab
 //debugPrint("\(self.mCTAG).viewWillAppear STARTED")
         super.viewWillAppear(animated)
         
+        // setups
         self.build_database_list()
+    }
+    
+    // called by the framework when the view will disappear from the UI framework;
+    // remember this does NOT necessarily mean the view is being dismissed since viewDidDisappear() will be called if this VC opens another VC;
+    override func viewWillDisappear(_ animated:Bool) {
+        super.viewWillDisappear(animated)
+        self.mContacts_database_List.removeAllObjects()  // save some memory since this table gets rebuilt and reloaded at viewWillAppear()
+        self.tableview_contacts_list.reloadData()
+    }
+    
+    // called by the framework when the view has disappeared from the UI framework;
+    // remember this does NOT necessarily mean the view is being dismissed since viewDidDisappear() will be called if this VC opens another VC;
+    // need this for SendContactsFormViewController() contained view controller
+    override func viewDidDisappear(_ animated:Bool) {
+        if self.isBeingDismissed || self.isMovingFromParent ||
+            (self.navigationController?.isBeingDismissed ?? false) || (self.navigationController?.isMovingFromParent ?? false) {
+//debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED \(self)")
+            self.mContacts_database_List.removeAllObjects()
+            self.tableview_contacts_list.reloadData()
+        } else {
+//debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed \(self)")
+        }
+        super.viewDidDisappear(animated)
     }
     
     // called by the framework when memory needs to be freed
@@ -65,6 +90,31 @@ class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITab
             }
         }
         self.tableview_contacts_list.reloadData()
+    }
+    
+    // review a contacts record of the indicated table view cell;
+    // called by ContactsMgmtTableViewCell
+    internal func doEdit(cell:ContactsMgmtTableViewCell) {
+        // set the proposed row as selected
+        for cell in tableview_contacts_list.visibleCells {
+            cell.setSelected(false, animated: false)
+        }
+        cell.setSelected(true, animated: true)
+        
+        // get the needed information from the cell
+        let indexPath:IndexPath? = tableview_contacts_list.indexPath(for:cell)
+        if indexPath == nil { return }
+        self.doEdit(indexPath: indexPath!)
+    }
+    internal func doEdit(indexPath:IndexPath) {
+        let ccRec:RecContactsCollected = self.mContacts_database_List[indexPath.row] as! RecContactsCollected
+        
+        // open the ContactsReview view for changing
+        let storyboard = UIStoryboard(name:"Main", bundle:nil)
+        let nextViewController:ContactsReviewViewController = storyboard.instantiateViewController(withIdentifier:"VC ContactsReview") as! ContactsReviewViewController
+        nextViewController.mCCRVCdelegate = self
+        nextViewController.mReview_CCrec = RecContactsCollected(existingRec: ccRec)
+        self.navigationController?.pushViewController(nextViewController, animated:true)
     }
     
     // delete a form of the indicated table view cell;
@@ -146,6 +196,12 @@ class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITab
         self.build_database_list()
     }
     
+    // return from the ContactsReview View Controller
+    func completed_CCRVC(wasChanged:Bool) {
+        if !wasChanged { return }
+        self.build_database_list()
+    }
+    
     private func changeCCrecord(index:Int64, changeNotes:Bool, theNotes:String?, changeRating:Bool, theRating:String?) {
         // load and change the in-process CC record
         do {
@@ -209,11 +265,23 @@ class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITab
     func tableView(_ tableView:UITableView, heightForRowAt indexPath:IndexPath) -> CGFloat {
         return UITableView.automaticDimension
     }
+    
+    // a cell row was tapped; setup for editing it;
+    // for some reason I cannot get this method to be invoked anymore despite alot of Googling and different texts;
+    // so I implemented a text button instead of a label for each row
+    func tableView(_ tableView:UITableView, didSelectRowAt indexPath:IndexPath) {
+//debugPrint("\(self.mCTAG).didSelectRowAtIndexPath STARTED")
+        self.doEdit(indexPath: indexPath)
+    }
 }
+
+///////////////////////////////////////////////////
+// class definition for ContactsMgmtTableViewCell
+///////////////////////////////////////////////////
 
 class ContactsMgmtTableViewCell: UITableViewCell {
     // member variables
-    public var mTableViewDelegate:ContactsMgmtViewController?
+    public weak var mTableViewDelegate:ContactsMgmtViewController?
     
     // outlets to screen controls
     @IBOutlet weak var button_notes: UIButton!

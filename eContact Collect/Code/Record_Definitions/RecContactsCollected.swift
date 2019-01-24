@@ -142,6 +142,24 @@ public class RecContactsCollected {
         }
     }
     
+    // create a duplicate of an existing record
+    init(existingRec:RecContactsCollected) {
+        self.rCC_index = existingRec.rCC_index
+        self.rOrg_Code_For_SV_File = existingRec.rOrg_Code_For_SV_File
+        self.rForm_Code_For_SV_File = existingRec.rForm_Code_For_SV_File
+        self.rCC_DateTime = existingRec.rCC_DateTime
+        self.rCC_Status = existingRec.rCC_Status
+        self.rCC_Composed_Name = existingRec.rCC_Composed_Name
+        self.rCC_MetadataAttribs = existingRec.rCC_MetadataAttribs
+        self.rCC_MetadataValues = existingRec.rCC_MetadataValues
+        self.rCC_EnteredAttribs = existingRec.rCC_EnteredAttribs
+        self.rCC_EnteredValues = existingRec.rCC_EnteredValues
+        self.rCC_Importance = existingRec.rCC_Importance
+        self.rCC_Collector_Notes = existingRec.rCC_Collector_Notes
+        self.rCC_Importance_Position = existingRec.rCC_Importance_Position
+        self.rCC_Collector_Notes_Position = existingRec.rCC_Collector_Notes_Position
+    }
+    
     // constructor creates the record from entered values
     init(org_code_sv_file:String, form_code_sv_file:String, dateTime:String, status:RecContactsCollectedStatus, composed_name:String, meta_attribs:String, meta_values:String, entered_attribs:String, entered_values:String) {
         self.rCC_index = -1
