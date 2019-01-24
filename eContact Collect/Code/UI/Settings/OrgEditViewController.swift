@@ -996,7 +996,7 @@ public class OrgEditFormLangFields {
                 // this removal or move or hide occured in the mvs_langs MultivaluedSection
                 if self.mMovesInProcess > 0 {
                     // it is an in-process move
-                    let br:LabelRow = rows[inx] as! LabelRow
+//let br:LabelRow = rows[inx] as! LabelRow
 //debugPrint("\(self.mCTAG).rowsHaveBeenRemoved.mvs_langs Move \(self.mMovesInProcess) in-process \(indexPath.item) is \(br.title!)")
                 } else {
                     // it is a delete or hide; mark the applicable OrgLangRec as deleted but keep it for now in the array
@@ -1036,7 +1036,7 @@ public class OrgEditFormLangFields {
                 // this add or move or unhide occured in the mvs_langs MultivaluedSection
                 if self.mMovesInProcess > 0 {
                     // it is a move; not an add or unhide
-                    let br:LabelRow = rows[inx] as! LabelRow
+//let br:LabelRow = rows[inx] as! LabelRow
 //debugPrint("\(self.mCTAG).rowsHaveBeenAdded.mvs_langs Move \(self.mMovesInProcess) completed \(indexPath.item) is \(br.title!)")
                     self.mMovesInProcess = self.mMovesInProcess - 1
                     

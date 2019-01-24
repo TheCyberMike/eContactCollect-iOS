@@ -105,7 +105,6 @@ internal class ATHMultiSelectionControlSegmentButton: UIButton {
     fileprivate func _setSelectedState() {
         
         layer.borderColor = self.titleColorSelected?.cgColor    // !!! MMM
-        let t = tintColor
         backgroundColor = tintColor
         setTitleColor(self.titleColorSelected ?? UIColor.white, for: .normal)   // !!! MMM
         

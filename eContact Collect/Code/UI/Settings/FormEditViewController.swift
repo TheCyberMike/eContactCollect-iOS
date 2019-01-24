@@ -1230,7 +1230,7 @@ class FormEditFormViewController: FormViewController {
             if indexPath.section == 1 {
                 // this removal or move or hide occured in the mvs_fields MultivaluedSection
                 if self.mMovesInProcess > 0 {
-let br:ButtonRow = rows[inx] as! ButtonRow
+//let br:ButtonRow = rows[inx] as! ButtonRow
 //debugPrint("\(self.mCTAG).rowsHaveBeenRemoved.mvs_fields Move \(self.mMovesInProcess) in-process \(indexPath.item) is \(br.title!)")
                 } else {
                     let br:ButtonRow = rows[inx] as! ButtonRow
@@ -1256,7 +1256,7 @@ let br:ButtonRow = rows[inx] as! ButtonRow
             if indexPath.section == 1 {
                 // this add or move or unhide occured in the mvs_fields MultivaluedSection
                 if self.mMovesInProcess > 0 {
-let br:ButtonRow = rows[inx] as! ButtonRow
+//let br:ButtonRow = rows[inx] as! ButtonRow
 //debugPrint("\(self.mCTAG).rowsHaveBeenAdded.mvs_fields Move \(self.mMovesInProcess) completed \(indexPath.item) is \(br.title!)")
                     self.mMovesInProcess = self.mMovesInProcess - 1
                 }
@@ -1795,7 +1795,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
             if form[indexPath.section].tag == "mvs_field_options" {
                 // this removal or move or hide occured in the mvs_field_options MultivaluedSection
                 if self.mMovesInProcess > 0 {
-                    let br:ButtonRow = rows[inx] as! ButtonRow
+//let br:ButtonRow = rows[inx] as! ButtonRow
 //debugPrint("\(self.mCTAG).rowsHaveBeenRemoved.mvs_field_options Move \(self.mMovesInProcess) in-process \(indexPath.item) is \(br.title!)")
                 } else {
                     let br:ButtonRow = rows[inx] as! ButtonRow
@@ -1818,7 +1818,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
             if form[indexPath.section].tag == "mvs_field_options" {
                 // this add or move or unhide occured in the mvs_field_options MultivaluedSection
                 if self.mMovesInProcess > 0 {
-                    let br:ButtonRow = rows[inx] as! ButtonRow
+//let br:ButtonRow = rows[inx] as! ButtonRow
 //debugPrint("\(self.mCTAG).rowsHaveBeenAdded.mvs_field_options Move \(self.mMovesInProcess) completed \(indexPath.item) is \(br.title!)")
                     self.mMovesInProcess = self.mMovesInProcess - 1
                 }
