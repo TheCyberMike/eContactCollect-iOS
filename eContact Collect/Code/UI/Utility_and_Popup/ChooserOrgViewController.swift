@@ -75,7 +75,7 @@ class ChooserOrgViewController: UIViewController, UIPickerViewDelegate, UIPicker
                 self.mOrgRecs.add(orgRec)
             }
         } catch {
-            // error.log and alert already posted
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewWillAppear", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""), completion: { () in
                 if self.mCOVCdelegate == nil { self.dismiss(animated: true, completion: nil) }
                 else { self.mCOVCdelegate!.completed_COVC(fromVC: self, wasChosen: nil) }

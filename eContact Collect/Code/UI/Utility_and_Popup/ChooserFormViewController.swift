@@ -67,26 +67,23 @@ class ChooserFormViewController: UIViewController, UIPickerViewDelegate, UIPicke
         
         // obtain a list of all Form records
         self.mFormRecs.removeAllObjects()
-        do {
-            if self.mForOrgShortName != nil {
-                let records:AnySequence<Row> = try RecOrgFormDefs.orgFormGetAllRecs(forOrgShortName: self.mForOrgShortName!)
+        var forOrgShortName:String? = nil
+        if self.mForOrgShortName != nil { forOrgShortName = self.mForOrgShortName! }
+        else if AppDelegate.mEntryFormProvisioner != nil { forOrgShortName = AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File }
+        if !(forOrgShortName ?? "").isEmpty {
+            do {
+                let records:AnySequence<Row> = try RecOrgFormDefs.orgFormGetAllRecs(forOrgShortName: forOrgShortName!)
                 for rowObj in records {
                     let orgFormRec:RecOrgFormDefs = try RecOrgFormDefs(row:rowObj)
                     self.mFormRecs.add(orgFormRec)
                 }
-            } else if AppDelegate.mEntryFormProvisioner != nil {
-                let records:AnySequence<Row> = try RecOrgFormDefs.orgFormGetAllRecs(forOrgShortName: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
-                for rowObj in records {
-                    let orgFormRec:RecOrgFormDefs = try RecOrgFormDefs(row:rowObj)
-                    self.mFormRecs.add(orgFormRec)
-                }
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewWillAppear", errorStruct: error, extra: forOrgShortName!)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""), completion: { () in
+                    if self.mCFVCdelegate == nil { self.dismiss(animated: true, completion: nil) }
+                    else { self.mCFVCdelegate!.completed_CFVC(fromVC: self, wasChosen: nil) }
+                })
             }
-        } catch {
-            // error.log and alert already posted
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""), completion: { () in
-                if self.mCFVCdelegate == nil { self.dismiss(animated: true, completion: nil) }
-                else { self.mCFVCdelegate!.completed_CFVC(fromVC: self, wasChosen: nil) }
-            })
         }
         
         // if there are no choices, then just return that and quit;

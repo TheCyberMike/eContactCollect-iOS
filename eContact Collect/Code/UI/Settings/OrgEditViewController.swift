@@ -81,8 +81,9 @@ class OrgEditViewController: UIViewController {
             if self.mWorking_orgRec != nil { self.mWorking_orgRec = nil }
             self.mWorking_orgRec = RecOrganizationDefs(existingRec:mEdit_orgRec!)   // make a copy of the existing Org rec
             do {
-                try self.mWorking_orgRec!.loadLangRecs()
+                try self.mWorking_orgRec!.loadLangRecs(method: "\(self.mCTAG).viewDidLoad")
             } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 self.mAction = .Add // auto-force to an Add
             }
@@ -179,6 +180,7 @@ class OrgEditViewController: UIViewController {
             do {
                 orgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: self.mWorking_orgRec!.rOrg_Code_For_SV_File)
             } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).validateEntries", errorStruct: error, extra: nil)
                 return NSLocalizedString("Database error occurred while verifying inputs", comment:"")
         }
         if orgRec != nil {
@@ -190,17 +192,22 @@ class OrgEditViewController: UIViewController {
     // save the entered or updated profile information to the database;
     // return true if successful or false if failed
     private func saveRecordToDB() -> Bool {
-        
         // finalize the LangRegion settings to what is shown on the Form
-        self.mOrgEditFormVC!.finalizeLangRegions()
+        do {
+            try self.mOrgEditFormVC!.finalizeLangRegions()
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).saveRecordToDB", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            return false
+        }
         
         switch self.mAction {
         case .Add:
 //debugPrint("\(self.mCTAG).saveRecordToDB.Add STARTED")
              do {
-                _ = try self.mWorking_orgRec!.saveNewToDB()     // this will auto-add all non-deleted internal RecOrganizationLangs
+                let _ = try self.mWorking_orgRec!.saveNewToDB()     // this will auto-add all non-deleted internal RecOrganizationLangs
              } catch {
-                // errors will already have been logged
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).saveRecordToDB.Add", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 return false
              }
@@ -213,8 +220,9 @@ class OrgEditViewController: UIViewController {
             if self.mWorking_orgRec!.rOrg_Code_For_SV_File == self.mEdit_orgRec!.rOrg_Code_For_SV_File {
                 // the key has not been changed
                 do {
-                    _ = try self.mWorking_orgRec!.saveChangesToDB(originalOrgRec:self.mEdit_orgRec!)  // this will auto-add/update/delete internal RecOrganizationLangs
+                    let _ = try self.mWorking_orgRec!.saveChangesToDB(originalOrgRec:self.mEdit_orgRec!)  // this will auto-add/update/delete internal RecOrganizationLangs
                 } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).saveRecordToDB.Change", errorStruct: error, extra: nil)
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                     return false
                 }
@@ -311,8 +319,13 @@ class OrgEditFormViewController: FormViewController {
     
     // although the internal RecOrganizationLangs and the rOrg_LangRegionCodes_Supported SHOULD be already correct,
     // we will re-evaluate and reset all of them according to the final state of the form's fields
-    public func finalizeLangRegions() {
-        self.mLangRows!.finalizeLangRegions()
+    public func finalizeLangRegions() throws {
+        do {
+            try self.mLangRows!.finalizeLangRegions()
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).finalizeLangRegions")
+            throw appError
+        } catch { throw error }
     }
 
     // build the form
@@ -491,7 +504,7 @@ class OrgEditFormViewController: FormViewController {
             $0.title = NSLocalizedString("Org Title for ", comment:"") + AppDelegate.makeFullDescription(forLangRegion: langRegionCode)
             do {
                 $0.value = try self.mOrgEditVC!.mWorking_orgRec!.getOrgTitleShown(langRegion: langRegionCode)
-            } catch {}
+            } catch {}  // ???
             $0.textAreaHeight = .fixed(cellHeight: 50)
             $0.textAreaWidth = .fixed(cellWidth: 300)
             }.cellUpdate { cell, row in
@@ -502,9 +515,9 @@ class OrgEditFormViewController: FormViewController {
                 cell.textView.layer.borderWidth = 1
             }.onChange { [weak self] chgRow in
                 do {
-                    try self!.mOrgEditVC!.mWorking_orgRec!.setOrgTitleShown(langRegion: langRegionCode, title: chgRow.value)
+                    try self!.mOrgEditVC!.mWorking_orgRec!.setOrgTitleShown_Editing(langRegion: langRegionCode, title: chgRow.value)
                     self!.mOrgEditVC!.mOrgTitleViewController!.refresh()
-                } catch {}  // report no error
+                } catch {}  // ???
         }
 
         if self.mLangRows!.mSupportingMultLangs {
@@ -521,7 +534,7 @@ class OrgEditFormViewController: FormViewController {
                         $0.title = NSLocalizedString("Org Title for ", comment:"") + AppDelegate.makeFullDescription(forLangRegion: langRegionCode)
                         do {
                             $0.value = try self.mOrgEditVC!.mWorking_orgRec!.getOrgTitleShown(langRegion: langRegionCode)
-                        } catch {}
+                        } catch {}  // ???
                         $0.textAreaHeight = .fixed(cellHeight: 50)
                         $0.textAreaWidth = .fixed(cellWidth: 300)
                         }.cellUpdate { cell, row in
@@ -532,9 +545,9 @@ class OrgEditFormViewController: FormViewController {
                             cell.textView.layer.borderWidth = 1
                         }.onChange { [weak self] chgRow in
                             do {
-                                try self!.mOrgEditVC!.mWorking_orgRec!.setOrgTitleShown(langRegion: langRegionCode, title: chgRow.value)
+                                try self!.mOrgEditVC!.mWorking_orgRec!.setOrgTitleShown_Editing(langRegion: langRegionCode, title: chgRow.value)
                                 self!.mOrgEditVC!.mOrgTitleViewController!.refresh()
-                            } catch {}  // report no error
+                            } catch {}  // ???
                     }
                 }
             }
@@ -597,7 +610,7 @@ class OrgEditFormViewController: FormViewController {
                         let langRegionCode = String(hasRow.tag![pastIndex...])
                         do {
                             (hasRow as! TextAreaRowExt).value = try self.mOrgEditVC!.mWorking_orgRec!.getOrgTitleShown(langRegion: langRegionCode)
-                        } catch {}  // report no error
+                        } catch {}  // ???
                     }
                 }
                 break
@@ -722,12 +735,12 @@ public class OrgEditFormLangFields {
                                 let ar = self!.mForm!.rowBy(tag: "add_new_lang")
                                 do {
                                     try self!.mMVS_langs!.insert(row: br, before: ar!)
-                                } catch {}
+                                } catch {}  // ???
                             }
                         }
                     } else {
                         // a langRegion record does not yet exist for this new SV-File langRegion; create it and get it shown in the MVS
-                        let inx = self!.mOrgRec!.addNewLangRec(forLangRegion: self!.mOrgRec!.rOrg_LangRegionCode_SV_File)
+                        let inx = self!.mOrgRec!.addNewPlaceholderLangRec(forLangRegion: self!.mOrgRec!.rOrg_LangRegionCode_SV_File)
                         orgLangRec = self!.mOrgRec!.mOrg_Lang_Recs![inx]
                         // create a MVS row for this shown language
                         let br = self!.makeLangButtonRow(forLangRec: orgLangRec!)
@@ -735,7 +748,7 @@ public class OrgEditFormLangFields {
                             let ar = self!.mForm!.rowBy(tag: "add_new_lang")
                             do {
                                 try self!.mMVS_langs!.insert(row: br, before: ar!)
-                            } catch {}
+                            } catch {}  // ???
                         }
                     }
                     self!.mChangesCallback?()   // not used on WizOrgDefine11ViewController
@@ -787,7 +800,7 @@ public class OrgEditFormLangFields {
                     let langRegionCode:String = fromPushRow.value!
                     
                     // add the new langugage record
-                    let inx:Int = self!.mOrgRec!.addNewLangRec(forLangRegion: langRegionCode)
+                    let inx:Int = self!.mOrgRec!.addNewPlaceholderLangRec(forLangRegion: langRegionCode)
                     self!.mChangesCallback?()
                     self!.mEFP?.reassess()   // not used on WizOrgDefine11ViewController
                     
@@ -871,7 +884,7 @@ public class OrgEditFormLangFields {
                             let ar = self.mForm!.rowBy(tag: "add_new_lang")
                             do {
                                 try self.mMVS_langs!.insert(row: br, before: ar!)
-                            } catch {}
+                            } catch {}  // ???
                         }
                     }
                     // now look if there are any straggler LangRegion records that are NOT in rOrg_LangRegionCodes_Supported;
@@ -886,7 +899,7 @@ public class OrgEditFormLangFields {
                                     let ar = self.mForm!.rowBy(tag: "add_new_lang")
                                     do {
                                         try self.mMVS_langs!.insert(row: br, before: ar!)
-                                    } catch {}
+                                    } catch {}  // ???
                                 }
                             }
                         }
@@ -901,58 +914,80 @@ public class OrgEditFormLangFields {
     }
     
     // although the internal RecOrganizationLangs and the rOrg_LangRegionCodes_Supported SHOULD be already correct,
-    // we will re-evaluate and reset all of them according to the final state of the form's fields
-    public func finalizeLangRegions() {
-        var foundSVFileRec:Bool = false
-        self.mOrgRec!.mOrg_Lang_Recs_are_changed = true
-        if !self.mSupportingMultLangs {
-            // only the SV-File language is desired
-            if self.mOrgRec!.mOrg_Lang_Recs != nil {
-                var inx:Int = 0
-                for langRec in self.mOrgRec!.mOrg_Lang_Recs! {
-                    if langRec.rOrgLang_LangRegionCode == self.mOrgRec!.rOrg_LangRegionCode_SV_File {
-                        foundSVFileRec = true
-                        langRec.mDuringEditing_isDeleted = false
-                    } else {
-                        langRec.mDuringEditing_isDeleted = true
-                    }
-                    inx = inx + 1
-                }
-            }
-            if !foundSVFileRec {
-                _ = self.mOrgRec!.addNewLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File)
-            }
-            self.mOrgRec!.rOrg_LangRegionCodes_Supported = [self.mOrgRec!.rOrg_LangRegionCode_SV_File]
-        } else {
-            // multiple shown languages are desired; do a safety finalization of those records;
-            // first pre-mark ALL the records temporarily as deleted
-            for orgLangRec in self.mOrgRec!.mOrg_Lang_Recs! {
-                orgLangRec.mDuringEditing_isDeleted = true
-            }
-            // now unmark as deleted all those that ARE showing as rows in the multi-valued section; rebuild rOrg_LangRegionCodes_Supported in order shown
-            self.mOrgRec!.rOrg_LangRegionCodes_Supported = []
-            if self.mMVS_langs!.count > 0 {
-                for inx in 0...self.mMVS_langs!.count - 1 {
-                    let rowTag = self.mMVS_langs![inx].tag!
-                    if rowTag.starts(with: "LC,") {
-                        let components = rowTag.components(separatedBy: ",")
-                        if components[1] == self.mOrgRec!.rOrg_LangRegionCode_SV_File { foundSVFileRec = true }
-                        let orgLanRec = self.mOrgRec!.getLangRec(forLangRegion: components[1], includingDeleted: true)
-                        if orgLanRec != nil {
-                            self.mOrgRec!.markUndeletedLangRec(forLangRegion: components[1])
+    // we will re-evaluate and reset all of them according to the final state of the form's fields and
+    // ensure all placeholder language records are finalized
+    public func finalizeLangRegions() throws {
+        do {
+            var foundSVFileRec:Bool = false
+            self.mOrgRec!.mOrg_Lang_Recs_are_changed = true
+            if !self.mSupportingMultLangs {
+                // only the SV-File language is desired
+                if self.mOrgRec!.mOrg_Lang_Recs != nil {
+                    var inx:Int = 0
+                    for langRec in self.mOrgRec!.mOrg_Lang_Recs! {
+                        if langRec.rOrgLang_LangRegionCode == self.mOrgRec!.rOrg_LangRegionCode_SV_File {
+                            foundSVFileRec = true
+                            langRec.mDuringEditing_isDeleted = false
                         } else {
-                            _ = self.mOrgRec!.addNewLangRec(forLangRegion: components[1])
+                            langRec.mDuringEditing_isDeleted = true
+                        }
+                        inx = inx + 1
+                    }
+                }
+                
+                if !foundSVFileRec {
+                    _ = try self.mOrgRec!.addNewFinalLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File)
+                }
+                self.mOrgRec!.rOrg_LangRegionCodes_Supported = [self.mOrgRec!.rOrg_LangRegionCode_SV_File]
+            } else {
+                // multiple shown languages are desired; do a safety finalization of those records;
+                // first pre-mark ALL the records temporarily as deleted
+                for orgLangRec in self.mOrgRec!.mOrg_Lang_Recs! {
+                    orgLangRec.mDuringEditing_isDeleted = true
+                }
+                
+                // now unmark as deleted all those that ARE showing as rows in the multi-valued section; rebuild rOrg_LangRegionCodes_Supported in order shown
+                self.mOrgRec!.rOrg_LangRegionCodes_Supported = []
+                if self.mMVS_langs!.count > 0 {
+                    for inx in 0...self.mMVS_langs!.count - 1 {
+                        let rowTag = self.mMVS_langs![inx].tag!
+                        if rowTag.starts(with: "LC,") {
+                            let components = rowTag.components(separatedBy: ",")
+                            if components[1] == self.mOrgRec!.rOrg_LangRegionCode_SV_File { foundSVFileRec = true }
+                            let orgLanRec = self.mOrgRec!.getLangRec(forLangRegion: components[1], includingDeleted: true)
+                            if orgLanRec != nil {
+                                self.mOrgRec!.markUndeletedLangRec(forLangRegion: components[1])
+                            } else {
+                                _ = try self.mOrgRec!.addNewFinalLangRec(forLangRegion: components[1])
+                            }
                         }
                     }
                 }
+                
+                // the SV-File's language record must exist; ensure it is undeleted or create it if missing
+                if !foundSVFileRec {
+                    let orgLanRec = self.mOrgRec!.getLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File, includingDeleted: true)
+                    if orgLanRec != nil {
+                        self.mOrgRec!.markUndeletedLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File)
+                    } else {
+                        _ = try self.mOrgRec!.addNewFinalLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File)
+                    }
+                }
             }
-            // the SV-File's language record must exist; ensure it is undeleted or create it if missing
-            if !foundSVFileRec {
-                let orgLanRec = self.mOrgRec!.getLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File, includingDeleted: true)
-                if orgLanRec != nil {
-                    self.mOrgRec!.markUndeletedLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File)
-                } else {
-                    _ = self.mOrgRec!.addNewLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).finalizeLangRegions")
+            throw appError
+        } catch { throw error }
+        
+        // now finalize any partial language records;
+        // going to ignore these throws as the partials can be used as-is
+        for orgLangRec in self.mOrgRec!.mOrg_Lang_Recs! {
+            if !orgLangRec.mDuringEditing_isDeleted && orgLangRec.mDuringEditing_isPartial {
+                do {
+                    try orgLangRec.finalizePartial(svFileLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File)
+                } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).finalizeLangRegions", errorStruct: error, extra: nil)
+                    // only post the error; do not show to end-user nor throw
                 }
             }
         }

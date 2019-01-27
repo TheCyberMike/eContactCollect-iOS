@@ -98,8 +98,8 @@ public class RecAlert {
             self.rAlert_SameDay_Dup_Count = try row.get(RecAlert.COL_EXPRESSION_ALERT_SAMEDAY_DUP_COUNT)
             self.rAlert_Message = try row.get(RecAlert.COL_EXPRESSION_ALERT_MESSAGE)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecAlert.mCTAG).init.row", during: "extraction", errorStruct: error, extra: RecAlert.TABLE_NAME)
-            throw error
+            let appError = APP_ERROR(funcName: "\(RecAlert.mCTAG).init(Row)", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: nil, developerInfo: RecAlert.TABLE_NAME)
+            throw appError
         }
     }
     
@@ -139,7 +139,7 @@ public class RecAlert {
     // throws exceptions either for local errors or from the database
     public static func alertGetQtyRecs() throws -> Int64 {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).alertGetQtyRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         return try AppDelegate.mDatabaseHandler!.genericQueryQty(method:"\(self.mCTAG).alertGetQtyRecs", table:Table(RecAlert.TABLE_NAME), whereStr:nil, valuesBindArray:nil)
     }
@@ -149,7 +149,7 @@ public class RecAlert {
     public func saveNewToDB() throws -> Int64 {
         // FUTURE?? implement alert counting for duplicated alerts on the same day
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecAlert.mCTAG).saveNewToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let setters = self.buildSetters()
         let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method:"\(RecAlert.mCTAG).saveNewToDB", table:Table(RecAlert.TABLE_NAME), cv:setters, orReplace:false, noAlert:true)
@@ -161,7 +161,7 @@ public class RecAlert {
     // throws exceptions either for local errors or from the database
     public static func alertGetAllRecs() throws -> AnySequence<Row> {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).alertGetAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecAlert.TABLE_NAME).select(*).order(RecAlert.COL_EXPRESSION_ALERT_TIMESTAMP_MS_UTC.desc)
         return try AppDelegate.mDatabaseHandler!.genericQuery(method:"\(self.mCTAG).alertGetAllRecs", tableQuery:query)
@@ -177,7 +177,7 @@ public class RecAlert {
     // throws exceptions either for local errors or from the database
     public static func alertDeleteRec(id:Int64) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).alertDeleteRec", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecAlert.TABLE_NAME).select(*).filter(RecAlert.COL_EXPRESSION_ALERT_ID == id)
         return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).alertDeleteRec", tableQuery:query)
@@ -187,7 +187,7 @@ public class RecAlert {
     // throws exceptions either for local errors or from the database
     public static func alertDeleteAll() throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).alertDeleteAll", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecAlert.TABLE_NAME).select(*)
         return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).alertDeleteAll", tableQuery:query)

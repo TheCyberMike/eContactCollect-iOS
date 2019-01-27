@@ -161,10 +161,10 @@ public class RecOptionSetLocales {
     // FormShortName is allowed to be nil or blank since its filled in when records are saved to the database
     init(existingRec:RecOptionSetLocales_Optionals) throws {
         if existingRec.rOptionSetLoc_Code == nil || existingRec.rOptionSetLoc_LangRegionCode == nil {
-            throw APP_ERROR(domain:DatabaseHandler.ThrowErrorDomain, errorCode:.MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo:"init(existingRec:RecOptionSetLocales_Optionals): Required == nil")
+            throw APP_ERROR(funcName: "\(RecOptionSetLocales.mCTAG).init.existingRec:RecOptionSetLocales_Optionals", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required == nil")
         }
         if existingRec.rOptionSetLoc_Code!.isEmpty || existingRec.rOptionSetLoc_LangRegionCode!.isEmpty {
-            throw APP_ERROR(domain:DatabaseHandler.ThrowErrorDomain, errorCode:.MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo:"init(existingRec:RecOptionSetLocales_Optionals): Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecOptionSetLocales.mCTAG).init.existingRec:RecOptionSetLocales_Optionals",domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
         }
         self.rOptionSetLoc_Code = existingRec.rOptionSetLoc_Code!
         self.rOptionSetLoc_Code_Extension = existingRec.rOptionSetLoc_Code_Extension
@@ -181,8 +181,8 @@ public class RecOptionSetLocales {
             self.rOptionSetLoc_Code_Extension = try row.get(RecOptionSetLocales.COL_EXPRESSION_OPTIONSETLOC_CODE_EXTENSION)
             self.rOptionSetLoc_LangRegionCode = try row.get(RecOptionSetLocales.COL_EXPRESSION_OPTIONSETLOC_LANGREGIONCODE)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOptionSetLocales.mCTAG).init.row", during: "extraction", errorStruct: error, extra: RecOptionSetLocales.TABLE_NAME)
-            throw error
+            let appError = APP_ERROR(funcName: "\(RecOptionSetLocales.mCTAG).init(Row)", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: nil, developerInfo: RecOptionSetLocales.TABLE_NAME)
+            throw appError
         }
         
         // break comma-delimited String into an Array
@@ -198,7 +198,7 @@ public class RecOptionSetLocales {
     // use 'exceptKey' for Update operations to ensure the key fields cannot be changed
     public func buildSetters(exceptKey:Bool=false) throws -> [Setter] {
         if self.rOptionSetLoc_Code.isEmpty || self.rOptionSetLoc_LangRegionCode.isEmpty {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "\(RecOptionSetLocales.mCTAG).buildSetters: Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecOptionSetLocales.mCTAG).buildSetters", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
         }
         
         var retArray = [Setter]()
@@ -249,7 +249,7 @@ public class RecOptionSetLocales {
     // throws exceptions either for local errors or from the database
     public static func optionSetLocalesGetQtyRecs() throws -> Int64 {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOptionSetLocales.mCTAG).optionSetLocalesGetQtyRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         return try AppDelegate.mDatabaseHandler!.genericQueryQty(method:"\(self.mCTAG).optionSetLocalesGetQtyRecs", table:Table(RecOptionSetLocales.TABLE_NAME), whereStr:nil, valuesBindArray:nil)
     }
@@ -258,7 +258,7 @@ public class RecOptionSetLocales {
     // throws exceptions either for local errors or from the database
     public static func optionSetLocalesGetAllRecs(forOptionSetLoc_Code:String?=nil) throws -> AnySequence<Row> {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOptionSetLocales.mCTAG).optionSetLocalesGetAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         var optionStr:String = ""
         var query:Table = Table(RecOptionSetLocales.TABLE_NAME)
@@ -289,15 +289,17 @@ public class RecOptionSetLocales {
     // throws exceptions either for local errors or from the database
     public func saveNewToDB(ignoreDups:Bool=false) throws -> Int64 {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOptionSetLocales.mCTAG).saveNewToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
+        
         var setters:[Setter]
         do {
             setters = try self.buildSetters()
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOptionSetLocales.mCTAG).saveNewToDB", during: ".buildSetters", errorStruct: error, extra: RecOptionSetLocales.TABLE_NAME)
-            throw error
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOptionSetLocales.mCTAG).saveNewToDB")
+            throw appError
+        } catch { throw error}
+        
         let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method:"\(RecOptionSetLocales.mCTAG).saveNewToDB", table:Table(RecOptionSetLocales.TABLE_NAME), cv:setters, orReplace:ignoreDups, noAlert:false)
         return rowID
     }
@@ -309,11 +311,13 @@ public class RecOptionSetLocales {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
             throw NSError(domain:DatabaseHandler.ThrowErrorDomain, code:APP_ERROR_DATABASE_IS_NOT_ENABLED, userInfo: nil)
         }
-        let setters = self.buildSetters(exceptKey:true)
-        if setters == nil {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecFieldAttribDefs.mCTAG).saveChangesToDB", during:"verification", errorMessage:"Required value is nil or empty", extra:RecFieldAttribDefs.TABLE_NAME, noAlert:true)
-            throw NSError(domain:DatabaseHandler.ThrowErrorDomain, code:APP_ERROR_MISSING_REQUIRED_CONTENT, userInfo: nil)
-        }
+        var setters:[Setter]
+        do {
+            setters = try self.buildSetters()
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOptionSetLocales.mCTAG).saveChangesToDB")
+            throw appError
+        } catch { throw error}
         let query = Table(RecFieldAttribDefs.TABLE_NAME).select(*).filter(RecFieldAttribDefs.COL_EXPRESSION_FIELD_ROW_TYPE == originalFieldRec.rField_Row_Type!.rawValue && RecFieldAttribDefs.COL_EXPRESSION_FIELD_ROW_TYPE_EXTENSION == originalFieldRec.rField_Row_Type_Extension!)
         let qty = try AppDelegate.mDatabaseHandler!.updateRec(method:"\(RecFieldAttribDefs.mCTAG).saveChangesToDB", tableQuery:query, cv:setters!)
         return qty

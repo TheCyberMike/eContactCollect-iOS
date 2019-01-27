@@ -20,27 +20,29 @@ public class FieldHandler {
     
     // member constants and other static content
     internal var mCTAG:String = "HFl"
-    internal var mThrowErrorDomain:String = "FieldHandler"
+    internal var mThrowErrorDomain:String = NSLocalizedString("Field-Handler", comment:"")
     internal var mFILE_FIELDS_MAX_VERSION:Int = 1
     internal var mFILE_FIELDATTRIBS_MAX_VERSION:Int = 1
     
     // constructor;
     public init() {}
     
-    // initialization; returns true if initialize fully succeeded; errors are stored via the class members;
+    // initialization; returns true if initialize fully succeeded;
+    // errors are stored via the class members and will already be posted to the error.log;
     // this handler must be mindful that the database initialization may have failed
-    public func initialize() -> Bool {
+    public func initialize(method:String) -> Bool {
 //debugPrint("\(mCTAG).initialize STARTED")
         self.mFHstatus_state = .Unknown
         
-        // load JSON files temporarily to ensure they are present and valid
-        let result:Bool = self.validateFiles()    // will properly set self.mFHstatus_state
+        // load JSON files temporarily to ensure they are present and valid; will properly set self.mFHstatus_state
+        let result:Bool = self.validateFiles(method: "\(self.mCTAG).initialize")    // already posted to error.log
         return result
     }
     
     // first-time setup is needed
-    // this handler must be mindful that it or the database handler may not have properly initialized and should bypass this
-    public func firstTimeSetup() throws {
+    // this handler must be mindful that it or the database handler may not have properly initialized and should bypass this;
+    // errors are stored via the class members and will already be posted to the error.log
+    public func firstTimeSetup(method:String) {
 //debugPrint("\(mCTAG).firstTimeSetup STARTED")
     }
     
@@ -60,43 +62,52 @@ public class FieldHandler {
     // methods used to get Language Information from JSON
     /////////////////////////////////////////////////////////////////////////////////////////
 
+    // get any information for the langRegion from the json files;
+    // returns nil if no matching language file was found;
+    // throws other filesystem errors and file validation errors
     public func getLangInfo(forLangRegion:String, noSubstitution:Bool=false) throws -> RecJsonLangDefs? {
+        let funcName:String = "\(self.mCTAG).getLangInfo"
         var jsonPath:String? = Bundle.main.path(forResource: "FieldLocales", ofType: "json", inDirectory: nil, forLocalization: forLangRegion)
         if (jsonPath ?? "").isEmpty {
             jsonPath = Bundle.main.path(forResource: "FieldLocales", ofType: "json")
         }
         if jsonPath == nil {
             self.mFHstatus_state = .Missing
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Load", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: nil)
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).getLangInfo", during: "Locate path", errorMessage: "Missing", extra: jsonPath)
-            return nil
+            self.mAppError = APP_ERROR(funcName: funcName, during: "Bundle.main.path", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Missing: FieldLocales.json")
+            throw self.mAppError!
         }
         let jsonContents = FileManager.default.contents(atPath: jsonPath!)   // obtain the data in JSON format
         if jsonContents == nil {
             self.mFHstatus_state = .Errors
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Load", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: nil)
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).getLangInfo", during: "Load path", errorMessage: "Failed", extra: jsonPath)
-            return nil
+            self.mAppError = APP_ERROR(funcName: funcName, during: "FileManager.default.contents", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Failed: \(jsonPath!)")
+            throw self.mAppError!
         }
         var validationResult:DatabaseHandler.ValidateJSONdbFile_Result
         do {
             validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents!)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).getLangInfo", during: ".validateJSONdbFile", errorStruct: error, extra: jsonPath)
-            throw error
+            self.mFHstatus_state = .Errors
+            self.mAppError = (error as! APP_ERROR)
+            self.mAppError!.prependCallStack(funcName: funcName)
+            if self.mAppError!.developerInfo == nil { self.mAppError!.developerInfo = "" }
+            self.mAppError!.developerInfo = self.mAppError!.developerInfo! + ": \(jsonPath!)"
+            throw self.mAppError!
         }
         if validationResult.jsonTopLevel!["method"] as! String != "eContactCollect.db.fieldLocales.factory" {
             self.mFHstatus_state = .Errors
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Verification", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: nil)
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).getLangInfo", during: "Validate top level", errorMessage: "'ethod' is invalid \(validationResult.jsonTopLevel!["method"] as! String)", extra: jsonPath)
-            return nil
+            self.mAppError = APP_ERROR(funcName: funcName, during: "Validate top level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Method is invalid \(validationResult.jsonTopLevel!["method"] as! String): \(jsonPath!)")
+            throw self.mAppError!
         }
         var getResult:DatabaseHandler.GetJSONdbFileTable_Result
         do {
             getResult = try DatabaseHandler.getJSONdbFileTable(forTableCode: "langs", forTableName: "Langs", needsItem: true, priorResult: validationResult)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).getLangInfo", during: ".getJSONdbFileTable.langs", errorStruct: error, extra: jsonPath)
-            throw error
+            self.mFHstatus_state = .Errors
+            self.mAppError = (error as! APP_ERROR)
+            self.mAppError!.prependCallStack(funcName: funcName)
+            if self.mAppError!.developerInfo == nil { self.mAppError!.developerInfo = "" }
+            self.mAppError!.developerInfo = self.mAppError!.developerInfo! + ": \(jsonPath!)"
+            throw self.mAppError!
         }
         if noSubstitution && validationResult.language != forLangRegion { return nil }
         let jsonLanDefRec:RecJsonLangDefs = RecJsonLangDefs(jsonRecObj: getResult.jsonItemLevel!, forDBversion: validationResult.databaseVersion)
@@ -125,7 +136,12 @@ public class FieldHandler {
     // adds the default meta-data formFields to the new Form (only from JSON)
     // throws exceptions either for local errors or from the database
     public func addMetadataFormFieldsToNewForm(forFormRec:RecOrgFormDefs, withOrgRec:RecOrganizationDefs) throws {
-        _ = self.loadPotentialFieldsForForm(forFormRec: forFormRec, withOrgRec: withOrgRec)
+        do {
+            let _ = try self.loadPotentialFieldsForForm(forFormRec: forFormRec, withOrgRec: withOrgRec)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).addMetadataFormFieldsToNewForm")
+            throw appError
+        } catch { throw error }
         
         for jsonFieldDefRec:RecJsonFieldDefs in self.mFields_json! {
             if jsonFieldDefRec.isMetaData() {
@@ -162,7 +178,12 @@ public class FieldHandler {
     public func addFieldstoForm(field_IDCodes:[String], forFormRec:RecOrgFormDefs, withOrgRec:RecOrganizationDefs, orderSVfile:inout Int, orderShown:inout Int, asSubfieldsOf:Int64?=nil) throws {
         
         if field_IDCodes.count == 0 { return }
-        _ = self.loadPotentialFieldsForForm(forFormRec: forFormRec, withOrgRec: withOrgRec)
+        do {
+            let _ = try self.loadPotentialFieldsForForm(forFormRec: forFormRec, withOrgRec: withOrgRec)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).addFieldstoForm")
+            throw appError
+        } catch { throw error }
         
         // step through all the submitted field_IDcodes; note that all errors are handled in the called functions
         for field_IDCode:String in field_IDCodes {
@@ -224,8 +245,13 @@ public class FieldHandler {
     // get all available Field records from the JSON and in the database; sorted in alphanumeric order of the SortOrder
     // used solely by FormEditForm ViewController to present the list of possible fields to choose from;
     // throws exceptions either for local errors or from the database
-    public func getAllAvailFieldIDCodes(withOrgRec:RecOrganizationDefs) -> ([CodePair], [String:String], [String:String]) {
-        _ = self.loadPotentialFieldsForEditDisplay(withOrgRec: withOrgRec)
+    public func getAllAvailFieldIDCodes(withOrgRec:RecOrganizationDefs) throws -> ([CodePair], [String:String], [String:String]) {
+        do {
+            let _ = try self.loadPotentialFieldsForEditDisplay(withOrgRec: withOrgRec)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).getAllAvailFieldIDCodes")
+            throw appError
+        } catch { throw error }
         
         var sortInx:Int = 1
         var currentSectionCode:String = ""
@@ -257,7 +283,13 @@ public class FieldHandler {
     // only the Org's default SV-File language is loaded; caller is assumed to set fields such as form name and the sort order fields and subfield linkages;
     // throws exceptions either for local errors or from the database
     public func getFieldDefsAsMatchForEditing(forFieldIDCode:String, forFormRec:RecOrgFormDefs, withOrgRec:RecOrganizationDefs) throws -> OrgFormFields?  {
-        _ = self.loadPotentialFieldsForForm(forFormRec: forFormRec, withOrgRec: withOrgRec)
+        do {
+            let _ = try self.loadPotentialFieldsForForm(forFormRec: forFormRec, withOrgRec: withOrgRec)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).getFieldDefsAsMatchForEditing")
+            throw appError
+        } catch { throw error }
+        
         let forLangRegions:[String] = self.pickFormsLanguages(forFormRec: forFormRec, withOrgRec: withOrgRec)
         let results:OrgFormFields = OrgFormFields()
 
@@ -297,7 +329,7 @@ public class FieldHandler {
         var formFieldRec:RecOrgFormFieldDefs
         do {
             formFieldRec = try RecOrgFormFieldDefs(existingRec: formFieldRecOpt)
-        } catch { return nil }
+        } catch { return nil }  // ???
         if jsonFieldDefRec.isMetaData() {
             formFieldRec.rFormField_Order_SV_File =  RecOrgFormFieldDefs.getInternalSortOrderFromString(fromString: jsonFieldDefRec.rField_Sort_Order!)
             formFieldRec.rFormField_Order_Shown = formFieldRec.rFormField_Order_SV_File
@@ -315,7 +347,7 @@ public class FieldHandler {
                 var formFieldLocalesRec:RecOrgFormFieldLocales
                 do {
                     formFieldLocalesRec = try RecOrgFormFieldLocales(existingRec: formFieldLocalesOptRec)
-                } catch { return nil }  // cannot occur since validate passed
+                } catch { return nil }  // ??? cannot occur since validate passed
                 formFieldLocalesComposedRec.mLocale1LangRegion = formFieldLocalesRec.rFormFieldLoc_LangRegionCode
                 formFieldLocalesRec.rFormFieldLoc_Index = -1
                 formFieldRec.mFormFieldLocalesRecs!.append(formFieldLocalesRec)
@@ -353,8 +385,14 @@ public class FieldHandler {
     }
     
     // get fully specified subfields allowed for a container field; returns empty array if none are allowed;
-    public func getAllowedSubfieldEntriesForEditing(forPrimaryFormFieldRec:RecOrgFormFieldDefs, forFormRec:RecOrgFormDefs, withOrgRec:RecOrganizationDefs) -> OrgFormFields {
-        _ = self.loadPotentialFieldsForForm(forFormRec: forFormRec, withOrgRec: withOrgRec)
+    public func getAllowedSubfieldEntriesForEditing(forPrimaryFormFieldRec:RecOrgFormFieldDefs, forFormRec:RecOrgFormDefs, withOrgRec:RecOrganizationDefs) throws -> OrgFormFields {
+        do {
+            let _ = try self.loadPotentialFieldsForForm(forFormRec: forFormRec, withOrgRec: withOrgRec)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).getAllowedSubfieldEntriesForEditing")
+            throw appError
+        } catch { throw error }
+        
         let forLangRegions:[String] = self.pickFormsLanguages(forFormRec: forFormRec, withOrgRec: withOrgRec)
         let results:OrgFormFields = OrgFormFields()
         
@@ -385,10 +423,16 @@ public class FieldHandler {
     
     // get and compose a RecOptionSetLocales with proper information in its subsections from proper languages;
     // return an empty array if nothing found to match
-    private func getMatchingOptionSetLocales(forOSLC:String, forSVFileLang:String, forShownLang:String) -> [RecOptionSetLocales_Composed] {
+    private func getMatchingOptionSetLocales(forOSLC:String, forSVFileLang:String, forShownLang:String) throws -> [RecOptionSetLocales_Composed] {
         var returnArray:[RecOptionSetLocales_Composed] = []
         
-        _ = self.loadOptionSetLocalesDefaults(forLangRegion: forSVFileLang)
+        do {
+            let _ = try self.loadOptionSetLocalesDefaults(forLangRegion: forSVFileLang)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).getMatchingOptionSetLocales")
+            throw appError
+        } catch { throw error }
+        
         for jsonOSLrec:RecJsonOptionSetLocales in self.mOptionSetLocales_json! {
             if jsonOSLrec.rOptionSetLoc_Code == forOSLC {
                 let oslComposedRec:RecOptionSetLocales_Composed = RecOptionSetLocales_Composed(jsonRec: jsonOSLrec)
@@ -402,7 +446,13 @@ public class FieldHandler {
         }
         if forSVFileLang == forShownLang { return returnArray }
         
-        _ = self.loadOptionSetLocalesDefaults(forLangRegion: forShownLang)
+        do {
+            let _ = try self.loadOptionSetLocalesDefaults(forLangRegion: forShownLang)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).getMatchingOptionSetLocales")
+            throw appError
+        } catch { throw error }
+        
         for jsonOSLrec:RecJsonOptionSetLocales in self.mOptionSetLocales_json! {
             if jsonOSLrec.rOptionSetLoc_Code == forOSLC {
                 let oslComposedRec:RecOptionSetLocales_Composed = RecOptionSetLocales_Composed(jsonRec: jsonOSLrec)
@@ -466,61 +516,80 @@ public class FieldHandler {
     }
     
     
-    // validate all the files during App startup; do not keep the loaded data in-memory
-    private func validateFiles() -> Bool {
+    // validate all the files during App startup; do not keep the loaded data in-memory;
+    // all errors will be posted but not shown
+    private func validateFiles(method:String) -> Bool {
         self.flushInMemoryObjects()
-        var result:Bool = true
+        
+        // pre-determine the languages needed and verify the FieldDefs.json
         let allLocalizations = AppDelegate.getAppsLocalizations()
-        if !self.loadFieldDefaults() { result = false }
-        if !self.mergeInFieldLocalesDefaults(forLangRegions: allLocalizations, validate: true) { result =  false }
-        for aLocale in allLocalizations {
-            if !self.loadOptionSetLocalesDefaults(forLangRegion: aLocale, validate: true) { result =  false }
+        do {
+            try self.loadFieldDefaults()
+            try self.mergeInFieldLocalesDefaults(forLangRegions: allLocalizations, validate: true)
+            for aLocale in allLocalizations {
+                try self.loadOptionSetLocalesDefaults(forLangRegion: aLocale, validate: true)
+            }
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(method):\(self.mCTAG).validateFiles", errorStruct: error, extra: nil)
+            // do not show anything to the end-user
+            return false
         }
+
         self.flushInMemoryObjects()
-        if result { self.mFHstatus_state = .Valid }
-        return result
+        self.mFHstatus_state = .Valid
+        return true
     }
     
-    private func loadPotentialFieldsForEditDisplay(withOrgRec: RecOrganizationDefs) -> Bool {
+    // load default fields which will be shown to the collector in SV-File language
+    private func loadPotentialFieldsForEditDisplay(withOrgRec: RecOrganizationDefs) throws {
         self.flushInMemoryObjects()
-        var result:Bool = true
-        
-        let forLangRegions:[String] = [withOrgRec.rOrg_LangRegionCode_SV_File]
-        
-        if !self.loadFieldDefaults() { result = false }
-        if !self.mergeInFieldLocalesDefaults(forLangRegions: forLangRegions) { result =  false }
-        return result
-    }
-    
-    private func loadPotentialFieldsForForm(forFormRec: RecOrgFormDefs, withOrgRec:RecOrganizationDefs) -> Bool {
-        self.flushInMemoryObjects()
-        var result:Bool = true
         
         // pre-determine the languages needed
+        let forLangRegion:[String] = [withOrgRec.rOrg_LangRegionCode_SV_File]
+        
+        // load the FieldDefs.json and the proper FieldLocales.json
+        do {
+            try self.loadFieldDefaults()
+            try self.mergeInFieldLocalesDefaults(forLangRegions: forLangRegion)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).loadPotentialFieldsForEditDisplay")
+            throw appError
+        } catch { throw error }
+    }
+    
+    // load default fields for use in Editing in all languages for the Org
+    private func loadPotentialFieldsForForm(forFormRec: RecOrgFormDefs, withOrgRec:RecOrganizationDefs) throws {
+        self.flushInMemoryObjects()
+        
+        // pre-determine the languages needed and load the FieldDefs.json
         let forLangRegions:[String] = self.pickFormsLanguages(forFormRec: forFormRec, withOrgRec: withOrgRec)
-
-        if !self.loadFieldDefaults() { result = false }
-        if !self.mergeInFieldLocalesDefaults(forLangRegions: forLangRegions) { result =  false }
-        return result
+        
+        // load the FieldDefs.json and the proper set of FieldLocales.json
+        do {
+            try self.loadFieldDefaults()
+            try self.mergeInFieldLocalesDefaults(forLangRegions: forLangRegions)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).loadPotentialFieldsForForm")
+            throw appError
+        } catch { throw error }
     }
 
     // load the FieldDefs.json file plus any custom fields in the database
-    private func loadFieldDefaults() -> Bool {
+    private func loadFieldDefaults() throws {
         // locate the file in the proper non-localized folder
+        let funcName:String = "\(self.mCTAG).loadFieldDefaults"
         let jsonPath1:String? = Bundle.main.path(forResource: "FieldDefs", ofType: "json")  // this file is not localized
         self.mFields_json = []
         if jsonPath1 == nil {
             self.mFHstatus_state = .Missing
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: "FieldDefs.json")
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).loadFieldDefaults", during: "Locate path", errorMessage: "Missing", extra: jsonPath1)
-            return false
+            self.mAppError = APP_ERROR(funcName: funcName, during: "Bundle.main.path", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Missing: FieldDefs.json")
+            throw self.mAppError!
         }
         let jsonContents1 = FileManager.default.contents(atPath: jsonPath1!)   // obtain the data in JSON format
         if jsonContents1 == nil {
             self.mFHstatus_state = .Errors
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: "FieldDefs.json")
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).loadFieldDefaults", during: "Load path", errorMessage: "Failed", extra: jsonPath1)
-            return false
+            self.mAppError = APP_ERROR(funcName: funcName, during: "FileManager.default.contents", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Failed: \(jsonPath1!)")
+            throw self.mAppError!
         }
         var validationResult:DatabaseHandler.ValidateJSONdbFile_Result
         do {
@@ -528,15 +597,15 @@ public class FieldHandler {
         } catch {
             self.mFHstatus_state = .Errors
             self.mAppError = (error as! APP_ERROR)
-            self.mAppError?.during = NSLocalizedString("Load Defaults", comment:"")
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).loadFieldDefaults", during: ".validateJSONdbFile", errorStruct: error, extra: jsonPath1)
-            return false
+            self.mAppError!.prependCallStack(funcName: funcName)
+            if self.mAppError!.developerInfo == nil { self.mAppError!.developerInfo = "" }
+            self.mAppError!.developerInfo = self.mAppError!.developerInfo! + ": \(jsonPath1!)"
+            throw self.mAppError!
         }
         if validationResult.jsonTopLevel!["method"] as! String != "eContactCollect.db.fieldDefs.factory" {
             self.mFHstatus_state = .Errors
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "FieldDefs.json")
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).loadFieldDefaults", during: "Validate top level", errorMessage: "Method is invalid \(validationResult.jsonTopLevel!["method"] as! String)", extra: jsonPath1)
-            return false
+            self.mAppError = APP_ERROR(funcName: funcName, during: "Validate top level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Method is invalid \(validationResult.jsonTopLevel!["method"] as! String): \(jsonPath1!)")
+            throw self.mAppError!
         }
         var getResult:DatabaseHandler.GetJSONdbFileTable_Result
         do {
@@ -544,9 +613,10 @@ public class FieldHandler {
         } catch {
             self.mFHstatus_state = .Errors
             self.mAppError = (error as! APP_ERROR)
-            self.mAppError?.during = NSLocalizedString("Load Defaults", comment:"")
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).loadFieldDefaults", during: ".getJSONdbFileTable.fieldDefs", errorStruct: error, extra: jsonPath1)
-            return false
+            self.mAppError!.prependCallStack(funcName: funcName)
+            if self.mAppError!.developerInfo == nil { self.mAppError!.developerInfo = "" }
+            self.mAppError!.developerInfo = self.mAppError!.developerInfo! + ": \(jsonPath1!)"
+            throw self.mAppError!
         }
         
         // all valid thus far; now read all the records in the JSON file
@@ -556,16 +626,14 @@ public class FieldHandler {
             let jsonRecObj:NSDictionary? = jsonRecAny as? NSDictionary
             if jsonRecObj == nil {
                 self.mFHstatus_state = .Errors
-                self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "FieldDefs.json")
-                AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).loadFieldDefaults", during:"Validate record level", errorMessage:"Failed to find record, item \(itemNo)", extra:jsonPath1)
-                return false
+                self.mAppError = APP_ERROR(funcName: funcName, during: "Validate record level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Failed to find record, item \(itemNo): \(jsonPath1!)")
+                throw self.mAppError!
             } else {
                 let jsonFieldRec:RecJsonFieldDefs = RecJsonFieldDefs(jsonRecObj: jsonRecObj!, forDBversion: validationResult.databaseVersion)
                 if (jsonFieldRec.rFieldProp_IDCode ?? "").isEmpty {
                     self.mFHstatus_state = .Invalid
-                    self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "FieldDefs.json")
-                    AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).loadFieldDefaults", during:"Validate record level", errorMessage:"Item# \(itemNo) invalid", extra:jsonPath1)
-                    return false
+                    self.mAppError = APP_ERROR(funcName: funcName, during: "Validate record level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Item# \(itemNo) invalid: \(jsonPath1!)")
+                    throw self.mAppError!
                 }
                 jsonFieldRec.mJsonFieldLocalesRecs = []
                 self.mFields_json!.append(jsonFieldRec)
@@ -575,12 +643,11 @@ public class FieldHandler {
         
         // now add in any custom Fields from the database
         // ?? FUTURE
-        
-        return true
     }
     
     // merge in the FieldLocales.json plus any custom Locales in the database
-    private func mergeInFieldLocalesDefaults(forLangRegions:[String], validate:Bool=false) -> Bool {
+    private func mergeInFieldLocalesDefaults(forLangRegions:[String], validate:Bool=false) throws {
+        let funcName:String = "\(self.mCTAG).mergeInFieldLocalesDefaults"
         for forLangRegion in forLangRegions {
             // locate the file in the proper or best localization folder
             var jsonPath2:String? = nil
@@ -592,18 +659,16 @@ public class FieldHandler {
             }
             if jsonPath2 == nil {
                 self.mFHstatus_state = .Missing
-                self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: "FieldLocales.json")
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).mergeInFieldLocalesDefaults.\(forLangRegion)", during: "Locate path", errorMessage: "Missing", extra: jsonPath2)
-                return false
+                self.mAppError = APP_ERROR(funcName: funcName, during: "Bundle.main.path", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Missing: FieldLocales.json")
+                throw self.mAppError!
             }
 //debugPrint("\(self.mCTAG).loadFiles.FieldLocales PATH=\(jsonPath2!)")
             // read the file, parse the JSON, and validate the file's JSON headers
             let jsonContents2 = FileManager.default.contents(atPath: jsonPath2!)   // obtain the data in JSON format
             if jsonContents2 == nil {
                 self.mFHstatus_state = .Errors
-                self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: "FieldLocales.json")
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).mergeInFieldLocalesDefaults.\(forLangRegion)", during: "Load path", errorMessage: "Failed", extra: jsonPath2)
-                return false
+                self.mAppError = APP_ERROR(funcName: funcName, during: "FileManager.default.contents", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Failed: \(jsonPath2!)")
+                throw self.mAppError!
             }
             var validationResult:DatabaseHandler.ValidateJSONdbFile_Result
             do {
@@ -611,15 +676,15 @@ public class FieldHandler {
             } catch {
                 self.mFHstatus_state = .Errors
                 self.mAppError = (error as! APP_ERROR)
-                self.mAppError?.during = NSLocalizedString("Load Defaults", comment:"")
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).mergeInFieldLocalesDefaults", during: ".validateJSONdbFile", errorStruct: error, extra: jsonPath2)
-                return false
+                self.mAppError!.prependCallStack(funcName: funcName)
+                if self.mAppError!.developerInfo == nil { self.mAppError!.developerInfo = "" }
+                self.mAppError!.developerInfo = self.mAppError!.developerInfo! + ": \(jsonPath2!)"
+                throw self.mAppError!
             }
             if validationResult.jsonTopLevel!["method"] as! String != "eContactCollect.db.fieldLocales.factory" {
                 self.mFHstatus_state = .Errors
-                self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "FieldLocales.json")
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).mergeInFieldLocalesDefaults.\(forLangRegion)", during: "Validate top level", errorMessage: "Method is invalid \(validationResult.jsonTopLevel!["method"] as! String)", extra: jsonPath2)
-                return false
+                self.mAppError = APP_ERROR(funcName: funcName, during: "Validate top level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Method is invalid \(validationResult.jsonTopLevel!["method"] as! String): \(jsonPath2!)")
+                throw self.mAppError!
             }
             var getResult:DatabaseHandler.GetJSONdbFileTable_Result
             do {
@@ -627,9 +692,10 @@ public class FieldHandler {
             } catch {
                 self.mFHstatus_state = .Errors
                 self.mAppError = (error as! APP_ERROR)
-                self.mAppError?.during = NSLocalizedString("Load Defaults", comment:"")
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).mergeInFieldLocalesDefaults", during: ".getJSONdbFileTable.fieldLocales", errorStruct: error, extra: jsonPath2)
-                return false
+                self.mAppError!.prependCallStack(funcName: funcName)
+                if self.mAppError!.developerInfo == nil { self.mAppError!.developerInfo = "" }
+                self.mAppError!.developerInfo = self.mAppError!.developerInfo! + ": \(jsonPath2!)"
+                throw self.mAppError!
             }
             
             // all valid thus far; now read all the records in the JSON file
@@ -639,16 +705,14 @@ public class FieldHandler {
                 let jsonRecObj:NSDictionary? = jsonRecAny as? NSDictionary
                 if jsonRecObj == nil {
                     self.mFHstatus_state = .Errors
-                    self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "FieldLocales.json")
-                    AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).mergeInFieldLocalesDefaults.\(forLangRegion)", during:"Validate record level", errorMessage:"Failed to find record, item \(itemNo)", extra:jsonPath2)
-                    return false
+                    self.mAppError = APP_ERROR(funcName: funcName, during: "Validate record level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Failed to find record, item# \(itemNo): \(jsonPath2!)")
+                    throw self.mAppError!
                 } else {
                     let jsonFieldLocalesRec:RecJsonFieldLocales = RecJsonFieldLocales(jsonRecObj: jsonRecObj!, forDBversion: validationResult.databaseVersion)
                     if (jsonFieldLocalesRec.rField_IDCode ?? "").isEmpty {
                         self.mFHstatus_state = .Invalid
-                        self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "FieldLocales.json")
-                        AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).mergeInFieldLocalesDefaults.\(forLangRegion)", during:"Validate record level", errorMessage:"Item# \(itemNo) invalid", extra:jsonPath2)
-                        return false
+                        self.mAppError = APP_ERROR(funcName: funcName, during: "Validate record level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Item# \(itemNo) invalid: \(jsonPath2!)")
+                        throw self.mAppError!
                     }
                     jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = validationResult.language
                     
@@ -663,9 +727,8 @@ public class FieldHandler {
                     }
                     if !found {
                         self.mFHstatus_state = .Invalid
-                        self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "FieldLocales.json")
-                        AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).mergeInFieldLocalesDefaults.\(forLangRegion)", during:"Validate record level", errorMessage:"Item# \(itemNo) \(jsonFieldLocalesRec.rField_IDCode!): Field IDCode does not match one in FieldDefs.json", extra:jsonPath2)
-                        return false
+                        self.mAppError = APP_ERROR(funcName: funcName, during: "Validate record level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Item# \(itemNo) \(jsonFieldLocalesRec.rField_IDCode!): Field IDCode does not match one in FieldDefs.json: \(jsonPath2!)")
+                        throw self.mAppError!
                     }
                     itemNo = itemNo + 1
                 }
@@ -676,9 +739,8 @@ public class FieldHandler {
                 for jsonFieldRec:RecJsonFieldDefs in self.mFields_json! {
                     if jsonFieldRec.mJsonFieldLocalesRecs!.count == 0 {
                         self.mFHstatus_state = .Invalid
-                        self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "FieldLocales.json")
-                        AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).mergeInFieldLocalesDefaults.\(forLangRegion)", during:"Validate record level", errorMessage:"Entry for FieldDefs.json Field IDCode '\(jsonFieldRec.rFieldProp_IDCode!)' is not present", extra:jsonPath2)
-                        return false
+                        self.mAppError = APP_ERROR(funcName: funcName, during: "Validate record level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Entry for FieldDefs.json Field IDCode '\(jsonFieldRec.rFieldProp_IDCode!)' is not present: \(jsonPath2!)")
+                        throw self.mAppError!
                     }
                     jsonFieldRec.mJsonFieldLocalesRecs = []
                 }
@@ -687,12 +749,11 @@ public class FieldHandler {
             // now merge in any custom Fields from the database for this forLangRegion
             // ?? FUTURE
         }   // end of forLangRegion for loop
-        
-        return true
     }
     
-    private func loadOptionSetLocalesDefaults(forLangRegion:String, validate:Bool=false) -> Bool {
+    private func loadOptionSetLocalesDefaults(forLangRegion:String, validate:Bool=false) throws {
         // locate the file in the proper or best localization folder
+        let funcName:String = "\(self.mCTAG).loadOptionSetLocalesDefaults"
         var jsonPath3:String? = nil
         if !forLangRegion.isEmpty {
             jsonPath3 = Bundle.main.path(forResource: "OptionSetLocales", ofType: "json", inDirectory: nil, forLocalization: forLangRegion)
@@ -703,17 +764,15 @@ public class FieldHandler {
         self.mOptionSetLocales_json = []
         if jsonPath3 == nil {
             self.mFHstatus_state = .Missing
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: "OptionSetLocales.json")
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).loadOptionSetDefaults.\(forLangRegion)", during: "Locate path", errorMessage: "Missing", extra: jsonPath3)
-            return false
+            self.mAppError = APP_ERROR(funcName: funcName, during: "Bundle.main.path", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Missing: OptionSetLocales.json")
+            throw self.mAppError!
         }
 //debugPrint("\(self.mCTAG).loadFiles.FieldsLocale PATH=\(jsonPath3!)")
         let jsonContents3 = FileManager.default.contents(atPath: jsonPath3!)   // obtain the data in JSON format
         if jsonContents3 == nil {
             self.mFHstatus_state = .Errors
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: "OptionSetLocales.json")
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).loadOptionSetDefaults.\(forLangRegion)", during: "Load path", errorMessage: "Failed", extra: jsonPath3)
-            return false
+            self.mAppError = APP_ERROR(funcName: funcName, during: "FileManager.default.contents", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Failed: \(jsonPath3!)")
+            throw self.mAppError!
         }
         var validationResult:DatabaseHandler.ValidateJSONdbFile_Result
         do {
@@ -721,15 +780,15 @@ public class FieldHandler {
         } catch {
             self.mFHstatus_state = .Errors
             self.mAppError = (error as! APP_ERROR)
-            self.mAppError?.during = NSLocalizedString("Load Defaults", comment:"")
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).loadOptionSetDefaults", during: ".validateJSONdbFile", errorStruct: error, extra: jsonPath3)
-            return false
+            self.mAppError!.prependCallStack(funcName: funcName)
+            if self.mAppError!.developerInfo == nil { self.mAppError!.developerInfo = "" }
+            self.mAppError!.developerInfo = self.mAppError!.developerInfo! + ": \(jsonPath3!)"
+            throw self.mAppError!
         }
         if validationResult.jsonTopLevel!["method"] as! String != "eContactCollect.db.optionSetLocs.factory" {
             self.mFHstatus_state = .Errors
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "OptionSetLocales.json")
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).loadOptionSetDefaults.\(forLangRegion)", during: "Validate top level", errorMessage: "Method is invalid \(validationResult.jsonTopLevel!["method"] as! String)", extra: jsonPath3)
-            return false
+            self.mAppError = APP_ERROR(funcName: funcName, during: "Validate top level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Method is invalid \(validationResult.jsonTopLevel!["method"] as! String): \(jsonPath3!)")
+            throw self.mAppError!
         }
         var getResult:DatabaseHandler.GetJSONdbFileTable_Result
         do {
@@ -737,9 +796,10 @@ public class FieldHandler {
         } catch {
             self.mFHstatus_state = .Errors
             self.mAppError = (error as! APP_ERROR)
-            self.mAppError?.during = NSLocalizedString("Load Defaults", comment:"")
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).loadOptionSetDefaults", during: ".getJSONdbFileTable.optionSetLocales", errorStruct: error, extra: jsonPath3)
-            return false
+            self.mAppError!.prependCallStack(funcName: funcName)
+            if self.mAppError!.developerInfo == nil { self.mAppError!.developerInfo = "" }
+            self.mAppError!.developerInfo = self.mAppError!.developerInfo! + ": \(jsonPath3!)"
+            throw self.mAppError!
         }
 
         // all valid thus far; now read all the records in the JSON file
@@ -749,16 +809,14 @@ public class FieldHandler {
             let jsonRecObj:NSDictionary? = jsonRecAny as? NSDictionary
             if jsonRecObj == nil {
                 self.mFHstatus_state = .Errors
-                self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "FieldAttribLocales.json")
-                AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).loadOptionSetDefaults.\(forLangRegion)", during:"Validate record level", errorMessage:"Failed to find record, item \(itemNo)", extra:jsonPath3)
-                return false
+                self.mAppError = APP_ERROR(funcName: funcName, during: "Validate record level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Failed to find record, item \(itemNo): \(jsonPath3!)")
+                throw self.mAppError!
             } else {
                 let jsonOptionSetLocaleRec:RecJsonOptionSetLocales = RecJsonOptionSetLocales(jsonRecObj: jsonRecObj!, forDBversion: validationResult.databaseVersion)
                 if (jsonOptionSetLocaleRec.rOptionSetLoc_Code ?? "").isEmpty {
                     self.mFHstatus_state = .Invalid
-                    self.mAppError = APP_ERROR(during: NSLocalizedString("Load Defaults", comment:""), domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "OptionSetLocales.json")
-                    AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).loadOptionSetDefaults.\(forLangRegion)", during:"Validate record level", errorMessage:"Item# \(itemNo) invalid", extra:jsonPath3)
-                    return false
+                    self.mAppError = APP_ERROR(funcName: funcName, during: "Validate record level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Item# \(itemNo) invalid: \(jsonPath3!)")
+                    throw self.mAppError!
                 }
                 jsonOptionSetLocaleRec.mOptionSetLoc_LangRegionCode = validationResult.language
                 self.mOptionSetLocales_json!.append(jsonOptionSetLocaleRec)
@@ -769,8 +827,6 @@ public class FieldHandler {
         if validate {
             self.mOptionSetLocales_json!.removeAll()
         }
-        
-        return true
     }
     
     /////////////////////////////////////////////////////////////////////////////////////////
@@ -797,36 +853,42 @@ public class FieldHandler {
         }
         
         // pre-load all the form's RecOrgFormFieldLocales
-        var formFieldLocaleRecs:[RecOrgFormFieldLocales] = []
-        let rows:AnySequence<SQLite.Row> = try RecOrgFormFieldLocales.formFieldLocalesGetAllRecs(forOrgShortName: forEFP.mOrgRec.rOrg_Code_For_SV_File, forFormShortName: forEFP.mFormRec!.rForm_Code_For_SV_File)
-        for row in rows {
-            let formFieldLocaleRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(row:row)
-            formFieldLocaleRecs.append(formFieldLocaleRec)
-        }
-        
-        // get all the form's RecOrgFormFieldDefs
-        let rows2:AnySequence<SQLite.Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: forEFP.mOrgRec.rOrg_Code_For_SV_File, forFormShortName: forEFP.mFormRec!.rForm_Code_For_SV_File, sortedBySVFileOrder: sortedBySVFileOrder)
-        
-        // process the rows, matching in Locales and Attributes
-        for row in rows2 {
-            let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(row:row)
-//debugPrint("\(self.mCTAG).getFormsFields found#\(formFieldRec.rFormField_Index!)")
-            if !metaDataOnly || (metaDataOnly && formFieldRec.isMetaData()) {
-                let formFieldLocalesComposedRec:RecOrgFormFieldLocales_Composed? = try self.makeComposedFormFieldLocale(forFormFieldRec: formFieldRec, forLangSVFile: forEFP.mOrgRec.rOrg_LangRegionCode_SV_File, forLangShown1st: forLangRegionShown1st, forLangShown2nd: forLangRegionShown2nd, viaArray: formFieldLocaleRecs, forEditing: forEditing)
-                
-                var optionSetLocalesComposedRecs:[RecOptionSetLocales_Composed] = []
-                if includeOptionSets && (formFieldRec.rFieldProp_Options_Code_For_SV_File?.count() ?? 0) > 0 {
-                    for svCP in formFieldRec.rFieldProp_Options_Code_For_SV_File!.mAttributes {
-                        if svCP.codeString.starts(with: "***OSLC_") {
-                            let oslc:String = String(svCP.codeString.suffix(from: svCP.codeString.index(svCP.codeString.startIndex, offsetBy: 3)))
-                            optionSetLocalesComposedRecs = self.getMatchingOptionSetLocales(forOSLC: oslc, forSVFileLang: forEFP.mOrgRec.rOrg_LangRegionCode_SV_File, forShownLang: forLangRegionShown1st)
-                            break
+        do {
+            var formFieldLocaleRecs:[RecOrgFormFieldLocales] = []
+            let rows:AnySequence<SQLite.Row> = try RecOrgFormFieldLocales.formFieldLocalesGetAllRecs(forOrgShortName: forEFP.mOrgRec.rOrg_Code_For_SV_File, forFormShortName: forEFP.mFormRec!.rForm_Code_For_SV_File)
+            for row in rows {
+                let formFieldLocaleRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(row:row)
+                formFieldLocaleRecs.append(formFieldLocaleRec)
+            }
+            
+            // get all the form's RecOrgFormFieldDefs
+            let rows2:AnySequence<SQLite.Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: forEFP.mOrgRec.rOrg_Code_For_SV_File, forFormShortName: forEFP.mFormRec!.rForm_Code_For_SV_File, sortedBySVFileOrder: sortedBySVFileOrder)
+            
+            // process the rows, matching in Locales and Attributes
+            for row in rows2 {
+                let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(row:row)
+    //debugPrint("\(self.mCTAG).getFormsFields found#\(formFieldRec.rFormField_Index!)")
+                if !metaDataOnly || (metaDataOnly && formFieldRec.isMetaData()) {
+                    let formFieldLocalesComposedRec:RecOrgFormFieldLocales_Composed? = try self.makeComposedFormFieldLocale(forFormFieldRec: formFieldRec, forLangSVFile: forEFP.mOrgRec.rOrg_LangRegionCode_SV_File, forLangShown1st: forLangRegionShown1st, forLangShown2nd: forLangRegionShown2nd, viaArray: formFieldLocaleRecs, forEditing: forEditing)
+                    
+                    var optionSetLocalesComposedRecs:[RecOptionSetLocales_Composed] = []
+                    if includeOptionSets && (formFieldRec.rFieldProp_Options_Code_For_SV_File?.count() ?? 0) > 0 {
+                        for svCP in formFieldRec.rFieldProp_Options_Code_For_SV_File!.mAttributes {
+                            if svCP.codeString.starts(with: "***OSLC_") {
+                                let oslc:String = String(svCP.codeString.suffix(from: svCP.codeString.index(svCP.codeString.startIndex, offsetBy: 3)))
+                                optionSetLocalesComposedRecs = try self.getMatchingOptionSetLocales(forOSLC: oslc, forSVFileLang: forEFP.mOrgRec.rOrg_LangRegionCode_SV_File, forShownLang: forLangRegionShown1st)
+                                break
+                            }
                         }
                     }
+                    results.appendFromDatabase(OrgFormFieldsEntry(formFieldRec: formFieldRec, composedFormFieldLocalesRec: formFieldLocalesComposedRec!, composedOptionSetLocalesRecs: optionSetLocalesComposedRecs))
                 }
-                results.appendFromDatabase(OrgFormFieldsEntry(formFieldRec: formFieldRec, composedFormFieldLocalesRec: formFieldLocalesComposedRec!, composedOptionSetLocalesRecs: optionSetLocalesComposedRecs))
             }
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).getOrgFormFields")
+            throw appError
+        } catch { throw error }
+        
         self.flushInMemoryObjects()
         return results
     }
@@ -847,23 +909,28 @@ public class FieldHandler {
             if forEFP.mShowMode == .BILINGUAL { forLangRegionShown2nd = forEFP.mShownBilingualLanguage }
         }
         
-        for entry:OrgFormFieldsEntry in forEFP.mFormFieldEntries! {
-            let formFieldRec:RecOrgFormFieldDefs = entry.mFormFieldRec
+        do {
+            for entry:OrgFormFieldsEntry in forEFP.mFormFieldEntries! {
+                let formFieldRec:RecOrgFormFieldDefs = entry.mFormFieldRec
 //debugPrint("\(self.mCTAG).changeOrgFormFieldsLanguageShown found#\(formFieldRec.rFormField_Index!)")
-            if formFieldRec.mFormFieldLocalesRecs != nil {
-                entry.mComposedFormFieldLocalesRec = try self.makeComposedFormFieldLocale(forFormFieldRec: formFieldRec, forLangSVFile: forEFP.mOrgRec.rOrg_LangRegionCode_SV_File, forLangShown1st: forLangRegionShown1st, forLangShown2nd: forLangRegionShown2nd, viaArray: formFieldRec.mFormFieldLocalesRecs!, forEditing: forEditing)
-            }
-            
-            if (entry.mComposedOptionSetLocalesRecs?.count ?? 0) > 0 && (formFieldRec.rFieldProp_Options_Code_For_SV_File?.count() ?? 0) > 0 {
-                for svCP in formFieldRec.rFieldProp_Options_Code_For_SV_File!.mAttributes {
-                    if svCP.codeString.starts(with: "***OSLC_") {
-                        let oslc:String = String(svCP.codeString.suffix(from: svCP.codeString.index(svCP.codeString.startIndex, offsetBy: 3)))
-                        entry.mComposedOptionSetLocalesRecs = self.getMatchingOptionSetLocales(forOSLC: oslc, forSVFileLang: forEFP.mOrgRec.rOrg_LangRegionCode_SV_File, forShownLang: forLangRegionShown1st)
-                        break
+                if formFieldRec.mFormFieldLocalesRecs != nil {
+                    entry.mComposedFormFieldLocalesRec = try self.makeComposedFormFieldLocale(forFormFieldRec: formFieldRec, forLangSVFile: forEFP.mOrgRec.rOrg_LangRegionCode_SV_File, forLangShown1st: forLangRegionShown1st, forLangShown2nd: forLangRegionShown2nd, viaArray: formFieldRec.mFormFieldLocalesRecs!, forEditing: forEditing)
+                }
+                
+                if (entry.mComposedOptionSetLocalesRecs?.count ?? 0) > 0 && (formFieldRec.rFieldProp_Options_Code_For_SV_File?.count() ?? 0) > 0 {
+                    for svCP in formFieldRec.rFieldProp_Options_Code_For_SV_File!.mAttributes {
+                        if svCP.codeString.starts(with: "***OSLC_") {
+                            let oslc:String = String(svCP.codeString.suffix(from: svCP.codeString.index(svCP.codeString.startIndex, offsetBy: 3)))
+                            entry.mComposedOptionSetLocalesRecs = try self.getMatchingOptionSetLocales(forOSLC: oslc, forSVFileLang: forEFP.mOrgRec.rOrg_LangRegionCode_SV_File, forShownLang: forLangRegionShown1st)
+                            break
+                        }
                     }
                 }
             }
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).changeOrgFormFieldsLanguageShown")
+            throw appError
+        } catch { throw error }
     }
     
     // compose a RecFieldLocales with proper information in its subsections from proper languages
@@ -934,7 +1001,7 @@ public class FieldHandler {
             returnRec!.mLocale1LangRegion = forLangSVFile
             returnRec!.mLocale2LangRegion = forLangSVFile
 
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).makeComposedFormFieldLocale", during: "stepThruFFLs", errorMessage: "FF missing all FFLs", extra: "O=\(forFormFieldRec.rOrg_Code_For_SV_File), F=\(forFormFieldRec.rForm_Code_For_SV_File), FF#=\(forFormFieldRec.rFormField_Index)")
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).makeComposedFormFieldLocale", during: "stepThruFFLs", errorMessage: "FF missing all FFLs", extra: "O=\(forFormFieldRec.rOrg_Code_For_SV_File), F=\(forFormFieldRec.rForm_Code_For_SV_File), FF#=\(forFormFieldRec.rFormField_Index)") // ???
             return returnRec!
         } else if foundCollector && found1st && found2nd { return returnRec! }     // found all necessary languages?
         

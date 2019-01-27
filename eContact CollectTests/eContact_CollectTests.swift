@@ -3,7 +3,6 @@
 //  eContact CollectTests
 //
 //  Created by Yo on 9/21/18.
-//  Copyright © 2018 Open Source. All rights reserved.
 //
 
 import XCTest
@@ -36,7 +35,99 @@ extension UIFont {
     }
 }
 
-class eContact_CollectTests_Database: XCTestCase {
+class eContact_CollectTests_001_Error: XCTestCase {
+    // This is the setUp() class method.
+    // It is called before the first test method begins.
+    // Set up any overall initial state here.
+    override class func setUp() {
+        super.setUp()   // should be first
+    }
+    
+    // This is the setUp() instance method.
+    // It is called before each test method begins.
+    // Set up any per-test state here.
+    override func setUp() {
+        // setup code here
+    }
+    
+    // This is the tearDown() instance method.
+    // It is called after each test method completes.
+    // Perform any per-test cleanup here.
+    override func tearDown() {
+        // teardown code here
+    }
+    
+    // This is the tearDown() class method.
+    // It is called after all test methods complete.
+    // Perform any overall cleanup here.
+    override class func tearDown() {
+        // teardown code here
+        super.tearDown()    // should be last
+    }
+    
+    func test_001_FileSystemErrors() {
+        continueAfterFailure = false
+        
+        // stage 1 - test the APP_ERROR struct itself by causing an error throw
+        var stage:Int = 1
+        do {
+            try FileManager.default.createDirectory(atPath:"/INVALID", withIntermediateDirectories:false, attributes:nil)
+            XCTFail("APP_ERROR.*.\(stage): improperly allowed directory creation")
+        } catch {
+            var appError = APP_ERROR(funcName: "test_001_FileSystemErrors", during: "createDirectory", domain: "domain", error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: "User Details", developerInfo: "/INVALID", noAlert: true)
+            XCTAssertEqual(appError.callStack, "test_001_FileSystemErrors", "APP_ERROR.*.\(stage):  appError.callStack wrong")
+            XCTAssertEqual(appError.during, "createDirectory", "APP_ERROR.*.\(stage):  appError.during wrong")
+            XCTAssertEqual(appError.domain, "domain", "APP_ERROR.*.\(stage):  appError.domain wrong")
+            XCTAssertEqual(appError.errorCode, .FILESYSTEM_ERROR, "APP_ERROR.*.\(stage):  appError.errorCode wrong")
+            XCTAssertEqual(appError.userErrorDetails, "User Details", "APP_ERROR.*.\(stage):  appError.userErrorDetails wrong")
+            XCTAssertEqual(appError.developerInfo, "/INVALID", "APP_ERROR.*.\(stage):  appError.developerInfo wrong")
+            XCTAssertEqual(appError.noAlert, true, "APP_ERROR.*.\(stage):  appError.noAlert wrong")
+            XCTAssertEqual(appError.noPost, false, "APP_ERROR.*.\(stage):  appError.noPost wrong")
+            XCTAssertNotNil(appError.error, "APP_ERROR.*.\(stage):  appError.error is nil")
+            
+            XCTAssertEqual(appError.error!._domain, "NSCocoaErrorDomain", "APP_ERROR.*.\(stage):  appError.error!._domain wrong")
+            XCTAssertEqual(appError.error!._code, 513, "APP_ERROR.*.\(stage):  appError.error!._code wrong")
+            if appError.error!._userInfo != nil {
+                for (key, value) in (error._userInfo! as! NSDictionary) {
+                    let keyString = key as? String
+                    let valueString = value as? String
+                    if !(keyString ?? "").isEmpty && !(valueString ?? "").isEmpty {
+                        XCTAssertEqual(keyString!, "NSFilePath", "APP_ERROR.*.\(stage):  appError.error!._userInfo key wrong")
+                        XCTAssertEqual(valueString!, "/INVALID", "APP_ERROR.*.\(stage):  appError.error!._userInfo value wrong")
+                    } else if !(keyString ?? "").isEmpty {
+                        XCTAssertEqual(keyString!, "NSUnderlyingError", "APP_ERROR.*.\(stage):  appError.error!._userInfo key wrong")
+                    } else if !(valueString ?? "").isEmpty {
+                        XCTFail("APP_ERROR.*.\(stage): appError.error!._userInfo value with no key")
+                    }
+                }
+            } else {
+                XCTFail("APP_ERROR.*.\(stage): appError.error!._userInfo is nil")
+            }
+            
+            appError.prependCallStack(funcName: "TestPrepend")
+            XCTAssertEqual(appError.callStack, "TestPrepend:test_001_FileSystemErrors", "APP_ERROR.*.\(stage):  appError.callStack prepending wrong")
+        }
+        
+        // stage 2 - test an APP_ERROR throw from a one-level-deep function; filesystem type error
+        stage = 2
+        let baseAppError1:APP_ERROR = APP_ERROR(funcName: "\(DatabaseHandler.CTAG).importOrgOrForm", during: "FileManager.default.contents", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_OPEN, userErrorDetails: NSLocalizedString("Import File", comment:""), developerInfo: "!!!CANNOT_EXIST!!!")
+        let baseAppError2:APP_ERROR = APP_ERROR(funcName: "testFileSystemErrors:\(DatabaseHandler.CTAG).importOrgOrForm", during: "FileManager.default.contents", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_OPEN, userErrorDetails: NSLocalizedString("Import File", comment:""), developerInfo: "!!!CANNOT_EXIST!!!")
+        do {
+            let _ = try DatabaseHandler.importOrgOrForm(fromFileAtPath: "!!!CANNOT_EXIST!!!")
+            XCTFail("APP_ERROR.*.\(stage): improperly returned a result")
+        } catch var appError as APP_ERROR {
+#if TESTING
+            XCTAssertTrue(baseAppError1.sameAs(baseError: appError), "APP_ERROR.*.\(stage): error obtained not as expected")
+            appError.prependCallStack(funcName: "testFileSystemErrors")
+            XCTAssertTrue(baseAppError2.sameAs(baseError: appError), "APP_ERROR.*.\(stage): prepended error obtained not as expected")
+#endif
+        } catch {
+            XCTFail("APP_ERROR.*.\(stage): did not return an APP_ERROR")
+        }
+    }
+}
+
+class eContact_CollectTests_002_Database: XCTestCase {
     
     // This is the setUp() class method.
     // It is called before the first test method begins.
@@ -67,7 +158,7 @@ class eContact_CollectTests_Database: XCTestCase {
         super.tearDown()    // should be last
     }
 
-    func testAlerts() {
+    func test_001_Alerts() {
         continueAfterFailure = false
         XCTAssertNotNil(AppDelegate.mDatabaseHandler, "RecAlert: Fatal-DatabaseHandler is nil")
         XCTAssertEqual(AppDelegate.mDatabaseHandler!.mDBstatus_state, HandlerStatusStates.Valid, "RecAlert: Fatal-DatabaseHandler is in state \(AppDelegate.mDatabaseHandler!.mDBstatus_state.rawValue)")
@@ -165,13 +256,12 @@ class eContact_CollectTests_Database: XCTestCase {
         }
     }
     
+    // TOBE tested
+    //public var rOrg_LangRegionCodes_Supported:[String]?             // ISO language code-region entries that the Organization supports
+    //public var rOrg_LangRegionCode_SV_File:String?                  // ISO language code-region used for SV-File columns and meta-data
+    //public var rOrg_Logo_Image_Blob:Data?                           // organization's logo (stored in 3x size as PNG)
     
-    public var rOrg_LangRegionCodes_Supported:[String]?             // ISO language code-region entries that the Organization supports
-    public var rOrg_LangRegionCode_SV_File:String?                  // ISO language code-region used for SV-File columns and meta-data
-    public var rOrg_Logo_Image_Blob:Data?                           // organization's logo (stored in 3x size as PNG)
-    
-    
-    func testOrganizations() {
+    func test_002_Organizations() {
         continueAfterFailure = false
         XCTAssertNotNil(AppDelegate.mDatabaseHandler, "RecOrganizationDefs: Fatal-DatabaseHandler is nil")
         XCTAssertEqual(AppDelegate.mDatabaseHandler!.mDBstatus_state, HandlerStatusStates.Valid, "RecOrganizationDefs: Fatal-DatabaseHandler is in state \(AppDelegate.mDatabaseHandler!.mDBstatus_state.rawValue)")
@@ -225,7 +315,7 @@ class eContact_CollectTests_Database: XCTestCase {
             do {
                 let _ = try baseOrgRec2.saveNewToDB()
                 XCTFail("RecOrganizationDefs.saveNewToDB.\(stage): Duplicate Rec2 saveNew was allowed")
-            } catch {}
+            } catch {}  // TESTING; this catch does not need to be handled
             let _ = try baseOrgRec3.saveNewToDB()
             qty = try RecOrganizationDefs.orgGetQtyRecs()
             XCTAssertEqual(qty, 3, "RecOrganizationDefs.orgGetQtyRecs.\(stage): Qty Wrong")

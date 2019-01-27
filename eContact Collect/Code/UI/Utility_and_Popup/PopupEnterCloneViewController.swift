@@ -43,6 +43,7 @@ class PopupEnterCloneViewController: UIViewController {
         do {
             formRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName: textfield_form_name.text!, forOrgShortName:self.mOrgShortName!)
         } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).button_choose_pressed", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }

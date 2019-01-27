@@ -27,7 +27,7 @@ class WizOrgDefine26ViewController: UIViewController {
         do {
             _ = try self.mRootVC!.mWorking_Org_Rec!.saveNewToDB()   // this will also save all internal RecOrganizationLangs
         } catch {
-            // error.log and alert already posted
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).button_done_pressed", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
@@ -312,7 +312,10 @@ class WizOrgDefine26FormViewController: FormViewController {
                 row.title = NSLocalizedString("Org Title for ", comment:"") + AppDelegate.makeFullDescription(forLangRegion: langRegionCode)
                 do {
                     row.value = try self!.mWiz26VC!.mRootVC!.mWorking_Org_Rec!.getOrgTitleShown(langRegion: langRegionCode)
-                } catch {}  // report no error
+                } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).rebuildForm", errorStruct: error, extra: nil)
+                    // do not show error to end-user
+                }
                 row.textAreaHeight = .fixed(cellHeight: 50)
                 row.textAreaWidth = .fixed(cellWidth: 200)
                 }.cellUpdate { cell, row in
@@ -322,8 +325,11 @@ class WizOrgDefine26FormViewController: FormViewController {
                     cell.textView.layer.borderWidth = 1
                 }.onChange { [weak self] chgRow in
                     do {
-                        try self!.mWiz26VC!.mRootVC!.mWorking_Org_Rec!.setOrgTitleShown(langRegion: langRegionCode, title: chgRow.value)
-                    } catch {}  // report no error
+                        try self!.mWiz26VC!.mRootVC!.mWorking_Org_Rec!.setOrgTitleShown_Editing(langRegion: langRegionCode, title: chgRow.value)
+                    } catch {
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).rebuildForm", errorStruct: error, extra: nil)
+                        AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                    }
             }
         }
     }

@@ -219,10 +219,10 @@ public class RecOrgFormDefs {
     // throws upon missing required fields; caller is responsible to error.log
     init(existingRec:RecOrgFormDefs_Optionals) throws {
         if existingRec.rOrg_Code_For_SV_File == nil || existingRec.rForm_Code_For_SV_File == nil || existingRec.rForm_SV_File_Type == nil {
-            throw APP_ERROR(domain:DatabaseHandler.ThrowErrorDomain, errorCode:.MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo:"init(existingRec:RecOrgFormDefs_Optionals): Required == nil")
+            throw APP_ERROR(funcName: "\(RecOrgFormDefs.mCTAG).init(RecOrgFormDefs_Optionals)", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required == nil")
         }
         if existingRec.rOrg_Code_For_SV_File!.isEmpty || existingRec.rForm_Code_For_SV_File!.isEmpty {
-            throw APP_ERROR(domain:DatabaseHandler.ThrowErrorDomain, errorCode:.MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo:"init(existingRec:RecOrgFormDefs_Optionals): Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecOrgFormDefs.mCTAG).init(RecOrgFormDefs_Optionals)", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
         }
         self.rOrg_Code_For_SV_File = existingRec.rOrg_Code_For_SV_File!
         self.rForm_Code_For_SV_File = existingRec.rForm_Code_For_SV_File!
@@ -256,8 +256,8 @@ public class RecOrgFormDefs {
             let value2:String = try row.get(RecOrgFormDefs.COL_EXPRESSION_FORM_VISUALS)
             self.rForm_Visuals = FormVisuals(decodeFrom: value2)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrgFormDefs.mCTAG).init.row", during: "extraction", errorStruct: error, extra: RecOrgFormDefs.TABLE_NAME)
-            throw error
+            let appError = APP_ERROR(funcName: "\(RecOrgFormDefs.mCTAG).init(Row)", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: nil, developerInfo: RecOrgFormDefs.TABLE_NAME)
+            throw appError
         }
 
         // string splitting
@@ -270,7 +270,7 @@ public class RecOrgFormDefs {
     // use 'exceptKey' for Update operations to ensure the key fields cannot be changed
     public func buildSetters(exceptKey:Bool=false) throws -> [Setter] {
         if self.rOrg_Code_For_SV_File.isEmpty || self.rForm_Code_For_SV_File.isEmpty {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "\(RecOrgFormDefs.mCTAG).buildSetters: Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecOrgFormDefs.mCTAG).buildSetters", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
         }
         
         var retArray = [Setter]()
@@ -339,7 +339,7 @@ public class RecOrgFormDefs {
     // throws exceptions either for local errors or from the database
     public static func orgFormGetQtyRecs(forOrgShortName:String) throws -> Int64 {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgFormGetQtyRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let whereClause:String = "(\"\(RecOrgFormDefs.COLUMN_ORG_CODE_FOR_SV_FILE)\" = \"\(forOrgShortName)\")"
         return try AppDelegate.mDatabaseHandler!.genericQueryQty(method:"\(self.mCTAG).orgFormGetQtyRecs", table:Table(RecOrgFormDefs.TABLE_NAME), whereStr:whereClause, valuesBindArray:nil)
@@ -349,7 +349,7 @@ public class RecOrgFormDefs {
     // throws exceptions either for local errors or from the database
     public static func orgFormGetAllRecs(forOrgShortName:String) throws -> AnySequence<Row> {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgFormGetAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrgFormDefs.TABLE_NAME).select(*).filter(RecOrgFormDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == forOrgShortName).order(RecOrgFormDefs.COL_EXPRESSION_FORM_CODE_FOR_SV_FILE.asc)
         return try AppDelegate.mDatabaseHandler!.genericQuery(method:"\(self.mCTAG).orgFormGetAllRecs", tableQuery:query)
@@ -360,7 +360,7 @@ public class RecOrgFormDefs {
     // null indicates the record was not found
     public static func orgFormGetSpecifiedRecOfShortName(formShortName:String, forOrgShortName:String) throws -> RecOrgFormDefs? {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgFormGetSpecifiedRecOfShortName", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrgFormDefs.TABLE_NAME).select(*).filter(RecOrgFormDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == forOrgShortName && RecOrgFormDefs.COL_EXPRESSION_FORM_CODE_FOR_SV_FILE == formShortName)
         let record = try AppDelegate.mDatabaseHandler!.genericQueryOne(method:"\(self.mCTAG).orgFormGetSpecifiedRecOfShortName", tableQuery:query)
@@ -374,19 +374,26 @@ public class RecOrgFormDefs {
     // throws exceptions either for local errors or from the database
     public func saveNewToDB(withOrgRec:RecOrganizationDefs?) throws -> Int64 {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOrgFormDefs.mCTAG).saveNewToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
+        
         if withOrgRec != nil { self.rOrg_Code_For_SV_File = withOrgRec!.rOrg_Code_For_SV_File }
         var setters:[Setter]
         do {
             setters = try self.buildSetters()
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrgFormDefs.mCTAG).saveNewToDB", during: ".buildSetters", errorStruct: error, extra: RecOrgFormDefs.TABLE_NAME)
-            throw error
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrgFormDefs.mCTAG).saveNewToDB")
+            throw appError
+        } catch { throw error}
+        
         let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method:"\(RecOrgFormDefs.mCTAG).saveNewToDB", table:Table(RecOrgFormDefs.TABLE_NAME), cv:setters, orReplace:false, noAlert:false)
         if AppDelegate.mFieldHandler != nil && withOrgRec != nil {
-            try AppDelegate.mFieldHandler!.addMetadataFormFieldsToNewForm(forFormRec: self, withOrgRec: withOrgRec!)
+            do {
+                try AppDelegate.mFieldHandler!.addMetadataFormFieldsToNewForm(forFormRec: self, withOrgRec: withOrgRec!)
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: "\(RecOrgFormDefs.mCTAG).saveNewToDB")
+                throw appError
+            } catch { throw error }
         }
         return rowID
     }
@@ -396,25 +403,33 @@ public class RecOrgFormDefs {
     // throws exceptions either for local errors or from the database
     public func saveChangesToDB(originalFormRec:RecOrgFormDefs) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOrgFormDefs.mCTAG).saveChangesToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
+        
         var setters:[Setter]
         do {
             setters = try self.buildSetters()
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrgFormDefs.mCTAG).saveChangesToDB", during: ".buildSetters", errorStruct: error, extra: RecOrgFormDefs.TABLE_NAME)
-            throw error
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrgFormDefs.mCTAG).saveChangesToDB")
+            throw appError
+        } catch { throw error}
+        
         let query = Table(RecOrgFormDefs.TABLE_NAME).select(*).filter(RecOrgFormDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == originalFormRec.rOrg_Code_For_SV_File && RecOrgFormDefs.COL_EXPRESSION_FORM_CODE_FOR_SV_FILE == originalFormRec.rForm_Code_For_SV_File)
-        let qty = try AppDelegate.mDatabaseHandler!.updateRec(method:"\(RecOrgFormDefs.mCTAG).saveChangesToDB", tableQuery:query, cv:setters)
-        return qty
+        return try AppDelegate.mDatabaseHandler!.updateRec(method:"\(RecOrgFormDefs.mCTAG).saveChangesToDB", tableQuery:query, cv:setters)
     }
     
     // delete the Form record; return is the count of records deleted (negative will not be returned;
     // note: this will also delete all the Form's formfields
     // throws exceptions either for local errors or from the database
     public func deleteFromDB(forOrgShortName:String) throws -> Int {
-        return try RecOrgFormDefs.orgFormDeleteRec(formShortName:self.rForm_Code_For_SV_File, forOrgShortName:forOrgShortName)
+        var result:Int
+        do {
+            result = try RecOrgFormDefs.orgFormDeleteRec(formShortName:self.rForm_Code_For_SV_File, forOrgShortName:forOrgShortName)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrgFormDefs.mCTAG).deleteFromDB")
+            throw appError
+        } catch { throw error }
+        return result
     }
     
     // delete the indicated Form record; return is the count of records deleted (negative will not be returned;
@@ -422,14 +437,19 @@ public class RecOrgFormDefs {
     // throws exceptions either for local errors or from the database
     public static func orgFormDeleteRec(formShortName:String, forOrgShortName:String) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgFormDeleteRec", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrgFormDefs.TABLE_NAME).select(*).filter(RecOrgFormDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == forOrgShortName && RecOrgFormDefs.COL_EXPRESSION_FORM_CODE_FOR_SV_FILE == formShortName)
         let qty = try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).orgFormDeleteRec", tableQuery:query)
         
         // maintain referential integrity
-        _ = try RecOrgFormFieldLocales.formFieldLocalesDeleteAllRecs(forOrgShortName:forOrgShortName, forFormShortName:formShortName)
-        _ = try RecOrgFormFieldDefs.orgFormFieldDeleteAllRecs(forOrgShortName:forOrgShortName, forFormShortName:formShortName)
+        do {
+            _ = try RecOrgFormFieldLocales.formFieldLocalesDeleteAllRecs(forOrgShortName:forOrgShortName, forFormShortName:formShortName)
+            _ = try RecOrgFormFieldDefs.orgFormFieldDeleteAllRecs(forOrgShortName:forOrgShortName, forFormShortName:formShortName)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrgFormDefs.mCTAG).orgFormDeleteRec")
+            throw appError
+        } catch { throw error }
         return qty
     }
     
@@ -438,54 +458,75 @@ public class RecOrgFormDefs {
     // throws exceptions either for local errors or from the database
     public static func orgFormDeleteAllRecs(forOrgShortName:String) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgFormDeleteAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrgFormDefs.TABLE_NAME).select(*).filter(RecOrgFormDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == forOrgShortName)
         return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).orgFormDeleteAllRecs", tableQuery:query)
     }
     
-    // clone this Form and all its associated records to a new Form as named
+    // clone this Form and all its associated records to a new Form as named;
+    // throws exceptions either for local errors or from the database
     public func clone(newFormName:String, withOrgRec:RecOrganizationDefs) throws {
         let newFormRec:RecOrgFormDefs = RecOrgFormDefs(existingRec: self)
         newFormRec.rForm_Code_For_SV_File = newFormName
-        let _ = try newFormRec.saveNewToDB(withOrgRec: nil) // do not want to auto-load meta-data fields
+        do {
+            let _ = try newFormRec.saveNewToDB(withOrgRec: nil) // do not want to auto-load meta-data fields
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrgFormDefs.mCTAG).clone")
+            throw appError
+        } catch { throw error }
         
         // get and copy all primary RecOrgFormFieldDefs, building a mapping index
         var remappingFFI:[Int64:Int64] = [:]
-        let records1:AnySequence<Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: self.rForm_Code_For_SV_File, sortedBySVFileOrder: false)
-        for rowRec in records1 {
-            let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(row:rowRec)
-            if formFieldRec.rFormField_SubField_Within_FormField_Index == nil {
-                let originalIndex = formFieldRec.rFormField_Index
-                formFieldRec.rForm_Code_For_SV_File = newFormName
-                formFieldRec.rFormField_Index = -1
-                formFieldRec.rFormField_Index = try formFieldRec.saveNewToDB()
-                remappingFFI[originalIndex] = formFieldRec.rFormField_Index
+        do {
+            let records1:AnySequence<Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: self.rForm_Code_For_SV_File, sortedBySVFileOrder: false)
+            for rowRec in records1 {
+                let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(row:rowRec)
+                if formFieldRec.rFormField_SubField_Within_FormField_Index == nil {
+                    let originalIndex = formFieldRec.rFormField_Index
+                    formFieldRec.rForm_Code_For_SV_File = newFormName
+                    formFieldRec.rFormField_Index = -1
+                    formFieldRec.rFormField_Index = try formFieldRec.saveNewToDB()
+                    remappingFFI[originalIndex] = formFieldRec.rFormField_Index
+                }
             }
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrgFormDefs.mCTAG).clone")
+            throw appError
+        } catch { throw error }
         
         // get and copy all subfield RecOrgFormFieldDefs, remapping their linkages
-        let records2:AnySequence<Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: self.rForm_Code_For_SV_File, sortedBySVFileOrder: false)
-        for rowRec in records2 {
-            let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(row:rowRec)
-            if formFieldRec.rFormField_SubField_Within_FormField_Index != nil {
-                let originalIndex = formFieldRec.rFormField_Index
-                formFieldRec.rFormField_SubField_Within_FormField_Index = remappingFFI[formFieldRec.rFormField_SubField_Within_FormField_Index!]
-                formFieldRec.rForm_Code_For_SV_File = newFormName
-                formFieldRec.rFormField_Index = -1
-                formFieldRec.rFormField_Index = try formFieldRec.saveNewToDB()
-                remappingFFI[originalIndex] = formFieldRec.rFormField_Index
+        do {
+            let records2:AnySequence<Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: self.rForm_Code_For_SV_File, sortedBySVFileOrder: false)
+            for rowRec in records2 {
+                let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(row:rowRec)
+                if formFieldRec.rFormField_SubField_Within_FormField_Index != nil {
+                    let originalIndex = formFieldRec.rFormField_Index
+                    formFieldRec.rFormField_SubField_Within_FormField_Index = remappingFFI[formFieldRec.rFormField_SubField_Within_FormField_Index!]
+                    formFieldRec.rForm_Code_For_SV_File = newFormName
+                    formFieldRec.rFormField_Index = -1
+                    formFieldRec.rFormField_Index = try formFieldRec.saveNewToDB()
+                    remappingFFI[originalIndex] = formFieldRec.rFormField_Index
+                }
             }
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrgFormDefs.mCTAG).clone")
+            throw appError
+        } catch { throw error }
 
         // get and copy all RecOrgFormFieldLocales, remapping their linkages
-        let records3:AnySequence<Row> = try RecOrgFormFieldLocales.formFieldLocalesGetAllRecs(forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: self.rForm_Code_For_SV_File)
-        for rowRec in records3 {
-            let formFieldLocaleRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(row:rowRec)
-            formFieldLocaleRec.rFormFieldLoc_Index = -1
-            formFieldLocaleRec.rForm_Code_For_SV_File = newFormName
-            formFieldLocaleRec.rFormField_Index = remappingFFI[formFieldLocaleRec.rFormField_Index] ?? -1
-            formFieldLocaleRec.rFormFieldLoc_Index = try formFieldLocaleRec.saveNewToDB()
-        }
+        do {
+            let records3:AnySequence<Row> = try RecOrgFormFieldLocales.formFieldLocalesGetAllRecs(forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: self.rForm_Code_For_SV_File)
+            for rowRec in records3 {
+                let formFieldLocaleRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(row:rowRec)
+                formFieldLocaleRec.rFormFieldLoc_Index = -1
+                formFieldLocaleRec.rForm_Code_For_SV_File = newFormName
+                formFieldLocaleRec.rFormField_Index = remappingFFI[formFieldLocaleRec.rFormField_Index] ?? -1
+                formFieldLocaleRec.rFormFieldLoc_Index = try formFieldLocaleRec.saveNewToDB()
+            }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrgFormDefs.mCTAG).clone")
+            throw appError
+        } catch { throw error }
     }
 }

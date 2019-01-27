@@ -128,7 +128,10 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
             var qtyOrgs:Int64 = 0
             do {
                 qtyOrgs = try RecOrganizationDefs.orgGetQtyRecs()
-            } catch {}
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).checkFirstTime", errorStruct: error, extra: nil)
+                // do not report the error to the end-user
+            }
             if qtyOrgs <= 0 {
                 // segue to the Org Definition Wizard sequence
                 let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizOrgDefine1")
@@ -142,7 +145,10 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
                         let orgRec = try RecOrganizationDefs(row:orgRec)
                         qtyForms += try RecOrgFormDefs.orgFormGetQtyRecs(forOrgShortName: orgRec.rOrg_Code_For_SV_File)
                     }
-                } catch {}
+                } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).checkFirstTime", errorStruct: error, extra: nil)
+                    // do not report the error to the end-user
+                }
                 if qtyForms <= 0 {
                     // segue to the Form Definition Wizard sequence
                     let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizFormDefine1")
@@ -195,6 +201,7 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
                 let tbc:MainTabBarViewController = self.tabBarController as! MainTabBarViewController
                 tbc.exitWizardFirstTime()
             } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_C1stVC", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             }
             break

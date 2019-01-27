@@ -179,7 +179,7 @@ public class RecContactsCollected {
     }
     
     // constructor creates the record from the results of a database query
-    // throws upon missing required columns from the database (already error.logs them)
+    // throws upon missing required columns from the database
     init(row:Row) throws {
         do {
             self.rCC_index = try row.get(RecContactsCollected.COL_EXPRESSION_CC_INDEX)
@@ -198,16 +198,17 @@ public class RecContactsCollected {
             self.rCC_Importance = try row.get(RecContactsCollected.COL_EXPRESSION_CC_IMPORTANCE)
             self.rCC_Collector_Notes = try row.get(RecContactsCollected.COL_EXPRESSION_CC_COLLECTOR_NOTES)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecContactsCollected.mCTAG).init.row", during: "extraction", errorStruct: error, extra: RecContactsCollected.TABLE_NAME)
-            throw error
+            let appError = APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).init(Row)", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: nil, developerInfo: RecContactsCollected.TABLE_NAME)
+            throw appError
         }
     }
     
-    // create an array of setters usable for database Insert or Update; will return nil if the record is incomplete and therefore not eligible to be stored
-    // use 'exceptKey' for Update operations to ensure the key fields cannot be changed
+    // create an array of setters usable for database Insert or Update;
+    // use 'exceptKey' for Update operations to ensure the key fields cannot be changed;
+    // throws if the record is incomplete and therefore not eligible to be stored
     public func buildSetters(exceptKey:Bool=false) throws -> [Setter] {
         if self.rOrg_Code_For_SV_File.isEmpty || self.rCC_DateTime.isEmpty || self.rCC_MetadataAttribs.isEmpty || self.rCC_MetadataValues.isEmpty || self.rCC_EnteredAttribs.isEmpty || self.rCC_EnteredValues.isEmpty {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "\(RecContactsCollected.mCTAG).buildSetters: Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).buildSetters", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
             
         }
         
@@ -241,7 +242,7 @@ public class RecContactsCollected {
     // throws exceptions either for local errors or from the database
     public static func ccGetQtyRecs(forOrgShortName:String) throws -> Int64 {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).ccGetQtyRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         return try AppDelegate.mDatabaseHandler!.genericQueryQty(method:"\(self.mCTAG).ccGetQtyRecs", table:Table(RecContactsCollected.TABLE_NAME), whereStr:"(\"\(RecContactsCollected.COLUMN_ORG_CODE_FOR_SV_FILE)\" = \"\(forOrgShortName)\")", valuesBindArray:nil)
     }
@@ -250,7 +251,7 @@ public class RecContactsCollected {
     // throws exceptions either for local errors or from the database
     public static func ccGetAllRecs(forOrgShortName:String, forFormShortName:String? = nil) throws -> AnySequence<Row> {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).ccGetAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         var query = Table(RecContactsCollected.TABLE_NAME).select(*)
         if forFormShortName != nil {
@@ -261,12 +262,12 @@ public class RecContactsCollected {
         return try AppDelegate.mDatabaseHandler!.genericQuery(method:"\(self.mCTAG).ccGetAllRecs", tableQuery:query)
     }
     
-    // get one specific CC record by index#
-    // throws exceptions either for local errors or from the database
-    // null indicates the record was not found
+    // get one specific CC record by index#;
+    // throws exceptions either for local errors or from the database;
+    // nil indicates the record was not found
     public static func ccGetSpecifiedRecOfIndex(index:Int64) throws -> RecContactsCollected? {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).ccGetSpecifiedRecOfIndex", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecContactsCollected.TABLE_NAME).select(*).filter(RecContactsCollected.COL_EXPRESSION_CC_INDEX == index)
         let record = try AppDelegate.mDatabaseHandler!.genericQueryOne(method:"\(self.mCTAG).ccGetSpecifiedRecOfIndex", tableQuery:query)
@@ -279,15 +280,17 @@ public class RecContactsCollected {
     // throws exceptions either for local errors or from the database
     public func saveNewToDB() throws -> Int64 {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).saveNewToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
+        
         var setters:[Setter]
         do {
             setters = try self.buildSetters()
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecContactsCollected.mCTAG).saveNewToDB", during: ".buildSetters", errorStruct: error, extra: RecContactsCollected.TABLE_NAME)
-            throw error
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecContactsCollected.mCTAG).saveNewToDB")
+            throw appError
+        } catch { throw error}
+        
         let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method:"\(RecContactsCollected.mCTAG).saveNewToDB", table:Table(RecContactsCollected.TABLE_NAME), cv:setters, orReplace:false, noAlert:false)
         self.rCC_index = rowID
         return rowID
@@ -298,15 +301,17 @@ public class RecContactsCollected {
     // throws exceptions either for local errors or from the database
     public func saveChangesToDB(originalCCRec:RecContactsCollected) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).saveChangesToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
+        
         var setters:[Setter]
         do {
             setters = try self.buildSetters()
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecContactsCollected.mCTAG).saveChangesToDB", during: ".buildSetters", errorStruct: error, extra: RecContactsCollected.TABLE_NAME)
-            throw error
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecContactsCollected.mCTAG).saveChangesToDB")
+            throw appError
+        } catch { throw error}
+        
         let query = Table(RecContactsCollected.TABLE_NAME).select(*).filter(RecContactsCollected.COL_EXPRESSION_CC_INDEX == originalCCRec.rCC_index)
         let qty = try AppDelegate.mDatabaseHandler!.updateRec(method:"\(RecContactsCollected.mCTAG).saveChangesToDB", tableQuery:query, cv:setters)
         return qty
@@ -316,7 +321,7 @@ public class RecContactsCollected {
     // throws exceptions either for local errors or from the database
     public static func ccDeleteRec(index:Int64) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).ccDeleteRec", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecContactsCollected.TABLE_NAME).select(*).filter(RecContactsCollected.COL_EXPRESSION_CC_INDEX == index)
         return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).ccDeleteRec", tableQuery:query)
@@ -326,7 +331,7 @@ public class RecContactsCollected {
     // throws exceptions either for local errors or from the database
     public static func ccDeleteGeneratedRecs() throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).ccDeleteGeneratedRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecContactsCollected.TABLE_NAME).select(*).filter(RecContactsCollected.COL_EXPRESSION_CC_STATUS == 1)
         return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).ccDeleteGeneratedRecs", tableQuery:query)

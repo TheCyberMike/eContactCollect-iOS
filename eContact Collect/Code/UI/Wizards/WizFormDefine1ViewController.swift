@@ -84,7 +84,7 @@ class WizFormDefine1ViewController: UIViewController, COVC_Delegate {
                     self.present(newViewController, animated: true, completion: nil)
                 }
             } catch {
-                // error.log and alert already posted
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewWillAppear", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             }
 //debugPrint("\(self.mCTAG).viewWillAppear ENDED self.mRootVC!.mWorking_Org_Rec == nil")
@@ -152,11 +152,12 @@ class WizFormDefine1ViewController: UIViewController, COVC_Delegate {
             do {
                 self.mRootVC!.mWorking_Org_Rec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName:wasChosen!)
             } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_COVC", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 return  // from the completion handler
             }
             if self.mRootVC!.mWorking_Org_Rec == nil {
-                AppDelegate.showAlertDialog(vc:self, title:NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText:NSLocalizedString("Okay", comment:""))
+                AppDelegate.showAlertDialog(vc:self, title:NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).completed_COVC", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText:NSLocalizedString("Okay", comment:""))
                 return  // from the completion handler
             }
             
@@ -201,6 +202,7 @@ class WizFormDefine1ViewController: UIViewController, COVC_Delegate {
         do {
             formRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName: self.mRootVC!.mWorking_Form_Rec!.rForm_Code_For_SV_File, forOrgShortName:self.mRootVC!.mWorking_Org_Rec!.rOrg_Code_For_SV_File)
         } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_COVC", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return false
         }

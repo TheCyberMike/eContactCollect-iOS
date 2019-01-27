@@ -84,7 +84,7 @@ class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITab
                     self.mContacts_database_List.add(ccRec)
                 }
             } catch {
-                // already error.log and alert
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).build_database_list", errorStruct: error, extra: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 return
             }
@@ -140,7 +140,7 @@ class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITab
                     _ = try RecContactsCollected.ccDeleteRec(index:ccRec.rCC_index)
                     self.build_database_list()
                 } catch {
-                    // already error.log and alert
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).doDelete", errorStruct: error, extra: String(ccRec.rCC_index))
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
             }
@@ -207,7 +207,7 @@ class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITab
         do {
             let ccRec:RecContactsCollected? = try RecContactsCollected.ccGetSpecifiedRecOfIndex(index:index)
             if ccRec == nil {
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).changeCCrecord", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
                 return
             }
             if changeNotes {
@@ -219,6 +219,7 @@ class ContactsMgmtViewController: UIViewController, UITableViewDataSource, UITab
 
             _ = try ccRec!.saveChangesToDB(originalCCRec: ccRec!)
         } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).changeCCrecord", errorStruct: error, extra: String(index))
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }

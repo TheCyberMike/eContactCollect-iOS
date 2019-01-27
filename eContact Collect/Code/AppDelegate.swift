@@ -82,8 +82,8 @@ class ResizableButton: UIButton {
 public struct PreferencesKeys {
     enum Bools: String {
 #if TESTING
-        case APP_Rating_Needed = "TESTapp_PIN"
-        case APP_Rating_Done = "TESTapp_PIN"
+        case APP_Rating_Needed = "TESTapp_rating_needed"
+        case APP_Rating_Done = "TESTapp_rating_done"
 #else
         case APP_Rating_Needed = "app_rating_needed"            // perform the rating reminder (part of ask-for-a-rating)
         case APP_Rating_Done = "app_rating_done"                // rating was performed; do not ask again (part of ask-for-a-rating)
@@ -129,92 +129,6 @@ public func <<T: RawRepresentable>(a: T, b: T) -> Bool where T.RawValue: Compara
 }
 public enum HandlerStatusStates: Int, Comparable {
     case Unknown = 0, Missing = 1, Errors = 2, Invalid = 3, Obsolete = 4, Valid = 5
-}
-
-public struct APP_ERROR:Error, CustomStringConvertible {
-    var during:String? = nil
-    var domain:String
-    var errorCode:APP_ERROR_CODE
-    var userErrorDetails:String? = nil
-    var developerInfo:String? = nil
-    
-    public init(during:String?=nil, domain:String, errorCode:APP_ERROR_CODE, userErrorDetails:String?, developerInfo:String?=nil) {
-        self.during = during
-        self.domain = domain
-        self.errorCode = errorCode
-        self.userErrorDetails = userErrorDetails
-        self.developerInfo = developerInfo
-    }
-
-    public var description:String {
-        var messageStr:String = ""
-        if self.during != nil { messageStr = messageStr + "\(self.during!) @ " }
-        messageStr = messageStr + "\(self.domain): (\(self.errorCode.rawValue)) \"\(self.errorCode.description)\""
-        if !(self.userErrorDetails ?? "").isEmpty { messageStr = messageStr + "; " + self.userErrorDetails! }
-        return messageStr
-    }
-}
-
-public enum APP_ERROR_CODE:Int, CustomStringConvertible {
-    case NO_ERROR  = 0
-    case UNKNOWN_ERROR  = -1
-    case HANDLER_IS_NOT_ENABLED  = -40
-    case FILESYSTEM_ERROR  = -41
-    case DATABASE_ERROR  = -42
-    case INTERNAL_ERROR  = -43
-    case MISSING_REQUIRED_CONTENT  = -44
-    case RECORD_NOT_FOUND = -45
-    case RECORD_IS_COMPOSED  = -46
-    case COULD_NOT_CREATE = -47
-    case COULD_NOT_ACCESS = -48
-    case DID_NOT_VALIDATE = -49
-    case DID_NOT_OPEN = -50
-    case ORG_DOES_NOT_EXIST = -51
-    case RECORD_MARKED_DELETED = -52
-    case MISSING_OR_MISMATCHED_FIELD_METADATA = -53
-    case MISSING_OR_MISMATCHED_FIELD_OPTIONS = -54
-    case MISSING_OR_MISMATCHED_FIELD_OPTIONSET = -55
-    
-    public var description:String {
-        switch self {
-        case .NO_ERROR:
-            return NSLocalizedString("No error", comment:"")
-        case .UNKNOWN_ERROR:
-            return NSLocalizedString("Unknown error", comment:"")
-        case .HANDLER_IS_NOT_ENABLED:
-            return NSLocalizedString("Handler is not enabled", comment:"")
-        case .FILESYSTEM_ERROR:
-            return NSLocalizedString("Filesystem Error", comment:"")
-        case .DATABASE_ERROR:
-            return NSLocalizedString("Database Error", comment:"")
-        case .INTERNAL_ERROR:
-            return NSLocalizedString("Internal Error", comment:"")
-        case .MISSING_REQUIRED_CONTENT:
-            return NSLocalizedString("Missing required content", comment:"")
-        case .RECORD_IS_COMPOSED:
-            return NSLocalizedString("Record is composed", comment:"")
-        case .RECORD_NOT_FOUND:
-            return NSLocalizedString("Record not found", comment:"")
-        case .COULD_NOT_CREATE:
-            return NSLocalizedString("Could not create", comment:"")
-        case .COULD_NOT_ACCESS:
-            return NSLocalizedString("Could not access", comment:"")
-        case .DID_NOT_VALIDATE:
-            return NSLocalizedString("Did not validate", comment:"")
-        case .DID_NOT_OPEN:
-            return NSLocalizedString("Did not open", comment:"")
-        case .ORG_DOES_NOT_EXIST:
-            return NSLocalizedString("Oganization does not exist", comment:"")
-        case .RECORD_MARKED_DELETED:
-            return NSLocalizedString("Record is marked deleted and cannot be saved", comment:"")
-        case .MISSING_OR_MISMATCHED_FIELD_METADATA:
-            return NSLocalizedString("Field's metadata is missing or mismatched", comment:"")
-        case .MISSING_OR_MISMATCHED_FIELD_OPTIONS:
-            return NSLocalizedString("Field's options are missing or mismatched", comment:"")
-        case .MISSING_OR_MISMATCHED_FIELD_OPTIONSET:
-            return NSLocalizedString("Field's optionSet is missing or mismatched", comment:"")
-        }
-    }
 }
 
 // global pointer to the AppDelegate which is useful for debugging
@@ -318,17 +232,15 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         // startup any App's Handlers and Coordinators, and perform first time setups if warranted;
         // errors are logged to error.log, and a user message stored within; errors will be reported to the end-user when the UI launches
         AppDelegate.mDatabaseHandler = DatabaseHandler()        // must create and initialize the database handler first
-        let _ = AppDelegate.mDatabaseHandler!.initialize()
+        let _ = AppDelegate.mDatabaseHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
         AppDelegate.mFieldHandler = FieldHandler()
-        let _ = AppDelegate.mFieldHandler!.initialize()
+        let _ = AppDelegate.mFieldHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
         AppDelegate.mSVFilesHandler = SVFilesHandler()
-        let _ = AppDelegate.mSVFilesHandler!.initialize()
+        let _ = AppDelegate.mSVFilesHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
         if AppDelegate.mFirstTImeStages == 0 {
-            do {
-                try AppDelegate.mDatabaseHandler!.firstTimeSetup()
-                try AppDelegate.mFieldHandler!.firstTimeSetup()
-                try AppDelegate.mSVFilesHandler!.firstTimeSetup()
-            } catch {}      // not reporting any errors to the end-user at this stage
+            AppDelegate.mDatabaseHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
+            AppDelegate.mFieldHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
+            AppDelegate.mSVFilesHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
         }
         
         // prepare the mainline EFP if possible; for first time setup this will not be possible
@@ -417,7 +329,11 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             workingURL = URL(fileURLWithPath: AppDelegate.mDocsApp, isDirectory: true).appendingPathComponent(url.lastPathComponent)
             do {
                 try FileManager.default.copyItem(at: url, to: workingURL)
-            } catch { return false }
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).application.open url", during:"FileManager.default.copyItem", errorStruct: error, extra: "\(url.path) to \(workingURL.path)")
+                // cannot show the error to the end-user at this time
+                return false
+            }
         }
         
         // open it and make sure its our file
@@ -464,7 +380,10 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
                     }
                 }
             }
-        } catch {}  // not reporting any errors to the end-user at this stage
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).setupMainlineEFP", errorStruct: error, extra: nil)
+            // do not show an error to the end-user
+        }
         
         // successful in getting the last-used Org and Form?
         if AppDelegate.mEntryFormProvisioner == nil {
@@ -503,7 +422,10 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
                         AppDelegate.mEntryFormProvisioner = EntryFormProvisioner(forOrgRec: lastOrgRec!, forFormRec: lastFormRec!)
                     }
                 }
-            } catch {}  // not reporting any errors to the end-user at this stage
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).setupMainlineEFP", errorStruct: error, extra: nil)
+                // do not show an error to the end-user
+            }
         }
     }
     
@@ -532,7 +454,10 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             if orgRec != nil {
                 self.setCurrentOrg(toOrgRec: orgRec)
             }
-        } catch {}
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).setCurrentOrg(toOrgShortName", errorStruct: error, extra: nil)
+            // do not show an error to the end-user
+        }
     }
     
     // set and remember the specified Organization or one that is found in the database
@@ -567,7 +492,10 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
                     }
                 }
             }
-        } catch {}
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).setCurrentOrg(toOrgRec", errorStruct: error, extra: nil)
+            // do not show an error to the end-user
+        }
         
         // were both found and consistent with each other?
         if lastOrgRec != nil && (lastFormRec?.isPartOfOrg(orgRec: lastOrgRec!) ?? false) == true {
@@ -621,7 +549,10 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             if formRec != nil {
                 self.setCurrentForm(toFormRec: formRec)
             }
-        } catch {}
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).setCurrentForm(toFormShortName", errorStruct: error, extra: nil)
+            // do not show an error to the end-user
+        }
     }
     
     // set and remember the specified Form or one that is found in the database
@@ -682,7 +613,10 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
                 // no, at least remember the FormRec
                 AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastForm, value: lastFormRec!.rForm_Code_For_SV_File)
             }
-        } catch {}
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).setCurrentForm(toFormRec", errorStruct: error, extra: nil)
+            // do not show an error to the end-user
+        }
     }
     
     // set the Event
@@ -1092,9 +1026,9 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
     }
     
     // show an alert dialog with only an Okay button (aka dismiss button)
-    public static func showAlertDialog(vc:UIViewController, title:String, during:String?=nil, errorStruct:Error, buttonText:String, completion:(() -> Void)?=nil) {
+    public static func showAlertDialog(vc:UIViewController, title:String, endUserDuring:String?=nil, errorStruct:Error, buttonText:String, completion:(() -> Void)?=nil) {
         var msg:String
-        if !(during ?? "").isEmpty { msg = "\(during!): " + AppDelegate.endUserErrorMessage(errorStruct: errorStruct) }
+        if !(endUserDuring ?? "").isEmpty { msg = "\(endUserDuring!): " + AppDelegate.endUserErrorMessage(errorStruct: errorStruct) }
         else { msg = AppDelegate.endUserErrorMessage(errorStruct: errorStruct) }
         
         let alertObj = UIAlertController(title: title, message: msg, preferredStyle: UIAlertController.Style.alert)
@@ -1164,50 +1098,56 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         if type(of:errorStruct) == Result.self {
             // SQLite.swift general error
             let errorResult:Result = errorStruct as! Result
-            return "\(NSLocalizedString("Database found ErrCode", comment:""))=\(errorResult._code) \"\(errorResult.description)\""
+            return "\(NSLocalizedString("Database-Handler:", comment:"")) \(errorResult._code) \"\(errorResult.localizedDescription)\""
         } else if type(of:errorStruct) == QueryError.self {
             // SQLite.swift query error
             let errorResult:QueryError = errorStruct as! QueryError
-            return "\(NSLocalizedString("Database found ErrCode", comment:""))=\(errorResult._code) \"\(errorResult.description)\""
+            return "\(NSLocalizedString("Database-Handler:", comment:"")) \(errorResult._code) \"\(errorResult.localizedDescription)\""
         } else if type(of:errorStruct) == APP_ERROR.self {
             // our App's errors
             let errorResult:APP_ERROR = errorStruct as! APP_ERROR
-            var errorMessage:String = ""
-            if errorResult.during != nil { errorMessage = errorMessage + "\(NSLocalizedString("During ", comment:"")) \(errorResult.during!) " }
-            errorMessage = errorMessage + "\(errorResult.domain) \(NSLocalizedString("found ErrCode", comment:""))=\(errorResult.errorCode.rawValue) \"\(errorResult.errorCode.description)\""
-            if !(errorResult.userErrorDetails ?? "").isEmpty { errorMessage = errorMessage + "; " + errorResult.userErrorDetails! }
-            return errorMessage
+            return errorResult.localizedDescription
         } else {
             // standard error
-            return "\(errorStruct._domain) \(NSLocalizedString("found ErrCode", comment:""))=\(errorStruct._code) \"\(errorStruct.localizedDescription)\""
+            return "\(errorStruct._domain): \(errorStruct._code) \"\(errorStruct.localizedDescription)\""
         }
     }
     
-    // Thread Context: may be called from utility threads, so cannot perform UI actions
-    // create an appropriate developer error string based upon the type of the ErrorType
-    public static func developerErrorMessage(errorStruct:Error) -> String {
+    // Thread Context: may be called from utility threads, so cannot perform UI actions;
+    // create an appropriate developer error string based upon the type of the ErrorType;
+    // if forErrorLog do NOT place a final '\n' into the return string
+    public static func developerErrorMessage(errorStruct:Error, forErrorLog:Bool=false) -> String {
         if type(of:errorStruct) == Result.self {
             // SQLite.swift error
             let errorResult:Result = errorStruct as! Result
-            return "SQLite Error: ErrCode=\(errorResult._code) \(errorResult.description)"
+            return "SQLite Error: \(errorResult._code) \"\(errorResult.description)\""
         } else if type(of:errorStruct) == QueryError.self {
             // SQLite.swift query error
             let errorResult:QueryError = errorStruct as! QueryError
-            return "SQLite Query Error: ErrCode=\(errorResult._code) \(errorResult.description)"
+            return "SQLite Query Error: \(errorResult._code) \"\(errorResult.description)\""
         } else if type(of:errorStruct) == APP_ERROR.self {
             // our App's errors
             let errorResult:APP_ERROR = errorStruct as! APP_ERROR
-            var errorMessage:String = "App Error: "
-            if errorResult.during != nil { errorMessage = errorMessage + "During \(errorResult.during!) " }
-            errorMessage = errorMessage + "\(errorResult.domain) ErrCode=\(errorResult.errorCode.rawValue) \"\(errorResult.errorCode.description)\""
-            if !(errorResult.userErrorDetails ?? "").isEmpty { errorMessage = errorMessage + "; " + errorResult.userErrorDetails! }
-            if !(errorResult.developerInfo ?? "").isEmpty { errorMessage = errorMessage + "; " + errorResult.developerInfo! }
+            var errorMessage:String = "App_Error: "
+            if forErrorLog {
+                errorMessage = "  " + errorMessage + errorResult.descriptionForErrorLog
+            } else {
+                errorMessage = errorMessage + errorResult.description
+            }
+            if errorResult.error != nil && !forErrorLog {
+                if forErrorLog { errorMessage = errorMessage + "\n" }
+                else { errorMessage = errorMessage + "; " }
+                errorMessage = errorMessage + developerErrorMessage(errorStruct: errorResult.error!, forErrorLog: forErrorLog)
+            }
             return errorMessage
         } else {
             // standard error
-            var errorMessage = "Error: \(errorStruct._domain) ErrCode=\(errorStruct._code) \"\(errorStruct.localizedDescription)\""
+            var errorMessage:String = "Error: "
+            if forErrorLog { errorMessage = "  " + errorMessage }
+            errorMessage = errorMessage + "\(errorStruct._domain): \(errorStruct._code) \"\(errorStruct.localizedDescription)\""
             if errorStruct._userInfo != nil {
-                errorMessage = errorMessage + " UserInfo:"
+                if forErrorLog { errorMessage = errorMessage + "\n         UserInfo:" }
+                else { errorMessage = errorMessage + "; UserInfo:" }
                 for (key, value) in (errorStruct._userInfo! as! NSDictionary) {
                     let keyString = key as? String
                     let valueString = value as? String
@@ -1227,18 +1167,27 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
     // Thread Context: may be called from utility threads, so cannot perform UI actions
     // write detailed exception and severe error information into an error log that the end-user can email to the developer
     public static func postExceptionToErrorLogAndAlert(method:String?, exception:NSException, extra:String?) {
-        self.postToErrorLogAndAlert_internal(method: method, during:nil, prefix:"EXCEPTION!", exception:exception, message:nil ,extra:extra, noAlert:false)
+        self.postToErrorLogAndAlert_internal(method: method, during:nil, prefix:"EXCEPTION!", exception:exception, errorStruct:nil, message:nil ,extra:extra, noAlert:false)
     }
-    public static func postToErrorLogAndAlert(method:String?, during:String, errorStruct:Error, extra:String?, noAlert:Bool=false) {
-        self.postToErrorLogAndAlert_internal(method:method, during:during, prefix:"ERROR!", exception:nil, message:AppDelegate.developerErrorMessage(errorStruct: errorStruct), extra:extra, noAlert:noAlert)
+    public static func postToErrorLogAndAlert(method:String?, during:String?=nil, errorStruct:Error, extra:String?, noAlert:Bool=false) {
+        if method != nil, var appError = errorStruct as? APP_ERROR {
+            if !appError.callStack.starts(with: method!) {
+                appError.prependCallStack(funcName: method!)
+                var doNoAlert:Bool = noAlert
+                if appError.noAlert { doNoAlert = true }
+                self.postToErrorLogAndAlert_internal(method:method!, during:during, prefix:"ERROR!", exception:nil, errorStruct:appError, message:nil, extra:extra, noAlert:doNoAlert)
+                return
+            }
+        }
+        self.postToErrorLogAndAlert_internal(method:method, during:during, prefix:"ERROR!", exception:nil, errorStruct:errorStruct, message:nil, extra:extra, noAlert:noAlert)
     }
-    public static func postToErrorLogAndAlert(method:String?, during:String, errorMessage:String, extra:String? = nil, noAlert:Bool=false) {
-        self.postToErrorLogAndAlert_internal(method: method, during:during, prefix:"ERROR!", exception:nil, message:errorMessage, extra:extra, noAlert:noAlert)
+    public static func postToErrorLogAndAlert(method:String?, during:String?=nil, errorMessage:String, extra:String? = nil, noAlert:Bool=false) {
+        self.postToErrorLogAndAlert_internal(method: method, during:during, prefix:"ERROR!", exception:nil, errorStruct:nil, message:errorMessage, extra:extra, noAlert:noAlert)
     }
-    public static func noticeToErrorLogAndAlert(method:String?, during:String?, notice:String, extra:String? = nil, noAlert:Bool=false) {
-        self.postToErrorLogAndAlert_internal(method: method, during:during, prefix:"NOTICE!", exception:nil, message:notice, extra:extra, noAlert:noAlert)
+    public static func noticeToErrorLogAndAlert(method:String?, during:String?=nil, notice:String, extra:String? = nil, noAlert:Bool=false) {
+        self.postToErrorLogAndAlert_internal(method: method, during:during, prefix:"NOTICE!", exception:nil, errorStruct:nil, message:notice, extra:extra, noAlert:noAlert)
     }
-    private static func postToErrorLogAndAlert_internal(method:String?, during:String?, prefix:String, exception:NSException?, message:String?, extra:String?, noAlert:Bool) {
+    private static func postToErrorLogAndAlert_internal(method:String?, during:String?, prefix:String, exception:NSException?, errorStruct:Error?, message:String?, extra:String?, noAlert:Bool) {
         UIDevice.current.beginGeneratingDeviceOrientationNotifications()
         
         // show the error on the console
@@ -1247,6 +1196,7 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         if !(during ?? "").isEmpty { eMsg = eMsg + " during \(during!)" }
         if !(extra ?? "").isEmpty { eMsg = eMsg + " [\(extra!)]" }
         if !(message ?? "").isEmpty { eMsg = eMsg + ": \(message!)" }
+        if errorStruct != nil { eMsg = eMsg + ": " + AppDelegate.developerErrorMessage(errorStruct: errorStruct!) }
 
         if exception != nil {
             eMsg = eMsg + ": \(exception!.name)"
@@ -1257,6 +1207,11 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         print("\(AppDelegate.mCTAG).postToErrorLogAndAlert: \(eMsg)")
         if exception != nil {
             print(exception!.callStackSymbols)
+        }
+        if errorStruct != nil {
+            if let appError = errorStruct as? APP_ERROR {
+                if appError.noPost { return }
+            }
         }
         
         // build the pre-information for the error.log
@@ -1363,6 +1318,21 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             if !(during ?? "").isEmpty { str = "During: \(during!)\n"; outputStream.write(str, maxLength:str.count) }
             if !(extra ?? "").isEmpty { str = "Extra: \(extra!)\n"; outputStream.write(str, maxLength:str.count) }
             if !(message ?? "").isEmpty { str = "Message: \(prefix) \(message!)\n"; outputStream.write(str, maxLength:str.count) }
+            if errorStruct != nil {
+                str = "ErrorStruct: \(prefix)\n"
+                outputStream.write(str, maxLength:str.count)
+                if let appError = errorStruct as? APP_ERROR {
+                    str = AppDelegate.developerErrorMessage(errorStruct: appError, forErrorLog: true) + "\n"
+                    outputStream.write(str, maxLength:str.utf8.count)
+                    if appError.error != nil {
+                        str = AppDelegate.developerErrorMessage(errorStruct: appError.error!, forErrorLog: true) + "\n"
+                        outputStream.write(str, maxLength:str.utf8.count)
+                    }
+                } else {
+                    str = AppDelegate.developerErrorMessage(errorStruct: errorStruct!, forErrorLog: true) + "\n"
+                    outputStream.write(str, maxLength:str.utf8.count)
+                }
+            }
             if exception != nil {
                 str = "Exception: \(exception!.name)"
                 if exception!.reason != nil { str = str + " \(exception!.reason!)" }
@@ -1392,14 +1362,15 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
                     outputStream.write(str, maxLength:str.count)
                 }
             }
+#if DEBUG
+            // record the call stack into the error.log; since the downloaded App has no symbols this is not useful in the released version
             outputStream.write("-----Thread-----\n", maxLength:17)
-            
-            // record the call stack into the error.log
             let stack:[String] = Thread.callStackSymbols
             for entry in stack {
                 str = "\(entry)\n"
                 outputStream.write(str, maxLength:str.count)
             }
+#endif
             outputStream.write("==========\n", maxLength:11)
             outputStream.write("==========\n", maxLength:11)
             outputStream.write("==========\n", maxLength:11)
@@ -1427,8 +1398,8 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         do {
             let _ = try aRec.saveNewToDB()
         } catch {
-            // errors will have already been logged; nothing else we can do about it
-            return
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).postAlert", errorStruct: error, extra: nil, noAlert: true)
+            // do not show an error to the end-user
         }
     }
 }

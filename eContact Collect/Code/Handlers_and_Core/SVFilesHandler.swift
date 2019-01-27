@@ -19,7 +19,7 @@ public class SVFilesHandler {
     
     // member constants and other static content
     internal var mCTAG:String = "HSV"
-    internal var mThrowErrorDomain:String = "SVFilesHandler"
+    internal var mThrowErrorDomain:String = NSLocalizedString("SVFiles-Handler", comment:"")
     public static let mDateFormatString:String = "yyMMdd'_'HHmmss'_'"
     private let mSVSentDirPath:String = "\(AppDelegate.mDocsApp)/SVfiles_sent"
     private let mSVPendingDirPath:String = "\(AppDelegate.mDocsApp)/SVfiles_pending"
@@ -27,8 +27,10 @@ public class SVFilesHandler {
     // constructor;
     public init() {}
     
-    // initialization; returns true if initialize fully succeeded; errors are stored via the class members
-    public func initialize() -> Bool {
+    // initialization; returns true if initialize fully succeeded;
+    // errors are stored via the class members and will already be posted to the error.log;
+    // this handler must be mindful that the database initialization may have failed
+    public func initialize(method:String) -> Bool {
 //debugPrint("\(mCTAG).initialize STARTED")
         self.mSVHstatus_state = .Unknown
         
@@ -39,8 +41,8 @@ public class SVFilesHandler {
                 try FileManager.default.createDirectory(atPath:self.mSVSentDirPath, withIntermediateDirectories:false, attributes:nil)
             } catch {
                 self.mSVHstatus_state = .Errors
-                self.mAppError = APP_ERROR(during: NSLocalizedString("Initialization", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: AppDelegate.endUserErrorMessage(errorStruct: error))
-                AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).initialize", during:"CreateDir", errorStruct:error, extra:self.mSVSentDirPath)
+                self.mAppError = APP_ERROR(funcName: "\(method):\(self.mCTAG).initialize", during: "createDirectory", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Initialization", comment:""), developerInfo: self.mSVSentDirPath, noAlert: true)
+                AppDelegate.postToErrorLogAndAlert(method: "\(method):\(self.mCTAG).initialize", errorStruct: self.mAppError!, extra: nil, noAlert: true)
                 success = false
             }
         }
@@ -49,8 +51,8 @@ public class SVFilesHandler {
                 try FileManager.default.createDirectory(atPath:self.mSVPendingDirPath, withIntermediateDirectories:false, attributes:nil)
             } catch {
                 self.mSVHstatus_state = .Errors
-                self.mAppError = APP_ERROR(during: NSLocalizedString("Initialization", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: AppDelegate.endUserErrorMessage(errorStruct: error))
-                AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).initialize", during:"createDirectory", errorStruct:error, extra:self.mSVPendingDirPath)
+                self.mAppError = APP_ERROR(funcName: "\(method):\(self.mCTAG).initialize", during: "createDirectory", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Initialization", comment:""), developerInfo: self.mSVPendingDirPath, noAlert: true)
+                AppDelegate.postToErrorLogAndAlert(method: "\(method):\(self.mCTAG).initialize", errorStruct: self.mAppError!, extra: nil, noAlert: true)
                 success = false
             }
         }
@@ -65,8 +67,8 @@ public class SVFilesHandler {
             fileURLs = try FileManager.default.contentsOfDirectory(at:targetURL, includingPropertiesForKeys:nil)
         } catch {
             self.mSVHstatus_state = .Errors
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Initialization", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: AppDelegate.endUserErrorMessage(errorStruct: error))
-            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).initialize", during:"contentsOfDirectory", errorStruct:error, extra:self.mSVSentDirPath)
+            self.mAppError = APP_ERROR(funcName: "\(method):\(self.mCTAG).initialize", during: "contentsOfDirectory", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Initialization", comment:""), developerInfo: self.mSVSentDirPath, noAlert: true)
+            AppDelegate.postToErrorLogAndAlert(method: "\(method):\(self.mCTAG).initialize", errorStruct: self.mAppError!, extra: nil, noAlert: true)
             return false
         }
 
@@ -78,8 +80,8 @@ public class SVFilesHandler {
                 attrs = try FileManager.default.attributesOfItem(atPath: url.path) as NSDictionary
             } catch {
                 self.mSVHstatus_state = .Errors
-                self.mAppError = APP_ERROR(during: NSLocalizedString("Initialization", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: AppDelegate.endUserErrorMessage(errorStruct: error))
-                AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).initialize", during:"attributesOfItem", errorStruct:error, extra:url.path)
+                self.mAppError = APP_ERROR(funcName: "\(method):\(self.mCTAG).initialize", during: "attributesOfItem", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Initialization", comment:""), developerInfo: url.path, noAlert: true)
+                AppDelegate.postToErrorLogAndAlert(method: "\(method):\(self.mCTAG).initialize", errorStruct: self.mAppError!, extra: nil, noAlert: true)
                 return false
             }
             var fileDate:Date? = nil
@@ -107,8 +109,8 @@ public class SVFilesHandler {
                         try FileManager.default.removeItem(atPath:url.path)
                     } catch {
                         self.mSVHstatus_state = .Errors
-                        self.mAppError = APP_ERROR(during: NSLocalizedString("Initialization", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: AppDelegate.endUserErrorMessage(errorStruct: error))
-                        AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).initialize", during:"removeItem", errorStruct:error, extra:url.path)
+                        self.mAppError = APP_ERROR(funcName: "\(method):\(self.mCTAG).initialize", during: "removeItem", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Initialization", comment:""), developerInfo: url.path, noAlert: true)
+                        AppDelegate.postToErrorLogAndAlert(method: "\(method):\(self.mCTAG).initialize", errorStruct: self.mAppError!, extra: nil, noAlert: true)
                         return false
                     }
                 }
@@ -118,8 +120,9 @@ public class SVFilesHandler {
     }
     
     // first-time setup is needed;
-    // this handler must be mindful that if it or the database handler may not have properly initialized that this should be bypassed
-    public func firstTimeSetup() throws {
+    // this handler must be mindful that if it or the database handler may not have properly initialized that this should be bypassed;
+    // errors are stored via the class members and will already be posted to the error.log
+    public func firstTimeSetup(method:String) {
 //debugPrint("\(mCTAG).firstTimeSetup STARTED")
         // none at this time
     }
@@ -151,7 +154,7 @@ public class SVFilesHandler {
     }
     
     // indicate whether there are any pending files
-    // throws exceptions for errors after logging them
+    // throws exceptions for errors
     public func anyPendingFiles() throws -> Bool {
         let targetURL = URL(fileURLWithPath:self.mSVPendingDirPath, isDirectory:true)
         do {
@@ -160,14 +163,13 @@ public class SVFilesHandler {
                 if !url.lastPathComponent.starts(with: ".") { return true } // ignore all .* files
             }
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).anyPendingFiles", during: "contentsOfDirectory", errorStruct: error, extra: targetURL.path)
-            throw error
+            throw APP_ERROR(funcName: "\(self.mCTAG).anyPendingFiles", during: "contentsOfDirectory", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: nil, developerInfo: targetURL.path)
         }
         return false
     }
 
     // return a list of all files in the Pending directory in descending order by filename
-    // throws exceptions for errors after logging them
+    // throws exceptions for errors
     public func getPendingFiles() throws -> [URL] {
         let targetURL = URL(fileURLWithPath:self.mSVPendingDirPath, isDirectory:true)
         do {
@@ -178,13 +180,12 @@ public class SVFilesHandler {
             }
             return results
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).getPendingFiles", during: "contentsOfDirectory", errorStruct: error, extra: targetURL.path)
-            throw error
+            throw APP_ERROR(funcName: "\(self.mCTAG).getPendingFiles", during: "contentsOfDirectory", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: nil, developerInfo: targetURL.path)
         }
     }
     
     // return a list of all files in the Sent directory in descending order by filename
-    // throws exceptions for errors after logging them
+    // throws exceptions for errors
     public func getSentFiles() throws -> [URL] {
         let targetURL = URL(fileURLWithPath:self.mSVSentDirPath, isDirectory:true)
         do {
@@ -195,44 +196,41 @@ public class SVFilesHandler {
             }
             return results
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).getSentFiles", during: "contentsOfDirectory", errorStruct: error, extra: targetURL.path)
-            throw error
+            throw APP_ERROR(funcName: "\(self.mCTAG).getSentFiles", during: "contentsOfDirectory", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: nil, developerInfo: targetURL.path)
         }
     }
     
     // delete a pending file
-    // throws exceptions for errors after logging them
+    // throws exceptions for errors
     public func deletePendingFile(fileName:String) throws {
         let targetPath:String = self.mSVPendingDirPath + "/" + fileName
         do {
             try FileManager.default.removeItem(atPath:targetPath)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).deletePendingFile", during: "removeItem", errorStruct: error, extra: targetPath)
-            throw error
+            throw APP_ERROR(funcName: "\(self.mCTAG).deletePendingFile", during: "removeItem", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: nil, developerInfo: targetPath)
         }
     }
 
     // delete a sent file
-    // throws exceptions for errors after logging them
+    // throws exceptions for errors
     public func deleteSentFile(fileName:String) throws {
         let targetPath:String = self.mSVSentDirPath + "/" + fileName
         do {
             try FileManager.default.removeItem(atPath:targetPath)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).deleteSentFile", during: "removeItem", errorStruct: error, extra: targetPath)
-            throw error
+            throw APP_ERROR(funcName: "\(self.mCTAG).deleteSentFile", during: "removeItem", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: nil, developerInfo: targetPath)
         }
     }
     
     // move a file from Pending to Sent
+    // throws exceptions for errors
     public func movePendingToSent(fileName:String) throws {
         let sourcePath:String = self.mSVPendingDirPath + "/" + fileName
         let targetPath:String = self.mSVSentDirPath + "/" + fileName
         do {
             try FileManager.default.moveItem(atPath:sourcePath, toPath:targetPath)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).movePendingToSent", during: "moveItem", errorStruct: error, extra: targetPath)
-            throw error
+            throw APP_ERROR(funcName: "\(self.mCTAG).movePendingToSent", during: "moveItem", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: nil, developerInfo: sourcePath + " to " + targetPath)
         }
     }
     
@@ -250,7 +248,7 @@ public class SVFilesHandler {
     }
     
     // generate new SV files for all pending contacts in the RecContactsCollected Table
-    // throws exceptions for errors (all will have been already logged)
+    // throws exceptions for errors
     public func generateNewSVFiles() throws -> Bool {
         // pre-parse the RecCollectedContacts building up a list of Org:Form pairs
         // get all the RecContactsCollected for the particular Org and Form
@@ -272,28 +270,34 @@ public class SVFilesHandler {
         // generate a SV file for each Org:Form pair
         for po in pairs {
             let pair:OrgFormPair = po as! OrgFormPair
-            if try generateNewSVFile(forOrgShortName:pair.orgShortName, forFormShortName:pair.formShortName) {
-                // successful; delete any CC records that have status "Generated"
-                let _ = try RecContactsCollected.ccDeleteGeneratedRecs()
-            }
+            do {
+                if try generateNewSVFile(forOrgShortName:pair.orgShortName, forFormShortName:pair.formShortName) {
+                    // successful; delete any CC records that have status "Generated"
+                    let _ = try RecContactsCollected.ccDeleteGeneratedRecs()
+                }
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: "\(self.mCTAG).generateNewSVFiles")
+                throw appError
+            } catch { throw error }
         }
         
         return true
     }
     
     // used only during a factory reset to delete all pending and sent files
-    public func deleteAll() {
+    // throws exceptions for errors
+    public func deleteAll() throws {
         // get a list of files in SVFiles_pending then delete them all
         
+        self.mAppError = nil
         var fileURLs1:[URL]? = nil
         do {
             let targetURL = URL(fileURLWithPath:self.mSVPendingDirPath, isDirectory:true)
             fileURLs1 = try FileManager.default.contentsOfDirectory(at:targetURL, includingPropertiesForKeys:nil)
-            
         } catch {
             self.mSVHstatus_state = .Errors
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Factory Reset", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: AppDelegate.endUserErrorMessage(errorStruct: error))
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).deleteAll", during: "contentsOfDirectory", errorStruct: error, extra: self.mSVPendingDirPath)
+            self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).deleteAll", during: "contentsOfDirectory", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Factory Reset", comment:""), developerInfo: "pending: "+self.mSVPendingDirPath)
+            // do not throw yet so deletes in other directory may happen
         }
         if fileURLs1 != nil {
             for url in fileURLs1! {
@@ -301,11 +305,12 @@ public class SVFilesHandler {
                     try FileManager.default.removeItem(atPath:url.path)
                 } catch {
                     self.mSVHstatus_state = .Errors
-                    self.mAppError = APP_ERROR(during: NSLocalizedString("Factory Reset", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: AppDelegate.endUserErrorMessage(errorStruct: error))
-                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).deleteAll", during: "removeItem", errorStruct: error, extra: url.path)
+                    self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).deleteAll", during: "removeItem", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Factory Reset", comment:""), developerInfo: "pending: "+url.path)
                 }
             }
+            if self.mAppError != nil { throw self.mAppError! }  // if got errors at this point then throw
         }
+        
         
         // get a list of files in SVFiles_sent then delete them all
         var fileURLs2:[URL]? = nil
@@ -315,8 +320,8 @@ public class SVFilesHandler {
             
         } catch {
             self.mSVHstatus_state = .Errors
-            self.mAppError = APP_ERROR(during: NSLocalizedString("Factory Reset", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: AppDelegate.endUserErrorMessage(errorStruct: error))
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).deleteAll", during: "contentsOfDirectory", errorStruct: error, extra: self.mSVSentDirPath)
+            self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).deleteAll", during: "contentsOfDirectory", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Factory Reset", comment:""), developerInfo: "sent: "+self.mSVSentDirPath)
+            throw self.mAppError!
         }
         if fileURLs2 != nil {
             for url in fileURLs2! {
@@ -324,10 +329,10 @@ public class SVFilesHandler {
                     try FileManager.default.removeItem(atPath:url.path)
                 } catch {
                     self.mSVHstatus_state = .Errors
-                    self.mAppError = APP_ERROR(during: NSLocalizedString("Factory Reset", comment:""), domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: AppDelegate.endUserErrorMessage(errorStruct: error))
-                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).deleteAll", during: "removeItem", errorStruct: error, extra: url.path)
+                    self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).deleteAll", during: "removeItem", domain: self.mThrowErrorDomain, error: error, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Factory Reset", comment:""), developerInfo: "sent: "+url.path)
                 }
             }
+            if self.mAppError != nil { throw self.mAppError! }  // if got errors at this point then throw
         }
     }
     
@@ -336,18 +341,22 @@ public class SVFilesHandler {
     /////////////////////////////////////////////////////////////////////////////////////////
     
     // generate one new SV file
-    // throws exceptions for errors (database errors will aready have been logged)
+    // throws exceptions for errors
     private func generateNewSVFile(forOrgShortName:String, forFormShortName:String) throws -> Bool {
         // obtain the Org and OrgForm Records
-        let orgRec:RecOrganizationDefs? = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName:forOrgShortName)
-        let formRec:RecOrgFormDefs? = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName:forFormShortName, forOrgShortName:forOrgShortName)
+        var orgRec:RecOrganizationDefs?
+        var formRec:RecOrgFormDefs?
+        do {
+            orgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName:forOrgShortName)
+            formRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName:forFormShortName, forOrgShortName:forOrgShortName)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).generateNewSVFile")
+        } catch { throw error }
         if orgRec == nil {
-            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).generateNewSVFile", during:"orgGetSpecifiedRecOfShortName", errorMessage:"Could not get Org record", extra:forOrgShortName)
-            throw APP_ERROR(during:NSLocalizedString("Export Preparation", comment:""), domain:self.mThrowErrorDomain, errorCode:.RECORD_NOT_FOUND, userErrorDetails: NSLocalizedString("Organization record", comment:""))
+            throw APP_ERROR(funcName: "\(self.mCTAG).generateNewSVFile", during: "orgGetSpecifiedRecOfShortName", domain: self.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: NSLocalizedString("Export Preparation for ", comment:"")+NSLocalizedString("Organization record", comment:""), developerInfo: forOrgShortName)
         }
         if formRec == nil {
-            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).generateNewSVFile", during:"orgFormGetSpecifiedRecOfShortName", errorMessage:"Could not get Form record", extra:forFormShortName)
-            throw APP_ERROR(during:NSLocalizedString("Export Preparation", comment:""), domain:self.mThrowErrorDomain, errorCode:.RECORD_NOT_FOUND, userErrorDetails: NSLocalizedString("Form Record", comment:""))
+            throw APP_ERROR(funcName: "\(self.mCTAG).generateNewSVFile", during: "orgFormGetSpecifiedRecOfShortName", domain: self.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: NSLocalizedString("Export Preparation for ", comment:"")+NSLocalizedString("Form record", comment:""), developerInfo: forFormShortName)
         }
         
         // prep the date of the file
@@ -373,15 +382,13 @@ public class SVFilesHandler {
         }
 //debugPrint("\(mCTAG).generateNewSVFile PATH=\(filePath)")
         
-        // open the file for writing and initialize it if appropriate
+        // creeate and open the file for writing and initialize it if appropriate
         if !(FileManager.default.createFile(atPath:filePath, contents:nil, attributes: [FileAttributeKey.extensionHidden: false])) {
-            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).generateNewSVFile", during:"FileManager.createFile", errorMessage:"Could not create file", extra:filePath)
-            throw APP_ERROR(during:NSLocalizedString("Export File", comment:""), domain:self.mThrowErrorDomain, errorCode:.COULD_NOT_CREATE, userErrorDetails: nil)
+            throw APP_ERROR(funcName: "\(self.mCTAG).generateNewSVFile", during: "createFile", domain: self.mThrowErrorDomain, errorCode: .COULD_NOT_CREATE, userErrorDetails: NSLocalizedString("Export SV File", comment:""), developerInfo: filePath)
         }
         let fileHandle:FileHandle? = FileHandle(forWritingAtPath:filePath)
         if fileHandle == nil {
-            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).generateNewSVFile", during:"FileHandle.forWritingAtPath", errorMessage:"Could not access file", extra:filePath)
-            throw APP_ERROR(during:NSLocalizedString("Export File", comment:""), domain:self.mThrowErrorDomain, errorCode:.COULD_NOT_ACCESS, userErrorDetails: nil)
+            throw APP_ERROR(funcName: "\(self.mCTAG).generateNewSVFile", during: "FileHandle.forWritingAtPath", domain: self.mThrowErrorDomain, errorCode: .COULD_NOT_ACCESS, userErrorDetails: NSLocalizedString("Export SV File", comment:""), developerInfo: filePath)
         }
         switch formRec!.rForm_SV_File_Type {
         case .TEXT_TAB_DELIMITED_WITH_HEADERS:

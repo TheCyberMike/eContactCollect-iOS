@@ -10,6 +10,7 @@
 "File Error" = "File Error";
 "No error" = "No error";
 "Unknown error" = "Unknown error";
+"Suberror:" = "Suberror:";
 "Handler is not enabled" = "Handler is not enabled";
 "Filesystem Error" = "Filesystem Error";
 "Database Error" = "Database Error";
@@ -32,9 +33,6 @@
 "Regionalized Common Languages" = "Regionalized Common Languages";
 "Regionalized Base Languages" = "Regionalized Base Languages";
 "Regionalized Extended Languages" = "Regionalized Extended Languages";
-"Database found ErrCode" = "Database found ErrCode";
-"During " = "During ";
-"found ErrCode" = "found ErrCode";
 "Severe error has occured; see error.log for details" = "Severe error has occured; see error.log for details";
 "Rating Reminder" = "Rating Reminder";
 "Are you willing to rate/review this App in the AppStore?" = "Are you willing to rate/review this App in the AppStore?";
@@ -42,30 +40,34 @@
 "Never" = "Never";
 
 // FieldHandler.swift
+"Field-Handler" = "Field-Handler";
 "Load" = "Load";
 "Load Defaults" = "Load Defaults";
 "Verification" = "Verification";
 
 // SVFilesHandler.swift
-"Initialization" = "Initialization";
+"SVFiles-Handler" = "SVFiles-Handler";
+"Load Defaults" = "Load Defaults";
 "Factory Reset" = "Factory Reset";
-"Export Preparation" = "Export Preparation";
-"Export File" = "Export File";
+"Export Preparation for " = "Export Preparation for ";
+"Export SV File" = "Export SV File";
 "Organization record" = "Organization record";
 "Form record" = "Form record";
 
 // DatabaseHandler.swift
-"Connection" = "Connection";
-"Upgrade" = "Upgrade";
-"Create" = "Create";
-"ErrCode" = "ErrCode";
-"Create database table failed" = "Create database table failed";
+"Database-Handler" = "Database-Handler";
+"Connect to Database" = "Connect to Database";
+"Upgrade the Database" = "Upgrade the Database";
+"Create the Database" = "Create the Database";
+"Verify the Database" = "Verify the Database";
+"Delete the Database" = "Delete the Database";
 "Export Preparation" = "Export Preparation";
 "Export Generation" = "Export Generation";
 "Export File" = "Export File";
 "Import File" = "Import File";
 "Could not open the file" = "Could not open the file";
 "Content Error: " = "Content Error: ";
+"File improperly formatted" = "File improperly formatted";
 "level improperly formatted" = "level improperly formatted";
 "level improperly formatted record" = "level improperly formatted record";
 "Organization for the Form must pre-exist: " = "Organization for the Form must pre-exist: ";
@@ -259,6 +261,7 @@
 "There are attachments waiting to be sent" = "There are attachments waiting to be sent";
 
 // EntryFormViewController.swift
+"EntryForm-ViewController" = "EntryForm-ViewController";
 "Submit" = "Submit";
 "Choose one" = "Choose one";
 "Choose one or more" = "Choose one or more";

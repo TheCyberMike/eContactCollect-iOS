@@ -99,7 +99,7 @@ class OrgsMgmtViewController: UITableViewController, OEVC_Delegate {
                 self.mOrg_database_List.add(orgRec)
             }
         } catch {
-            // error.log and alert already posted
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).build_database_list", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
@@ -131,7 +131,7 @@ class OrgsMgmtViewController: UITableViewController, OEVC_Delegate {
                     (UIApplication.shared.delegate as! AppDelegate).checkDeletionCurrentOrg(withOrgRecShortName: callbackString1!)
                     self.build_database_list()
                 } catch {
-                    // error.log and alert already posted
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).doDelete", errorStruct: error, extra: callbackString1!)
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
             }

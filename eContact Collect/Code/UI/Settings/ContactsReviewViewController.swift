@@ -37,7 +37,7 @@ class ContactsReviewViewController: UIViewController {
                     if self.mCCRVCdelegate != nil { self.mCCRVCdelegate!.completed_CCRVC(wasChanged: true) }
                     self.navigationController?.popViewController(animated:true)
                 } catch {
-                    // already error.log and alert
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).button_delete_pressed", errorStruct: error, extra: String(self.mReview_CCrec!.rCC_index))
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
             }
@@ -165,6 +165,7 @@ class ContactsReviewFormViewController: FormViewController {
                 do {
                     let _ = try self.mContactsReviewVC!.mReview_CCrec!.saveChangesToDB(originalCCRec: self.mContactsReviewVC!.mReview_CCrec!)
                 } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).finalizeChanges", errorStruct: error, extra: String(self.mContactsReviewVC!.mReview_CCrec!.rCC_index))
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
             }
@@ -273,6 +274,7 @@ class ContactsReviewFormViewController: FormViewController {
                 do {
                     let _ = try self!.mContactsReviewVC!.mReview_CCrec!.saveChangesToDB(originalCCRec: self!.mContactsReviewVC!.mReview_CCrec!)
                 } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm", errorStruct: error, extra: nil)
                     AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
         }
@@ -296,6 +298,7 @@ class ContactsReviewFormViewController: FormViewController {
                 do {
                     let _ = try self!.mContactsReviewVC!.mReview_CCrec!.saveChangesToDB(originalCCRec: self!.mContactsReviewVC!.mReview_CCrec!)
                 } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm", errorStruct: error, extra: nil)
                     AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
         }

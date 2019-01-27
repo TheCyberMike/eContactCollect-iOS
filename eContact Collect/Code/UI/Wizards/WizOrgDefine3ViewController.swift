@@ -96,6 +96,7 @@ class WizOrgDefine3ViewController: FormViewController {
         do {
             orgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: self.mRootVC!.mWorking_Org_Rec!.rOrg_Code_For_SV_File)
         } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).shouldPerformSegue", errorStruct: error, extra: self.mRootVC!.mWorking_Org_Rec!.rOrg_Code_For_SV_File)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return false
         }

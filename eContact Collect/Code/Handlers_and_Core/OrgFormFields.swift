@@ -362,18 +362,18 @@ public struct FieldAttributes {
     // compare the sync-status of a SV-File set and a Shown set
     public static func compareSync(domain:String, sv:FieldAttributes?, shown:FieldAttributes?, deepSync:Bool=false) throws {
         if sv == nil || shown == nil {
-            throw APP_ERROR(domain: domain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONS, userErrorDetails: nil, developerInfo: "sv == nil || shown == nil")
+            throw APP_ERROR(funcName: "FieldAttributes.compareSync", domain: domain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONS, userErrorDetails: nil, developerInfo: "sv == nil || shown == nil")
         }
         if sv!.count() == 0 || shown!.count() == 0 {
-            throw APP_ERROR(domain: domain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONS, userErrorDetails: nil, developerInfo: "sv!.count() == 0 || shown!.count() == 0")
+            throw APP_ERROR(funcName: "FieldAttributes.compareSync", domain: domain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONS, userErrorDetails: nil, developerInfo: "sv!.count() == 0 || shown!.count() == 0")
         }
         if sv!.count() != shown!.count() {
-            throw APP_ERROR(domain: domain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONS, userErrorDetails: nil, developerInfo: "sv!.count() != shown!.count()")
+            throw APP_ERROR(funcName: "FieldAttributes.compareSync", domain: domain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONS, userErrorDetails: nil, developerInfo: "sv!.count() != shown!.count()")
         }
         if deepSync {
             for svCP in sv!.mAttributes {
                 if !shown!.codeExists(givenCode: svCP.codeString) {
-                    throw APP_ERROR(domain: domain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONS, userErrorDetails: nil, developerInfo: "sv entry '\(svCP.codeString)' not found in shown")
+                    throw APP_ERROR(funcName: "FieldAttributes.compareSync", domain: domain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONS, userErrorDetails: nil, developerInfo: "sv entry '\(svCP.codeString)' not found in shown")
                 }
             }
         }

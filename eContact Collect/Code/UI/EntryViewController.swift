@@ -152,7 +152,10 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
                         if try AppDelegate.mSVFilesHandler!.anyPendingFiles() {
                             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Notice", comment:""), message: NSLocalizedString("There are attachments waiting to be sent", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
                         }
-                    } catch {}  // do not report these errors to end-user
+                    } catch {
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).mainline.viewDidAppear", during: "anyPendingFiles", errorStruct: error, extra: nil)
+                        // do not show the end-user the error at this time
+                    }
                 }
                 self.mAppStartupsDone = true
             }
@@ -282,7 +285,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
     
     // refresh the limited content on the upper portion of the screen;
     // the OrgTitle, Event title, and Language buttons; the Submit button is handled by the EntryFormViewController
-    // note that during a factor reset the self.mEFP will become nil and thus various previously shown values need to be cleared
+    // note that during a factory reset the self.mEFP will become nil and thus various previously shown values need to be cleared
     private func refresh() {
         if !self.isVisible { return }
         if self.mEFP == nil { return }
@@ -291,15 +294,20 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
         if self.mEFP!.mShowMode == .MULTI_LINGUAL {
             let oCnt:Int = self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported.count
             
-            let title1:String = self.mEFP!.mOrgRec.getLangNameInLang(langRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[0])
-            self.button_lang1.setTitle(title1, for: .normal)
-            self.button_lang1.isHidden = false
-            self.mButton_lang1_langRegion = self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[0]
-            
-            let title2:String = self.mEFP!.mOrgRec.getLangNameInLang(langRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[1])
-            self.button_lang2.setTitle(title2, for: .normal)
-            self.button_lang2.isHidden = false
-            self.mButton_lang2_langRegion = self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[1]
+            do {
+                let title1:String = try self.mEFP!.mOrgRec.getLangNameInLang(langRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[0])
+                self.button_lang1.setTitle(title1, for: .normal)
+                self.button_lang1.isHidden = false
+                self.mButton_lang1_langRegion = self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[0]
+                
+                let title2:String = try self.mEFP!.mOrgRec.getLangNameInLang(langRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[1])
+                self.button_lang2.setTitle(title2, for: .normal)
+                self.button_lang2.isHidden = false
+                self.mButton_lang2_langRegion = self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[1]
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refresh", during:"Lang Button refresh", errorStruct: error, extra: nil)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            }
             
             if oCnt > 2 { self.button_lang_more.setTitle("...", for: .normal); self.button_lang_more.isHidden = false }
             else { self.button_lang_more.isHidden = true }
@@ -315,7 +323,10 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
             if (shownEventTitle ?? "").isEmpty { shownEventTitle = try self.mEFP!.mOrgRec.getEventTitleShown(langRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[0]) }
             if !(shownEventTitle ?? "").isEmpty { self.label_event.text = shownEventTitle! }
             else { self.label_event.text = "" }
-        } catch {} // do no error reporting
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refresh", during:"Event refresh", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+        }
     }
     
     // record the submission into the database;
@@ -336,8 +347,9 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
         do {
             self.mEFP!.mFormFieldEntries = try AppDelegate.mFieldHandler!.getOrgFormFields(forEFP: self.mEFP!, forceLangRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCode_SV_File, includeOptionSets: false, metaDataOnly: false, sortedBySVFileOrder: true)
         } catch {
-            // error.log and alert already done
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).recordSubmission", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            return
         }
         
         // pre-process the set of fields and entered data to "decant" any container fields (name, address, phone)
@@ -525,6 +537,7 @@ debugPrint("\(self.mCTAG).recordSubmission NAME=\(composedName)")
         do {
             _ = try ccRec.saveNewToDB()
         } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).recordSubmission", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
     }

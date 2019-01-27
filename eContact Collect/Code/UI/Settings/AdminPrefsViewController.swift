@@ -134,7 +134,10 @@ class AdminPrefsViewController: FormViewController, COVC_Delegate, CFVC_Delegate
         var orgShortName:String? = nil
         do {
             orgQty = try RecOrganizationDefs.orgGetQtyRecs()
-        } catch {}          // do not bother to report errors at the menu
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).buildForm", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+        }
         if orgQty == 1 {
             do {
                 let records:AnySequence<SQLite.Row> = try RecOrganizationDefs.orgGetAllRecs()
@@ -144,7 +147,10 @@ class AdminPrefsViewController: FormViewController, COVC_Delegate, CFVC_Delegate
                     break
                 }
                 
-            } catch {}  // do not bother to report errors at the menu
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).buildForm", errorStruct: error, extra: nil)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            }
         }
         
         let section2 = Section(NSLocalizedString("Actions", comment:""))
@@ -199,7 +205,12 @@ class AdminPrefsViewController: FormViewController, COVC_Delegate, CFVC_Delegate
                     // callback from the yes/no dialog upon one of the buttons being pressed
                     if theResult && callbackAction == 1  {
                         // answer was Yes; reset everything
-                        AppDelegate.mSVFilesHandler!.deleteAll()
+                        do {
+                            try AppDelegate.mSVFilesHandler!.deleteAll()
+                        } catch {
+                            AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.ButtonRow.factory_reset", errorStruct: error, extra: nil)
+                            // do not show this error to the end-user
+                        }
                         (UIApplication.shared.delegate as! AppDelegate).resetCurrents()
                         AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.Collector_Nickname, value: nil)
                         AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_Pin, value: nil)
@@ -261,7 +272,10 @@ class AdminPrefsViewController: FormViewController, COVC_Delegate, CFVC_Delegate
         var formShortName:String? = nil
         do {
             formQty = try RecOrgFormDefs.orgFormGetQtyRecs(forOrgShortName: forOrgShortName)
-        } catch {}          // do not bother to report errors at the menu
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).chooseForm", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+        }
         if formQty == 1 {
             do {
                 let records:AnySequence<SQLite.Row> = try RecOrgFormDefs.orgFormGetAllRecs(forOrgShortName: forOrgShortName)
@@ -271,7 +285,10 @@ class AdminPrefsViewController: FormViewController, COVC_Delegate, CFVC_Delegate
                     break
                 }
                 
-            } catch {}  // do not bother to report errors at the menu
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).chooseForm", errorStruct: error, extra: nil)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            }
         }
         
         if formQty == 1 && formShortName != nil {
@@ -314,7 +331,8 @@ class AdminPrefsViewController: FormViewController, COVC_Delegate, CFVC_Delegate
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Success", comment:""), message: msg, buttonText: NSLocalizedString("Okay", comment:""))
                 }
             } catch {
-                // show the error back in the main UI thread; error.log and alert already done
+                // post the error then show the error back in the main UI thread
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).generateOrgOrFormConfigFile", errorStruct: error, extra: nil)
                 DispatchQueue.main.async {
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Export Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }

@@ -247,10 +247,10 @@ public class RecOrganizationDefs {
     init(existingRec:RecOrganizationDefs_Optionals) throws {
         if existingRec.rOrg_Code_For_SV_File == nil || existingRec.rOrg_Title_Mode == nil || existingRec.rOrg_LangRegionCode_SV_File == nil ||
            existingRec.rOrg_LangRegionCodes_Supported == nil {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "init(existingRec:RecOrganizationDefs_Optionals): Required == nil")
+            throw APP_ERROR(funcName: "\(RecOrganizationDefs.mCTAG).init(RecOrganizationDefs_Optionals)", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required == nil")
         }
         if existingRec.rOrg_Code_For_SV_File!.isEmpty || existingRec.rOrg_LangRegionCode_SV_File!.isEmpty || existingRec.rOrg_LangRegionCodes_Supported!.count == 0 {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "init(existingRec:RecOrganizationDefs_Optionals): Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecOrganizationDefs.mCTAG).init(RecOrganizationDefs_Optionals)", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
         }
         self.rOrg_Code_For_SV_File = existingRec.rOrg_Code_For_SV_File!
         self.rOrg_LangRegionCodes_Supported = existingRec.rOrg_LangRegionCodes_Supported!
@@ -304,8 +304,8 @@ public class RecOrganizationDefs {
             let value3:String = try row.get(RecOrganizationDefs.COL_EXPRESSION_ORG_VISUALS)
             self.rOrg_Visuals = OrgVisuals(decodeFrom: value3)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrganizationDefs.mCTAG).init.row", during: "extraction", errorStruct: error, extra: RecOrganizationDefs.TABLE_NAME)
-            throw error
+            let appError = APP_ERROR(funcName: "\(RecOrganizationDefs.mCTAG).init(Row)", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: nil, developerInfo: RecContactsCollected.TABLE_NAME)
+            throw appError
         }
         
         self.mOrg_Lang_Recs_are_changed = false
@@ -317,7 +317,7 @@ public class RecOrganizationDefs {
     // throws errors if record cannot be saved to the database; caller is responsible to error.log them
     private func buildSetters(exceptKey:Bool=false) throws -> [Setter] {
         if self.rOrg_Code_For_SV_File.isEmpty || self.rOrg_LangRegionCode_SV_File.isEmpty || self.rOrg_LangRegionCodes_Supported.count == 0 {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "\(RecOrganizationDefs.mCTAG).buildSetters: Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecOrganizationDefs.mCTAG).buildSetters", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
         }
         var retArray:[Setter] = []
         
@@ -340,7 +340,7 @@ public class RecOrganizationDefs {
     // throws errors if record cannot be exported; caller is responsible to error.log them
     public func buildJSONObject() throws -> NSMutableDictionary {
         if self.rOrg_Code_For_SV_File.isEmpty || self.rOrg_LangRegionCode_SV_File.isEmpty || self.rOrg_LangRegionCodes_Supported.count == 0 {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "buildJSONObject(): Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecOrganizationDefs.mCTAG).buildJSONObject", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
         }
         
         let jsonObj:NSMutableDictionary = NSMutableDictionary()
@@ -428,28 +428,29 @@ public class RecOrganizationDefs {
     /////////////////////////////////////////////////////////////////////////
     
     // get the language name in the language itself
-    public func getLangNameInLang(langRegion:String) -> String {
-        do {
-            if (self.mOrg_Lang_Recs?.count ?? 0) == 0  { try self.loadLangRecs() }
-            let inx = self.chooseLangRec(langRegion: langRegion)
-            if inx >= 0 { return self.mOrg_Lang_Recs![inx].rOrgLang_Lang_Title_Shown }
-        } catch {}
+    // throws if error in loadLangRecs()
+    public func getLangNameInLang(langRegion:String) throws -> String {
+        if (self.mOrg_Lang_Recs?.count ?? 0) == 0  { try self.loadLangRecs(method: "\(RecOrganizationDefs.mCTAG).getLangNameInLang") }
+        let inx = self.chooseLangRec(langRegion: langRegion)
+        if inx >= 0 { return self.mOrg_Lang_Recs![inx].rOrgLang_Lang_Title_Shown }
         return AppDelegate.makeFullDescription(forLangRegion: langRegion, inLangRegion: langRegion, noCode: true)
     }
 
     // get the organization title for a indicated language
+    // throws if error in loadLangRecs()
     public func getOrgTitleShown(langRegion:String) throws -> String? {
-        if (self.mOrg_Lang_Recs?.count ?? 0) == 0  { try self.loadLangRecs() }
+        if (self.mOrg_Lang_Recs?.count ?? 0) == 0  { try self.loadLangRecs(method: "\(RecOrganizationDefs.mCTAG).getOrgTitleShown") }
         let inx = self.chooseLangRec(langRegion: langRegion)
         if inx < 0 { return nil }
         return self.mOrg_Lang_Recs![inx].rOrgLang_Org_Title_Shown
     }
     
     // set the organization title for the specified language
-    public func setOrgTitleShown(langRegion:String, title:String!) throws {
-        if (self.mOrg_Lang_Recs?.count ?? 0) == 0 { try self.loadLangRecs() }
+    // throws if error in loadLangRecs()
+    public func setOrgTitleShown_Editing(langRegion:String, title:String!) throws {
+        if (self.mOrg_Lang_Recs?.count ?? 0) == 0 { try self.loadLangRecs(method: "\(RecOrganizationDefs.mCTAG).setOrgTitleShown") }
         var inx = self.chooseLangRec(langRegion: langRegion)
-        if inx < 0 { inx = self.addNewLangRec(forLangRegion: langRegion) }
+        if inx < 0 { inx = self.addNewPlaceholderLangRec(forLangRegion: langRegion) }
         if inx >= 0 {
             self.mOrg_Lang_Recs![inx].rOrgLang_Org_Title_Shown = title
             self.mOrg_Lang_Recs_are_changed = true
@@ -457,18 +458,20 @@ public class RecOrganizationDefs {
     }
     
     // get the event title for a indicated language
+    // throws if error in loadLangRecs()
     public func getEventTitleShown(langRegion:String) throws -> String? {
-        if (self.mOrg_Lang_Recs?.count ?? 0) == 0 { try self.loadLangRecs() }
+        if (self.mOrg_Lang_Recs?.count ?? 0) == 0 { try self.loadLangRecs(method: "\(RecOrganizationDefs.mCTAG).getEventTitleShown") }
         let inx = self.chooseLangRec(langRegion: langRegion)
         if inx < 0 { return nil }
         return self.mOrg_Lang_Recs![inx].rOrgLang_Event_Title_Shown
     }
     
     // set the event title for the specified language
-    public func setEventTitleShown(langRegion:String, title:String!) throws {
-        if (self.mOrg_Lang_Recs?.count ?? 0) == 0 { try self.loadLangRecs() }
+    // throws if error in loadLangRecs()
+    public func setEventTitleShown_Editing(langRegion:String, title:String!) throws {
+        if (self.mOrg_Lang_Recs?.count ?? 0) == 0 { try self.loadLangRecs(method: "\(RecOrganizationDefs.mCTAG).setEventTitleShown") }
         var inx = self.chooseLangRec(langRegion: langRegion)
-        if inx < 0 { inx = self.addNewLangRec(forLangRegion: langRegion) }
+        if inx < 0 { inx = self.addNewPlaceholderLangRec(forLangRegion: langRegion) }
         if inx >= 0 {
             self.mOrg_Lang_Recs![inx].rOrgLang_Event_Title_Shown = title
             self.mOrg_Lang_Recs_are_changed = true
@@ -531,8 +534,48 @@ public class RecOrganizationDefs {
         }
     }
     
-    // add a new RecOrganizationLangs to the per-language records; returns the index# of the added record; returns -1 if the forLangRegion already exists undeleted
-    public func addNewLangRec(forLangRegion:String) -> Int {
+    // add a new placeholder RecOrganizationLangs to the per-language records;
+    // returns the index# of the added record; returns -1 if the forLangRegion already exists undeleted;
+    // this func does not cause throws which simplifies some handling in OrgEditViewController
+    public func addNewPlaceholderLangRec(forLangRegion:String) -> Int {
+        if self.mOrg_Lang_Recs == nil { self.mOrg_Lang_Recs = [] }
+        
+        // first see if we can un-delete a matching deleted one; this allow the end-user to recover their pre-existing per-language Org-Title
+        var inx:Int = 0
+        for orgLangRec in self.mOrg_Lang_Recs! {
+            if orgLangRec.rOrgLang_LangRegionCode == forLangRegion {
+                // an existing record of that langRegion is already present
+                if orgLangRec.mDuringEditing_isDeleted {
+                    // its marked as deleted, so undelete it
+                    orgLangRec.mDuringEditing_isDeleted = false
+                    self.mOrg_Lang_Recs_are_changed = true
+                    if !self.rOrg_LangRegionCodes_Supported.contains(forLangRegion) {
+                        self.rOrg_LangRegionCodes_Supported.append(forLangRegion)
+                    }
+                    return inx
+                } else {
+                    // its not deleted; cannot add a duplicate OrgLang record
+                    return -1
+                }
+            }
+            inx = inx + 1
+        }
+        
+        let newOrgLangRec:RecOrganizationLangs = RecOrganizationLangs(langRegion_code: forLangRegion, withOrgRec: self)
+        newOrgLangRec.mDuringEditing_isPartial = true
+        if !self.rOrg_LangRegionCodes_Supported.contains(forLangRegion) {
+            self.rOrg_LangRegionCodes_Supported.append(forLangRegion)
+        }
+        self.mOrg_Lang_Recs!.append(newOrgLangRec)
+        self.mOrg_Lang_Recs_are_changed = true
+        
+        return self.mOrg_Lang_Recs!.count - 1
+    }
+    
+    // add a new final RecOrganizationLangs to the per-language records;
+    // returns the index# of the added record; returns -1 if the forLangRegion already exists undeleted
+    // throws upon filesystem errors getting the language defaults
+    public func addNewFinalLangRec(forLangRegion:String) throws -> Int {
         if self.mOrg_Lang_Recs == nil { self.mOrg_Lang_Recs = [] }
         
         // first see if we can un-delete a matching deleted one; this allow the end-user to recover their pre-existing per-language Org-Title
@@ -561,7 +604,11 @@ public class RecOrganizationDefs {
         var newOrgLangRec:RecOrganizationLangs
         do {
             jsonLangRec = try AppDelegate.mFieldHandler!.getLangInfo(forLangRegion: forLangRegion, noSubstitution: true)
-        } catch {}  // do not report error up-the-chain
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).addNewFinalLangRec")
+            throw appError
+        } catch { throw error }
+        
         if jsonLangRec != nil {
             // found a JSON entry for this language
             let title_svfile = AppDelegate.makeFullDescription(forLangRegion: jsonLangRec!.mLang_LangRegionCode!, inLangRegion: self.rOrg_LangRegionCode_SV_File, noCode: true)
@@ -570,7 +617,7 @@ public class RecOrganizationDefs {
             // no JSON found, so build it from scratch using iOS language mappings
             newOrgLangRec = RecOrganizationLangs(langRegion_code: forLangRegion, withOrgRec: self)
         }
-
+        
         if !self.rOrg_LangRegionCodes_Supported.contains(forLangRegion) {
             self.rOrg_LangRegionCodes_Supported.append(forLangRegion)
         }
@@ -580,36 +627,47 @@ public class RecOrganizationDefs {
         return self.mOrg_Lang_Recs!.count - 1
     }
     
-    // load all the Organization's per-language records
-    public func loadLangRecs() throws {
+    // load all the Organization's per-language records;
+    // throws any database or filesystem errors
+    public func loadLangRecs(method:String) throws {
         self.mOrg_Lang_Recs = nil
         self.mOrg_Lang_Recs_are_changed = false
         
         // load all records stored in the database
         var SVFileLanRegionFound:Bool = false
-        let records:AnySequence<Row> = try RecOrganizationLangs.orgLangGetAllRecs(orgShortName: self.rOrg_Code_For_SV_File)
-        self.mOrg_Lang_Recs = []
-        for rowRec in records {
-            let orglangRec = try RecOrganizationLangs(row:rowRec)
-            if orglangRec.rOrgLang_LangRegionCode == self.rOrg_LangRegionCode_SV_File { SVFileLanRegionFound = true }
-            self.mOrg_Lang_Recs!.append(orglangRec)
-        }
+        do {
+            let records:AnySequence<Row> = try RecOrganizationLangs.orgLangGetAllRecs(orgShortName: self.rOrg_Code_For_SV_File)
+            self.mOrg_Lang_Recs = []
+            for rowRec in records {
+                let orglangRec = try RecOrganizationLangs(row:rowRec)
+                if orglangRec.rOrgLang_LangRegionCode == self.rOrg_LangRegionCode_SV_File { SVFileLanRegionFound = true }
+                self.mOrg_Lang_Recs!.append(orglangRec)
+            }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(method):\(RecOrganizationDefs.mCTAG).loadLangRecs")
+            throw appError
+        } catch { throw error }
         
         // safety or during initial creation of a new RecOrganizationDefs; are all the records missing?
-        if self.mOrg_Lang_Recs!.count == 0 {
-            // yes, force-create the SV-File language
-            let _ = self.addNewLangRec(forLangRegion: self.rOrg_LangRegionCode_SV_File)
-            
-            // force-create all languages shown (if missing)
-            for langRegion in self.rOrg_LangRegionCodes_Supported {
-                if langRegion != self.rOrg_LangRegionCode_SV_File {
-                    let _ = self.addNewLangRec(forLangRegion: langRegion)
+        do {
+            if self.mOrg_Lang_Recs!.count == 0 {
+                // yes, force-create the SV-File language
+                let _ = try self.addNewFinalLangRec(forLangRegion: self.rOrg_LangRegionCode_SV_File)
+                
+                // force-create all languages shown (if missing)
+                for langRegion in self.rOrg_LangRegionCodes_Supported {
+                    if langRegion != self.rOrg_LangRegionCode_SV_File {
+                        let _ = try self.addNewFinalLangRec(forLangRegion: langRegion)
+                    }
                 }
+            } else if !SVFileLanRegionFound {
+                // there are record but the SV-File langRegion is missing , force-create the SV-File langRegion
+                let _ = try self.addNewFinalLangRec(forLangRegion: self.rOrg_LangRegionCode_SV_File)
             }
-        } else if !SVFileLanRegionFound {
-            // there are record but the SV-File langRegion is missing , force-create the SV-File langRegion
-            let _ = self.addNewLangRec(forLangRegion: self.rOrg_LangRegionCode_SV_File)
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(method):\(RecOrganizationDefs.mCTAG).loadLangRecs")
+            throw appError
+        } catch { throw error }
     }
     
     // choose the RecOrganizationLangs that will be used
@@ -657,7 +715,7 @@ public class RecOrganizationDefs {
     // throws exceptions either for local errors or from the database
     public static func orgGetQtyRecs() throws -> Int64 {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgGetQtyRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         return try AppDelegate.mDatabaseHandler!.genericQueryQty(method:"\(self.mCTAG).orgGetQtyRecs", table:Table(RecOrganizationDefs.TABLE_NAME), whereStr:nil, valuesBindArray:nil)
     }
@@ -666,7 +724,7 @@ public class RecOrganizationDefs {
     // throws exceptions either for local errors or from the database
     public static func orgGetAllRecs() throws -> AnySequence<Row> {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgGetAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrganizationDefs.TABLE_NAME).select(*).order(RecOrganizationDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE.asc)
         return try AppDelegate.mDatabaseHandler!.genericQuery(method:"\(self.mCTAG).orgGetAllRecs", tableQuery:query)
@@ -677,7 +735,7 @@ public class RecOrganizationDefs {
     // null indicates the record was not found
     public static func orgGetSpecifiedRecOfShortName(orgShortName:String) throws -> RecOrganizationDefs? {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgGetSpecifiedRecOfShortName", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrganizationDefs.TABLE_NAME).select(*).filter(RecOrganizationDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == orgShortName)
         let record = try AppDelegate.mDatabaseHandler!.genericQueryOne(method:"\(self.mCTAG).orgGetSpecifiedRecOfShortName", tableQuery:query)
@@ -690,18 +748,26 @@ public class RecOrganizationDefs {
     // throws exceptions either for local errors or from the database
     public func saveNewToDB() throws -> Int64 {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOrganizationDefs.mCTAG).saveNewToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
+        
         var setters:[Setter]
         do {
             setters = try self.buildSetters()
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrganizationDefs.mCTAG).saveNewToDB", during: ".buildSetters", errorStruct: error, extra: RecOrganizationDefs.TABLE_NAME)
-            throw error
-        }
-        let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method:"\(RecOrganizationDefs.mCTAG).saveNewToDB", table:Table(RecOrganizationDefs.TABLE_NAME), cv:setters, orReplace:false, noAlert:false)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).saveNewToDB")
+            throw appError
+        } catch { throw error}
         
-        if self.mOrg_Lang_Recs_are_changed { try self.addLangRecs() }
+        let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method:"\(RecOrganizationDefs.mCTAG).saveNewToDB", table:Table(RecOrganizationDefs.TABLE_NAME), cv:setters, orReplace:false, noAlert:false)
+        if self.mOrg_Lang_Recs_are_changed {
+            do {
+                try self.addLangRecs()
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).saveNewToDB")
+                throw appError
+            } catch { throw error}
+        }
         return rowID
     }
     
@@ -710,18 +776,27 @@ public class RecOrganizationDefs {
     // throws exceptions either for local errors or from the database
     public func saveChangesToDB(originalOrgRec:RecOrganizationDefs) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOrganizationDefs.mCTAG).saveChangesToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
+        
         var setters:[Setter]
         do {
             setters = try self.buildSetters()
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrganizationDefs.mCTAG).saveChangesToDB", during: ".buildSetters", errorStruct: error, extra: RecOrganizationDefs.TABLE_NAME)
-            throw error
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).saveChangesToDB")
+            throw appError
+        } catch { throw error}
+        
         let query = Table(RecOrganizationDefs.TABLE_NAME).select(*).filter(RecOrganizationDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == originalOrgRec.rOrg_Code_For_SV_File)
         let qty = try AppDelegate.mDatabaseHandler!.updateRec(method:"\(RecOrganizationDefs.mCTAG).saveChangesToDB", tableQuery:query, cv:setters)
-        if self.mOrg_Lang_Recs_are_changed { try self.updateLangRecs() }
+        if self.mOrg_Lang_Recs_are_changed {
+            do {
+                try self.updateLangRecs()
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).saveChangesToDB")
+                throw appError
+            } catch { throw error}
+        }
         return qty
     }
     
@@ -730,8 +805,7 @@ public class RecOrganizationDefs {
     // throws exceptions either for local errors or from the database
     public func deleteFromDB() throws -> Int {
         if self.rOrg_Code_For_SV_File.isEmpty {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrganizationDefs.mCTAG).deleteFromDB", during: "verification", errorMessage: "deleteFromDB() rOrg_Code_For_SV_File .isEmpty", extra: RecOrganizationDefs.TABLE_NAME)
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil)
+            throw APP_ERROR(funcName: "\(RecOrganizationDefs.mCTAG).deleteFromDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "self.rOrg_Code_For_SV_File.isEmpty")
         }
         return try RecOrganizationDefs.orgDeleteRec(orgShortName:self.rOrg_Code_For_SV_File)
     }
@@ -741,17 +815,22 @@ public class RecOrganizationDefs {
     // throws exceptions either for local errors or from the database
     public static func orgDeleteRec(orgShortName:String) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgDeleteRec", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrganizationDefs.TABLE_NAME).select(*).filter(RecOrganizationDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == orgShortName)
         let qty = try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).orgDeleteRec", tableQuery:query)
 
         // maintain referential integrity
         // ?? the custom Fields and FieldLocales
-        _ = try RecOrgFormFieldLocales.formFieldLocalesDeleteAllRecs(forOrgShortName:orgShortName, forFormShortName:nil)
-        _ = try RecOrgFormFieldDefs.orgFormFieldDeleteAllRecs(forOrgShortName:orgShortName, forFormShortName:nil)
-        _ = try RecOrgFormDefs.orgFormDeleteAllRecs(forOrgShortName:orgShortName)
-        _ = try RecOrganizationLangs.orgLangDeleteAllRecs(forOrgShortName:orgShortName)
+        do {
+            _ = try RecOrgFormFieldLocales.formFieldLocalesDeleteAllRecs(forOrgShortName:orgShortName, forFormShortName:nil)
+            _ = try RecOrgFormFieldDefs.orgFormFieldDeleteAllRecs(forOrgShortName:orgShortName, forFormShortName:nil)
+            _ = try RecOrgFormDefs.orgFormDeleteAllRecs(forOrgShortName:orgShortName)
+            _ = try RecOrganizationLangs.orgLangDeleteAllRecs(forOrgShortName:orgShortName)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).orgDeleteRec")
+            throw appError
+        } catch { throw error}
         return qty
     }
     
@@ -766,10 +845,20 @@ public class RecOrganizationDefs {
                 orgLangRec.rOrg_Code_For_SV_File = self.rOrg_Code_For_SV_File   // fill in in-case of deferred setting of Org short name during Editing
                 if !orgLangRec.mDuringEditing_isDeleted {
                     // record is not marked as deleted so add it
-                    _ = try orgLangRec.saveToDB()
+                    do {
+                        _ = try orgLangRec.saveToDB()
+                    } catch var appError as APP_ERROR {
+                        appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).addLangRecs")
+                        throw appError
+                    } catch { throw error}
                 } else if orgLangRec.rOrgLang_LangRegionCode == self.rOrg_LangRegionCode_SV_File {
                     // must not delete the SV-File language record
-                    _ = try orgLangRec.saveToDB()
+                    do {
+                        _ = try orgLangRec.saveToDB()
+                    } catch var appError as APP_ERROR {
+                        appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).addLangRecs")
+                        throw appError
+                    } catch { throw error}
                 }
             }
         }
@@ -783,13 +872,28 @@ public class RecOrganizationDefs {
                 orgLangRec.rOrg_Code_For_SV_File = self.rOrg_Code_For_SV_File   // fill in in-case of deferred setting of Org short name during Editing
                 if !orgLangRec.mDuringEditing_isDeleted {
                     // record is not marked as deleted, so add/update it
-                    _ = try orgLangRec.saveToDB()
+                    do {
+                        _ = try orgLangRec.saveToDB()
+                    } catch var appError as APP_ERROR {
+                        appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).updateLangRecs")
+                        throw appError
+                    } catch { throw error}
                 } else if orgLangRec.rOrgLang_LangRegionCode == self.rOrg_LangRegionCode_SV_File {
                     // must not delete the SV-File language record
-                    _ = try orgLangRec.saveToDB()
+                    do {
+                        _ = try orgLangRec.saveToDB()
+                    } catch var appError as APP_ERROR {
+                        appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).updateLangRecs")
+                        throw appError
+                    } catch { throw error}
                 } else {
                     // delete the existing language record
-                    _ = try orgLangRec.deleteFromDB()
+                    do {
+                        _ = try orgLangRec.deleteFromDB()
+                    } catch var appError as APP_ERROR {
+                        appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).updateLangRecs")
+                        throw appError
+                    } catch { throw error}
                 }
             }
         }

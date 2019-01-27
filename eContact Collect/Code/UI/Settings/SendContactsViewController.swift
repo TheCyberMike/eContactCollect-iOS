@@ -150,7 +150,10 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
         if AppDelegate.mEntryFormProvisioner != nil {
             do {
                 qty = try RecContactsCollected.ccGetQtyRecs(forOrgShortName: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
-            } catch {} // no error reported to end-user; it will already be in alerts and error.log
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).buildForm", during:"ccGetQtyRecs#1", errorStruct: error, extra: nil)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            }
         }
 
         let section1 = Section(NSLocalizedString("Generate Attachments", comment:""))
@@ -165,24 +168,27 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
             $0.tag = "button_generate"
             $0.disabled = (qty <= 0) ? true : false
             $0.evaluateDisabled()
-            $0.onCellSelection {  cell, row in
+            $0.onCellSelection { [weak self] cell, row in
 //debugPrint("\(self.mCTAG).buildForm.ButtonRow<Generate>.onCellSelection STARTED")
-                let success = self.generateNewSVFiles()
+                let success = self!.generateNewSVFiles()
                 if success {
                     var qty1:Int64 = 0
                     if AppDelegate.mEntryFormProvisioner != nil {
                         do {
                             qty1 = try RecContactsCollected.ccGetQtyRecs(forOrgShortName: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
-                        } catch {} // no error reported to end-user
+                        } catch {
+                            AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm", during:"ccGetQtyRecs#2", errorStruct: error, extra: nil)
+                            AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                        }
                     }
-                    let labelRow:LabelRow = self.form.rowBy(tag: "info_not_yet_sent") as! LabelRow
+                    let labelRow:LabelRow = self!.form.rowBy(tag: "info_not_yet_sent") as! LabelRow
                     labelRow.title = NSLocalizedString("Contacts not-yet-sent", comment:"") + ": \(qty1)"
                     labelRow.updateCell()
-                    let buttonRow:ButtonRow = self.form.rowBy(tag: "button_generate") as! ButtonRow
+                    let buttonRow:ButtonRow = self!.form.rowBy(tag: "button_generate") as! ButtonRow
                     buttonRow.disabled = true
                     buttonRow.evaluateDisabled()
                     buttonRow.updateCell()
-                    self.displayListOfFiles()
+                    self!.displayListOfFiles()
                 }
             }
         }
@@ -208,7 +214,7 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
         do {
             fileURLs = try AppDelegate.mSVFilesHandler!.getPendingFiles()
         } catch {
-            // already error.log and alert
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).displayListOfFiles", during: "getPendingFiles", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
         self.mNoDelete = true
@@ -248,7 +254,7 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
         do {
             fileURLs = try AppDelegate.mSVFilesHandler!.getSentFiles()
         } catch {
-            // already error.log and alert
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).displayListOfFiles", during: "getSentFiles", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("File Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
         self.mNoDelete = true
@@ -304,7 +310,7 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
                         try AppDelegate.mSVFilesHandler!.deleteSentFile(fileName:row.title!)
                     }
                 } catch {
-                    // already error.log and alert
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).rowsHaveBeenRemoved", errorStruct: error, extra: nil)
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("File Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
             }
@@ -315,8 +321,9 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
         do {
             _ = try AppDelegate.mSVFilesHandler!.generateNewSVFiles()
         } catch {
-            // already error.log and alert
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).generateNewSVFiles", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("File Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            return false
         }
         return true
     }
@@ -328,7 +335,7 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
         let splits:[String] = fileName.components(separatedBy: "_")
         if splits.count < 4 {
             AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"fileName.components(separatedBy:)", errorMessage:"Filename mis-composed", extra:fileName)
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: NSLocalizedString("Filename mis-composed", comment:"")), buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).emailSVfile", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: NSLocalizedString("Filename mis-composed", comment:"")), buttonText: NSLocalizedString("Okay", comment:""))
         }
         let formSplits:[String] = splits[3].components(separatedBy: ".")
         var orgRec:RecOrganizationDefs? = nil
@@ -338,18 +345,18 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
             formRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName:formSplits[0], forOrgShortName:splits[2])
             
         } catch {
-            // already posted to error.log and alerts
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).emailSVfile", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         if orgRec == nil {
             AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"orgGetSpecifiedRecOfShortName", errorMessage:"Could not get Org record", extra:splits[2])
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).emailSVfile", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         if formRec == nil {
             AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"orgFormGetSpecifiedRecOfShortName", errorMessage:"Could not get Form record", extra:formSplits[0])
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).emailSVfile", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         
@@ -432,7 +439,7 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
                 try AppDelegate.mSVFilesHandler!.movePendingToSent(fileName:fileName)
                 self.displayListOfFiles()
             } catch {
-                // already error.log and alert
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).mailComposeController.didFinishWith", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("File Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             }
         }

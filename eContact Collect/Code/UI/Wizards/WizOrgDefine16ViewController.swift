@@ -107,7 +107,10 @@ class WizOrgDefine16ViewController: FormViewController {
                 $0.title = NSLocalizedString("Org Title for ", comment:"") + AppDelegate.makeFullDescription(forLangRegion: langRegionCode)
                 do {
                     $0.value = try self.mRootVC!.mWorking_Org_Rec!.getOrgTitleShown(langRegion: langRegionCode)
-                } catch {}  // report no error
+                } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).buildForm", errorStruct: error, extra: nil)
+                    // do not show error to end-user
+                }
                 $0.textAreaHeight = .fixed(cellHeight: 50)
                 $0.textAreaWidth = .fixed(cellWidth: 300)
                 }.cellUpdate { cell, row in
@@ -118,8 +121,11 @@ class WizOrgDefine16ViewController: FormViewController {
                     cell.textView.layer.borderWidth = 1
                 }.onChange { [weak self] chgRow in
                     do {
-                        try self!.mRootVC!.mWorking_Org_Rec!.setOrgTitleShown(langRegion: langRegionCode, title: chgRow.value)
-                    } catch {}  // report no error
+                        try self!.mRootVC!.mWorking_Org_Rec!.setOrgTitleShown_Editing(langRegion: langRegionCode, title: chgRow.value)
+                    } catch {
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm", errorStruct: error, extra: nil)
+                        AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                    }
             }
         }
     }

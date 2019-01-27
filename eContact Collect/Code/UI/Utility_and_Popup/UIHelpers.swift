@@ -54,6 +54,7 @@ public class UIHelpers {
                             }
                         }
                     } catch {
+                        AppDelegate.postToErrorLogAndAlert(method: "UIHelpers.importConfigFile", errorStruct: error, extra: callbackString1!)
                         AppDelegate.showAlertDialog(vc: usingVC, title: NSLocalizedString("Import Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""), completion: { ()-> Void in
                                 if finalDialogCompletion != nil { finalDialogCompletion!(usingVC, fromURL, true, false ) }
                         })

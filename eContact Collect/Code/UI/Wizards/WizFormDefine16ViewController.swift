@@ -41,7 +41,7 @@ class WizFormDefine16ViewController: UIViewController {
         do {
             _ = try self.mRootVC!.mWorking_Form_Rec!.saveNewToDB(withOrgRec: self.mRootVC!.mWorking_Org_Rec!)
         } catch {
-            // error.log and alert already posted
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).button_done_pressed", during:"saveNewToDB", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
@@ -52,7 +52,7 @@ class WizFormDefine16ViewController: UIViewController {
             var orderShown:Int = 10
             try AppDelegate.mFieldHandler!.addFieldstoForm(field_IDCodes: fieldsToAdd, forFormRec: self.mRootVC!.mWorking_Form_Rec!, withOrgRec: self.mRootVC!.mWorking_Org_Rec!, orderSVfile: &orderSVfile, orderShown: &orderShown)
         } catch {
-            // error.log and alert already posted
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).button_done_pressed", during:"addFieldstoForm", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }

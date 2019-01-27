@@ -97,6 +97,7 @@ class FormEditViewController: UIViewController {
                 self.mWorking_formFieldEntries = try AppDelegate.mFieldHandler!.getOrgFormFields(forEFP: self.mLocalEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false, forEditing:true)
                 self.mLocalEFP!.mFormFieldEntries = self.mWorking_formFieldEntries
             } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 self.mAction = .Add // auto-force to an Add
             }
@@ -120,9 +121,10 @@ class FormEditViewController: UIViewController {
                     self.mLocalEFP!.mFormFieldEntries = self.mWorking_formFieldEntries!
                 } else {
                     AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", during: "getFieldDefsAsMatchForEditing", errorMessage: "(submitButtonEntries?.count() ?? 0) == 0", extra: FIELD_IDCODE_METADATA.SUBMIT_BUTTON.rawValue)
-                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(domain: AppDelegate.mFieldHandler!.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).viewDidLoad", domain: AppDelegate.mFieldHandler!.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
                 }
             } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             }
         }
@@ -210,6 +212,7 @@ class FormEditViewController: UIViewController {
             do {
                 orgFormRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName: self.mWorking_orgFormRec!.rForm_Code_For_SV_File, forOrgShortName: self.mReference_orgRec!.rOrg_Code_For_SV_File)
             } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).validateEntries", errorStruct: error, extra: nil)
                 return NSLocalizedString("Database error occurred while verifying inputs", comment:"")
             }
             if orgFormRec != nil {
@@ -231,6 +234,7 @@ class FormEditViewController: UIViewController {
                 do {
                     _ = try self.mWorking_orgFormRec!.saveChangesToDB(originalFormRec: self.mWorking_orgFormRec!)
                 } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).updateFormInDatabase", errorStruct: error, extra: nil)
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                     return false
                 }
@@ -247,7 +251,7 @@ class FormEditViewController: UIViewController {
             do {
                 _ = try self.mWorking_orgFormRec!.saveNewToDB(withOrgRec: self.mReference_orgRec!)
             } catch {
-                // errors will already have been logged
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).updateFormInDatabase", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 return false
             }
@@ -271,6 +275,7 @@ class FormEditViewController: UIViewController {
                         formFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = self.mWorking_orgFormRec!.rForm_Code_For_SV_File
                         let _ = try formFieldEntry.mFormFieldRec.saveChangesToDB(originalRec: formFieldEntry.mFormFieldRec)     // this will auto-save any retained and modified RecOrgFormFieldLocales
                     } catch {
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).updateFormInDatabase", errorStruct: error, extra: nil)
                         AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                         return false
                     }
@@ -324,6 +329,7 @@ class FormEditViewController: UIViewController {
                     }
                 }
             } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).updateFormInDatabase", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 return false
             }
@@ -373,6 +379,7 @@ class FormEditViewController: UIViewController {
                                     }
                                 }
                             } catch {
+                                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).updateFormInDatabase", errorStruct: error, extra: nil)
                                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                                 return false
                             }
@@ -492,6 +499,7 @@ class FormEditViewController: UIViewController {
                         }
                     }
                 } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).updateFormInDatabase", errorStruct: error, extra: nil)
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                     return false
                 }
@@ -833,25 +841,30 @@ class FormEditFormViewController: FormViewController {
                         row.tag = "add_new_field"
                         row.selectorTitle = NSLocalizedString("Choose one", comment:"")
                         row.options = ["Field-1"]   // temporary placeholder; will be populated in .onPresent()
-                    }.onPresent { sourceFVC, presentVC in
+                    }.onPresent { [weak self] sourceFVC, presentVC in
                         // callback to tap into PushRow's _SelectorViewController such that the ListCheckRows can be configured
                         let row = sourceFVC.form.rowBy(tag: "add_new_field") as? PushRow<String>
                         if row != nil {
-                            let (controlPairs, sectionMap, sectionTitles) = AppDelegate.mFieldHandler!.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
-                            row!.options = controlPairs.map { $0.valueString }
-                            row!.retainedObject = (controlPairs, sectionMap, sectionTitles)
-                            presentVC.selectableRowSetup = { listRow in
-                                listRow.cellStyle = UITableViewCell.CellStyle.subtitle
+                            do {
+                                let (controlPairs, sectionMap, sectionTitles) = try AppDelegate.mFieldHandler!.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
+                                row!.options = controlPairs.map { $0.valueString }
+                                row!.retainedObject = (controlPairs, sectionMap, sectionTitles)
+                                presentVC.selectableRowSetup = { listRow in
+                                    listRow.cellStyle = UITableViewCell.CellStyle.subtitle
+                                }
+                                presentVC.sectionKeyForValue = { oTitleShown in
+                                    return sectionMap[oTitleShown] ?? ""
+                                }
+                                presentVC.sectionHeaderTitleForKey = { sKey in
+                                    return sectionTitles[sKey]
+                                }
+                                //presentVC.selectableRowCellUpdate = { cell, row in
+                                //    cell.detailTextLabel?.text = ??
+                                //}
+                            } catch {
+                                AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.PushRow.onPresent", errorStruct: error, extra: nil)
+                                AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                             }
-                            presentVC.sectionKeyForValue = { oTitleShown in
-                                return sectionMap[oTitleShown] ?? ""
-                            }
-                            presentVC.sectionHeaderTitleForKey = { sKey in
-                                return sectionTitles[sKey]
-                            }
-                            //presentVC.selectableRowCellUpdate = { cell, row in
-                            //    cell.detailTextLabel?.text = ??
-                            //}
                         }
                     }.onChange { chgRow in
                         // PushRow has returned a value selected from the PushRow's view controller;
@@ -867,53 +880,75 @@ class FormEditFormViewController: FormViewController {
                     }
             }  // end of addButtonProvider
             mvSection.multivaluedRowToInsertAt = { [weak self] index in
-                // a new Field_IDCode was chosen by the end-user; get it from the PushRow
+                // a new Field_IDCode was chosen by the end-user; must return a row;
+                // get the collector-name of the field from the popup then translate it back to a proper FieldIDCode
                 let fromPushRow = self!.form.rowBy(tag: "add_new_field") as! PushRow<String>
                 let fieldNameForCollector:String? = fromPushRow.value!
-                let (controlPairs, _, _) = AppDelegate.mFieldHandler!.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
-                let fieldIDCode:String? = CodePair.findCode(pairs: controlPairs, givenValue: fieldNameForCollector!)
+                var fieldIDCode:String? = nil
+                do {
+                    let (controlPairs, _, _) = try AppDelegate.mFieldHandler!.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
+                    fieldIDCode = CodePair.findCode(pairs: controlPairs, givenValue: fieldNameForCollector!)
+                } catch {
+                    // some type of filesystem error occurred; should not happen
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt", errorStruct: error, extra: fieldNameForCollector)
+                    AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                    // cannot throw or return from here
+                }
                 
                 // build up the new OrgFormFieldsEntry and save it in the working set of FormFields; also add any subfields;
                 // sequential negative formField_index will be used as temporary placeholder's until they are saved to the database
                 var newFormFieldEntries:OrgFormFields? = nil
-                do {
-                    newFormFieldEntries = try AppDelegate.mFieldHandler!.getFieldDefsAsMatchForEditing(forFieldIDCode: fieldIDCode!, forFormRec: self!.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
-                } catch {
-                    // add new field; getFieldDefsAsMatchForEditing failed and threw; should not occur
-                    AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
-                }
-                if (newFormFieldEntries?.count() ?? 0) == 0 {
-                    // add new field; getFieldDefsAsMatchForEditing failed to find anything but didnt throw; should not occur
-                    AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt", during: "getFieldDefsAsMatchForEditing", errorMessage: "(newFormFieldEntries?.count() ?? 0) == 0", extra: fieldIDCode)
-                    AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(domain: AppDelegate.mFieldHandler!.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+                if !(fieldIDCode ?? "").isEmpty {
+                    do {
+                        newFormFieldEntries = try AppDelegate.mFieldHandler!.getFieldDefsAsMatchForEditing(forFieldIDCode: fieldIDCode!, forFormRec: self!.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
+                    } catch {
+                        // add new field; getFieldDefsAsMatchForEditing failed and threw; should not occur
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt", errorStruct: error, extra: fieldIDCode)
+                        AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                        // cannot throw or return from here
+                    }
                 }
                 
-                // add the primary field and its subfield's (if any); orderShown is fully re-synced and compacted when the changes are saved
-                var inx:Int = 0
-                var primaryIndex:Int64 = 0
-                var orderShown:Int = self!.mFormEditVC!.mWorking_formFieldEntries!.getNextOrderShown()
-                var orderSVfile:Int = self!.mFormEditVC!.mWorking_formFieldEntries!.getNextOrderSVfile()
-                for newFormFieldEntry in newFormFieldEntries! {
-                    newFormFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = self!.mFormEditVC!.mWorking_orgFormRec!.rForm_Code_For_SV_File
-                    newFormFieldEntry.mFormFieldRec.rFormField_Order_SV_File = orderSVfile
-                    newFormFieldEntry.mFormFieldRec.rFormField_Order_Shown = orderShown
-                    newFormFieldEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true   // the actual to-be-saved RecOrgFormFieldLocales are within this object
-                    
-                    newFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = self!.mFormEditVC!.mWorking_orgFormRec!.rForm_Code_For_SV_File
-                    newFormFieldEntry.mComposedFormFieldLocalesRec.rFormField_Index = newFormFieldEntry.mFormFieldRec.rFormField_Index
-                    
-                    self!.mFormEditVC!.mWorking_formFieldEntries!.appendNewDuringEditing(newFormFieldEntry)  // this auto-assigns temporary rFormField_Index
-                    
-                    if inx == 0 { primaryIndex = newFormFieldEntry.mFormFieldRec.rFormField_Index }
-                    else { newFormFieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index = primaryIndex }
-                    
-                    inx = inx + 1
-                    orderShown = orderShown + 1
-                    orderSVfile = orderSVfile + 10
+                // add the new field
+                if (newFormFieldEntries?.count() ?? 0) == 0 {
+                    // getFieldDefsAsMatchForEditing failed to find anything but didnt throw; should not occur
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt", during: "getFieldDefsAsMatchForEditing", errorMessage: "(newFormFieldEntries?.count() ?? 0) == 0", extra: fieldIDCode)
+                    AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self!.mCTAG).buildForm", domain: AppDelegate.mFieldHandler!.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+                    // cannot throw or return from here
+                } else {
+                    // add the primary field and its subfield's (if any); orderShown is fully re-synced and compacted when the changes are saved
+                    var inx:Int = 0
+                    var primaryIndex:Int64 = 0
+                    var orderShown:Int = self!.mFormEditVC!.mWorking_formFieldEntries!.getNextOrderShown()
+                    var orderSVfile:Int = self!.mFormEditVC!.mWorking_formFieldEntries!.getNextOrderSVfile()
+                    for newFormFieldEntry in newFormFieldEntries! {
+                        newFormFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = self!.mFormEditVC!.mWorking_orgFormRec!.rForm_Code_For_SV_File
+                        newFormFieldEntry.mFormFieldRec.rFormField_Order_SV_File = orderSVfile
+                        newFormFieldEntry.mFormFieldRec.rFormField_Order_Shown = orderShown
+                        newFormFieldEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true   // the actual to-be-saved RecOrgFormFieldLocales are within this object
+                        
+                        newFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = self!.mFormEditVC!.mWorking_orgFormRec!.rForm_Code_For_SV_File
+                        newFormFieldEntry.mComposedFormFieldLocalesRec.rFormField_Index = newFormFieldEntry.mFormFieldRec.rFormField_Index
+                        
+                        self!.mFormEditVC!.mWorking_formFieldEntries!.appendNewDuringEditing(newFormFieldEntry)  // this auto-assigns temporary rFormField_Index
+                        
+                        if inx == 0 { primaryIndex = newFormFieldEntry.mFormFieldRec.rFormField_Index }
+                        else { newFormFieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index = primaryIndex }
+                        
+                        inx = inx + 1
+                        orderShown = orderShown + 1
+                        orderSVfile = orderSVfile + 10
+                    }
                 }
 
                 // create a new ButtonRow based upon the new entry
-                let newRow = self!.makeFieldsButtonRow(forFormFieldEntry: newFormFieldEntries![0])
+                var newRow:ButtonRow
+                if (newFormFieldEntries?.count() ?? 0) == 0 {
+                    newRow = self!.makeFieldsButtonRow(forFormFieldEntry: nil)  // this means some type of error occurred earlier
+                } else {
+                    newRow = self!.makeFieldsButtonRow(forFormFieldEntry: newFormFieldEntries![0])
+                }
+                
                 fromPushRow.value = nil     // clear out the PushRow's value so this newly chosen item does not remain "selected"
                 fromPushRow.reload()        // note this will re-trigger .onChange in the PushRow so must ignore that re-trigger else infinite loop
                 return newRow               // self.rowsHaveBeenAdded() will get invoked after this point
@@ -1134,7 +1169,7 @@ class FormEditFormViewController: FormViewController {
                                 let ar = form.rowBy(tag: "add_new_field")
                                 do {
                                     try mvsSection.insert(row: br, before: ar!)
-                                } catch {}
+                                } catch {}  // ???
                             }
                         }
                     }
@@ -1147,33 +1182,40 @@ class FormEditFormViewController: FormViewController {
     }
     
     // create the pretty button row needed for existing and new FormField records
-    private func makeFieldsButtonRow(forFormFieldEntry:OrgFormFieldsEntry) -> ButtonRow {
-        return ButtonRow() { row in
-            row.tag = "FF,\(forFormFieldEntry.mFormFieldRec.rFormField_Index)"
-            row.cellStyle = UITableViewCell.CellStyle.subtitle
-            row.title = "#\(forFormFieldEntry.mFormFieldRec.rFormField_Index) \(forFormFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Name_For_Collector!)"
-            row.retainedObject = forFormFieldEntry
-            row.presentationMode = .show(
-                // selecting the ButtonRow invokes FormEditFieldFormViewController with callback so the row's content can be refreshed
-                controllerProvider: .callback(builder: { [weak self, weak row] in
-                    let vc = FormEditFieldFormViewController()
-                    vc.mFormEditVC = self!.mFormEditVC
-                    vc.mEdit_FormFieldEntry = (row!.retainedObject as! OrgFormFieldsEntry)
-                    return vc
-                }),
-                onDismiss: { [weak row] vc in
-                    row!.updateCell()
-                })
-            }.cellUpdate { cell, row in
-                // create and show the second line of text in the row
-                if row.retainedObject != nil {
-                    let formFieldEntry:OrgFormFieldsEntry = (row.retainedObject as! OrgFormFieldsEntry)
-                    if formFieldEntry.mFormFieldRec.rFieldProp_Row_Type != .SECTION && formFieldEntry.mFormFieldRec.rFieldProp_Row_Type != .LABEL {
-                        cell.detailTextLabel?.text = "\"\(formFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Name_Shown!)\", col=\(formFieldEntry.mFormFieldRec.rFieldProp_Col_Name_For_SV_File)"
-                    } else {
-                        cell.detailTextLabel?.text = "\"\(formFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Name_Shown!)\""
+    private func makeFieldsButtonRow(forFormFieldEntry:OrgFormFieldsEntry?) -> ButtonRow {
+        if forFormFieldEntry != nil {
+            return ButtonRow() { row in
+                row.tag = "FF,\(forFormFieldEntry!.mFormFieldRec.rFormField_Index)"
+                row.cellStyle = UITableViewCell.CellStyle.subtitle
+                row.title = "#\(forFormFieldEntry!.mFormFieldRec.rFormField_Index) \(forFormFieldEntry!.mComposedFormFieldLocalesRec.rFieldLocProp_Name_For_Collector!)"
+                row.retainedObject = forFormFieldEntry!
+                row.presentationMode = .show(
+                    // selecting the ButtonRow invokes FormEditFieldFormViewController with callback so the row's content can be refreshed
+                    controllerProvider: .callback(builder: { [weak self, weak row] in
+                        let vc = FormEditFieldFormViewController()
+                        vc.mFormEditVC = self!.mFormEditVC
+                        vc.mEdit_FormFieldEntry = (row!.retainedObject as! OrgFormFieldsEntry)
+                        return vc
+                    }),
+                    onDismiss: { [weak row] vc in
+                        row!.updateCell()
+                    })
+                }.cellUpdate { cell, row in
+                    // create and show the second line of text in the row
+                    if row.retainedObject != nil {
+                        let formFieldEntry:OrgFormFieldsEntry = (row.retainedObject as! OrgFormFieldsEntry)
+                        if formFieldEntry.mFormFieldRec.rFieldProp_Row_Type != .SECTION && formFieldEntry.mFormFieldRec.rFieldProp_Row_Type != .LABEL {
+                            cell.detailTextLabel?.text = "\"\(formFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Name_Shown!)\", col=\(formFieldEntry.mFormFieldRec.rFieldProp_Col_Name_For_SV_File)"
+                        } else {
+                            cell.detailTextLabel?.text = "\"\(formFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Name_Shown!)\""
+                        }
                     }
-                }
+            }
+        } else {
+            return ButtonRow() { row in
+                row.tag = nil
+                row.title = "!!!ERRROR!!!"
+            }
         }
     }
     
@@ -1316,7 +1358,13 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
         // now build and blend subfield entries only if the primary field supports them;
         // all the auto-indexing in the default fields is only local to this working array, not the master working set of fields;
         // however they will be pre-autolinked to the index# of the editing form field (regardless of whether it has a database or temporary index#)
-        self.mWorking_SubfieldEntries = AppDelegate.mFieldHandler!.getAllowedSubfieldEntriesForEditing(forPrimaryFormFieldRec: self.mEdit_FormFieldEntry!.mFormFieldRec, forFormRec: self.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self.mFormEditVC!.mReference_orgRec!)
+        do {
+            self.mWorking_SubfieldEntries = try AppDelegate.mFieldHandler!.getAllowedSubfieldEntriesForEditing(forPrimaryFormFieldRec: self.mEdit_FormFieldEntry!.mFormFieldRec, forFormRec: self.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self.mFormEditVC!.mReference_orgRec!)
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            // allow to continue processing
+        }
         if (self.mWorking_SubfieldEntries?.count() ?? 0) > 0 {
             if (self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
                 for subFieldIDCode in self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Contains_Field_IDCodes! {
@@ -1599,7 +1647,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
                     let ar = form.rowBy(tag: "add_new_option")
                     do {
                         try self.mMVS_field_options!.insert(row: br, before: ar!)
-                    } catch {}
+                    } catch {}  // ???
                 }
             }
         }

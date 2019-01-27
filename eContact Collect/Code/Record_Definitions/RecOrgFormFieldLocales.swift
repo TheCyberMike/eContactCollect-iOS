@@ -391,10 +391,10 @@ public class RecOrgFormFieldLocales {
     // FormShortName is allowed to be nil or blank since its filled in when records are saved to the database
     init(existingRec:RecOrgFormFieldLocales_Optionals) throws {
         if existingRec.rFormFieldLoc_Index == nil || existingRec.rFormField_Index == nil || existingRec.rFormFieldLoc_LangRegionCode == nil || existingRec.rOrg_Code_For_SV_File == nil || existingRec.rFieldLocProp_Name_For_Collector == nil {
-            throw APP_ERROR(domain:DatabaseHandler.ThrowErrorDomain, errorCode:.MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo:"init(existingRec:RecOrgFormFieldLocales_Optionals): Required == nil")
+            throw APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).init(RecOrgFormFieldLocales_Optionals)", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required == nil")
         }
         if existingRec.rFormFieldLoc_LangRegionCode!.isEmpty || existingRec.rOrg_Code_For_SV_File!.isEmpty || existingRec.rFieldLocProp_Name_For_Collector!.isEmpty {
-            throw APP_ERROR(domain:DatabaseHandler.ThrowErrorDomain, errorCode:.MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo:"init(existingRec:RecOrgFormFieldLocales_Optionals): Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).init(RecOrgFormFieldLocales_Optionals)", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
         }
         self.rFormFieldLoc_Index = existingRec.rFormFieldLoc_Index!
         self.rOrg_Code_For_SV_File = existingRec.rOrg_Code_For_SV_File!
@@ -423,8 +423,8 @@ public class RecOrgFormFieldLocales {
             self.rFieldLocProp_Name_Shown = try row.get(RecOrgFormFieldLocales.COL_EXPRESSION_FIELDLOCPROP_NAME_SHOWN)
             self.rFieldLocProp_Placeholder_Shown = try row.get(RecOrgFormFieldLocales.COL_EXPRESSION_FIELDLOCPROP_PLACEHOLDER_SHOWN)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrgFormFieldLocales.mCTAG).init.row", during: "extraction", errorStruct: error, extra: RecOrgFormFieldLocales.TABLE_NAME)
-            throw error
+            let appError = APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).init(Row)", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: nil, developerInfo: RecOrgFormFieldLocales.TABLE_NAME)
+            throw appError
         }
         
         // break comma-delimited String into an Array
@@ -440,7 +440,7 @@ public class RecOrgFormFieldLocales {
     // use 'exceptKey' for Update operations to ensure the key fields cannot be changed
     public func buildSetters(exceptKey:Bool=false) throws -> [Setter] {
         if self.rFormFieldLoc_LangRegionCode.isEmpty || self.rOrg_Code_For_SV_File.isEmpty || self.rForm_Code_For_SV_File.isEmpty || self.rFieldLocProp_Name_For_Collector.isEmpty {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "\(RecOrgFormFieldLocales.mCTAG).buildSetters: Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).buildSetters", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
         }
         
         var retArray = [Setter]()
@@ -516,7 +516,7 @@ public class RecOrgFormFieldLocales {
     // throws exceptions either for local errors or from the database
     public static func formFieldLocalesGetAllRecs(forOrgShortName:String, forFormShortName:String?) throws -> AnySequence<Row> {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).formFieldLocalesGetAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         var optionStr:String = ".O"
         var query = Table(RecOrgFormFieldLocales.TABLE_NAME)
@@ -535,7 +535,7 @@ public class RecOrgFormFieldLocales {
     // null indicates the record was not found
     public static func formFieldLocalesGetSpecifiedRecIndex(index:Int64) throws -> RecOrgFormFieldLocales? {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).formFieldLocalesGetSpecifiedRecIndex", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrgFormFieldLocales.TABLE_NAME).select(*).filter(RecOrgFormFieldLocales.COL_EXPRESSION_FORMFIELDLOC_INDEX == index)
         let record = try AppDelegate.mDatabaseHandler!.genericQueryOne(method:"\(self.mCTAG).formFieldLocalesGetSpecifiedRecIndex", tableQuery:query)
@@ -548,19 +548,20 @@ public class RecOrgFormFieldLocales {
     // throws exceptions either for local errors or from the database
     public func saveNewToDB(ignoreDups:Bool=false) throws -> Int64 {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).saveNewToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         guard !self.mDuringEditing_isDeleted else {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrgFormFieldLocales.mCTAG).saveNewToDB", during: "verification", errorMessage: "Record is marked deleted", extra: RecOrganizationLangs.TABLE_NAME, noAlert: true)
-            throw APP_ERROR(domain:DatabaseHandler.ThrowErrorDomain, errorCode:.RECORD_MARKED_DELETED, userErrorDetails: nil)
+            throw APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).saveNewToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_MARKED_DELETED, userErrorDetails: nil, developerInfo: RecOrganizationLangs.TABLE_NAME, noAlert: true)
         }
+        
         var setters:[Setter]
         do {
             setters = try self.buildSetters()
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrgFormFieldLocales.mCTAG).saveToDB", during: ".buildSetters", errorStruct: error, extra: RecOrgFormFieldLocales.TABLE_NAME)
-            throw error
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrgFormFieldLocales.mCTAG).saveNewToDB")
+            throw appError
+        } catch { throw error}
+        
         let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method:"\(RecOrgFormFieldLocales.mCTAG).saveNewToDB", table:Table(RecOrgFormFieldLocales.TABLE_NAME), cv:setters, orReplace:ignoreDups, noAlert:false)
         self.rFormFieldLoc_Index = rowID
         return rowID
@@ -572,19 +573,20 @@ public class RecOrgFormFieldLocales {
     // throws exceptions either for local errors or from the database
     public func saveChangesToDB(originalRec:RecOrgFormFieldLocales) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).saveChangesToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         guard !self.mDuringEditing_isDeleted else {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrgFormFieldLocales.mCTAG).saveChangesToDB", during: "verification", errorMessage: "Record is marked deleted", extra: RecOrganizationLangs.TABLE_NAME, noAlert: true)
-            throw APP_ERROR(domain:DatabaseHandler.ThrowErrorDomain, errorCode:.RECORD_MARKED_DELETED, userErrorDetails: nil)
+            throw APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).saveChangesToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_MARKED_DELETED, userErrorDetails: nil, developerInfo: RecOrganizationLangs.TABLE_NAME, noAlert: true)
         }
+        
         var setters:[Setter]
         do {
             setters = try self.buildSetters()
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrgFormFieldLocales.mCTAG).saveChangesToDB", during: ".buildSetters", errorStruct: error, extra: RecOrgFormFieldLocales.TABLE_NAME)
-            throw error
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrgFormFieldLocales.mCTAG).saveChangesToDB")
+            throw appError
+        } catch { throw error}
+        
         let query = Table(RecOrgFormFieldLocales.TABLE_NAME).select(*).filter(RecOrgFormFieldLocales.COL_EXPRESSION_FORMFIELDLOC_INDEX == self.rFormFieldLoc_Index)
         return try AppDelegate.mDatabaseHandler!.updateRec(method:"\(RecOrgFormFieldLocales.mCTAG).saveChangesToDB", tableQuery:query, cv:setters)
     }
@@ -612,7 +614,7 @@ public class RecOrgFormFieldLocales {
     // throws exceptions either for local errors or from the database
     public static func formFieldLocalesDeleteAllRecWithFormFieldIndex(index:Int64) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).formFieldLocalesDeleteAllRecWithFormFieldIndex", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrgFormFieldLocales.TABLE_NAME).select(*).filter(RecOrgFormFieldLocales.COL_EXPRESSION_FORMFIELD_INDEX == index)
         return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).fieldLocaleDeleteAllRecWithFormFieldIndex", tableQuery:query)
@@ -623,7 +625,7 @@ public class RecOrgFormFieldLocales {
     // throws exceptions either for local errors or from the database
     public static func formFieldLocalesDeleteAllRecs(forOrgShortName:String, forFormShortName:String?) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOrgFormFieldLocales.mCTAG).formFieldLocalesDeleteAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         var optionStr:String = ".O"
         var query = Table(RecOrgFormFieldLocales.TABLE_NAME)

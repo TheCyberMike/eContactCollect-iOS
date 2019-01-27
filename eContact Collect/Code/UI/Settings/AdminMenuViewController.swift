@@ -177,14 +177,15 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
         }
 
         var orgQty:Int64 = 0
+        var formQty:Int64 = 0
         do {
             orgQty = try RecOrganizationDefs.orgGetQtyRecs()
-        } catch {}          // do not bother to report errors at the menu
-        var formQty:Int64 = 0
-        if hasCurrentOrg {
-            do {
+            if hasCurrentOrg {
                 formQty = try RecOrgFormDefs.orgFormGetQtyRecs(forOrgShortName: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
-            } catch {}          // do not bother to report errors at the menu
+            }
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).buildForm", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
         
         let section1 = Section(NSLocalizedString("Actions for the Current Organization", comment: ""))
@@ -317,7 +318,10 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
         var formQty:Int64 = 0
         do {
             orgQty = try RecOrganizationDefs.orgGetQtyRecs()
-        } catch {}          // do not bother to report errors at the menu
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refresh", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+        }
 
         if !hasCurrentOrg {
             self.mButtonRowEditContacts!.disabled = true
@@ -328,7 +332,10 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
         } else {
             do {
                 formQty = try RecOrgFormDefs.orgFormGetQtyRecs(forOrgShortName: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
-            } catch {}          // do not bother to report errors at the menu
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refresh", errorStruct: error, extra: nil)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            }
             
             self.mButtonRowEditContacts!.disabled = false
             self.mButtonRowSendContacts!.disabled = false
@@ -360,12 +367,14 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
                 do {
                     let orgRec:RecOrganizationDefs? = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName:wasChosen!)
                     if orgRec == nil {
-                        AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+                        AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).completed_COVC", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
                         return  // from the completion handler
                     }
+                    
                     (UIApplication.shared.delegate as! AppDelegate).setCurrentOrg(toOrgRec:orgRec!)
                     self.refresh()
                 } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_COVC", errorStruct: error, extra: wasChosen!)
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
             }
@@ -384,12 +393,14 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
                 do {
                     let orgFormRec:RecOrgFormDefs? = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName: wasChosen!, forOrgShortName: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
                     if orgFormRec == nil {
-                        AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+                        AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).completed_CFVC", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
                         return
                     }
+                    
                     (UIApplication.shared.delegate as! AppDelegate).setCurrentForm(toFormRec:orgFormRec!)
                     self.refresh()
                 } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_CFVC", errorStruct: error, extra: wasChosen!)
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
             }
@@ -406,20 +417,20 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
             do {
                 let orgRec:RecOrganizationDefs? = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
                 if orgRec == nil {
-                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).completed_CEVC", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
                     return
                 }
                 
                 orgRec!.rOrg_Event_Code_For_SV_File = eventShortName
                 for cp in eventFullTitles! {
-                    try orgRec!.setEventTitleShown(langRegion: cp.codeString, title: cp.valueString)
+                    try orgRec!.setEventTitleShown_Editing(langRegion: cp.codeString, title: cp.valueString)
                 }
-
                 _ = try orgRec!.saveChangesToDB(originalOrgRec: AppDelegate.mEntryFormProvisioner!.mOrgRec)
                 
                 (UIApplication.shared.delegate as! AppDelegate).setCurrentEvent(toOrgRec: orgRec!)
                 self.refresh()
             } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_CEVC", errorStruct: error, extra: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 return
             }

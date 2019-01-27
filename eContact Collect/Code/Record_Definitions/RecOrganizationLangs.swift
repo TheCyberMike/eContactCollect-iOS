@@ -89,6 +89,7 @@ public class RecOrganizationLangs {
     public var rOrgLang_Event_Title_Shown:String?       // optional-event: name shown to end-users
     
     // member variables
+    public var mDuringEditing_isPartial:Bool = false    // during Editing, the record is marked as placeholder added
     public var mDuringEditing_isDeleted:Bool = false    // during Editing, the record is marked as deleted
     
     // member constants and other static content
@@ -153,10 +154,10 @@ public class RecOrganizationLangs {
     // throws upon missing required fields; caller is responsible to error.log
     init(existingRec:RecOrganizationLangs_Optionals) throws {
         if existingRec.rOrg_Code_For_SV_File == nil || existingRec.rOrgLang_LangRegionCode == nil || existingRec.rOrgLang_Lang_Title_SVFile == nil || existingRec.rOrgLang_Lang_Title_Shown == nil {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "init(existingRec:RecOrganizationLangs_Optionals): Required == nil")
+            throw APP_ERROR(funcName: "\(RecOrganizationLangs.mCTAG).init(RecOrganizationLangs_Optionals)", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required == nil")
         }
         if existingRec.rOrg_Code_For_SV_File!.isEmpty || existingRec.rOrgLang_LangRegionCode!.isEmpty || existingRec.rOrgLang_Lang_Title_SVFile!.isEmpty || existingRec.rOrgLang_Lang_Title_Shown!.isEmpty {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "init(existingRec:RecOrganizationLangs_Optionals): Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecOrganizationLangs.mCTAG).init(RecOrganizationLangs_Optionals)", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
         }
 
         self.rOrg_Code_For_SV_File = existingRec.rOrg_Code_For_SV_File!
@@ -182,8 +183,8 @@ public class RecOrganizationLangs {
             self.rOrgLang_Org_Title_Shown = try row.get(RecOrganizationLangs.COL_EXPRESSION_ORGLANG_ORG_TITLE_SHOWN)
             self.rOrgLang_Event_Title_Shown = try row.get(RecOrganizationLangs.COL_EXPRESSION_ORGLANG_EVENT_TITLE_SHOWN)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrganizationLangs.mCTAG).init.row", during: "extraction", errorStruct: error, extra: RecOrganizationLangs.TABLE_NAME)
-            throw error
+            let appError = APP_ERROR(funcName: "\(RecOrganizationLangs.mCTAG).init(Row)", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: nil, developerInfo: RecOrganizationLangs.TABLE_NAME)
+            throw appError
         }
     }
     
@@ -192,7 +193,7 @@ public class RecOrganizationLangs {
     // throws errors if record cannot be saved to the database; caller is responsible to error.log them
     public func buildSetters(exceptKey:Bool=false) throws -> [Setter] {
         if self.rOrg_Code_For_SV_File.isEmpty || self.rOrgLang_LangRegionCode.isEmpty || self.rOrgLang_Lang_Title_SVFile.isEmpty || self.rOrgLang_Lang_Title_Shown.isEmpty {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "\(RecOrganizationLangs.mCTAG).buildSetters: Required .isEmpty")
+            throw APP_ERROR(funcName: "\(RecOrganizationLangs.mCTAG).buildSetters", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "Required .isEmpty")
         }
         
         var retArray = [Setter]()
@@ -230,6 +231,28 @@ public class RecOrganizationLangs {
         return jsonObj
     }
     
+    // finalize a partial/placeholder language record;
+    // will be marked as finalized even if an error is thrown;
+    // throws filesystem errors when attempting to load from the json defaults files
+    public func finalizePartial(svFileLangRegion:String) throws {
+        self.mDuringEditing_isPartial = false
+        var jsonLangRec:RecJsonLangDefs?
+        do {
+            jsonLangRec = try AppDelegate.mFieldHandler!.getLangInfo(forLangRegion: self.rOrgLang_LangRegionCode, noSubstitution: true)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrganizationLangs.mCTAG).finalizePartial")
+            throw appError
+        } catch { throw error }
+        
+        if jsonLangRec != nil {
+            // found a JSON entry for this language
+            self.rOrgLang_Lang_Title_EN = jsonLangRec!.rLang_Name_English!
+            self.rOrgLang_Lang_Title_Shown = jsonLangRec!.rLang_Name_Speaker!
+            self.rOrgLang_Lang_Image_PNG_Blob = jsonLangRec!.rLang_Icon_PNG_Blob
+            self.rOrgLang_Lang_Title_SVFile = AppDelegate.makeFullDescription(forLangRegion: jsonLangRec!.mLang_LangRegionCode!, inLangRegion: svFileLangRegion, noCode: true)
+        }
+    }
+    
     /////////////////////////////////////////////////////////////////////////
     // Database interaction methods used throughout the application
     /////////////////////////////////////////////////////////////////////////
@@ -247,7 +270,7 @@ public class RecOrganizationLangs {
     // throws exceptions either for local errors or from the database
     public static func orgLangGetAllRecs(orgShortName:String) throws -> AnySequence<Row> {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgLangGetAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrganizationLangs.TABLE_NAME).select(*).filter(RecOrganizationLangs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == orgShortName)
         return try AppDelegate.mDatabaseHandler!.genericQuery(method:"\(self.mCTAG).orgLangGetAllRecs", tableQuery:query)
@@ -271,21 +294,24 @@ public class RecOrganizationLangs {
     // throws exceptions either for local errors or from the database
     public func saveToDB() throws -> Int64 {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(RecOrganizationLangs.mCTAG).saveToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         guard !self.mDuringEditing_isDeleted else {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrganizationLangs.mCTAG).saveToDB", during: "verification", errorMessage: "Record is marked deleted", extra: RecOrganizationLangs.TABLE_NAME, noAlert: true)
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_MARKED_DELETED, userErrorDetails: nil)
+            throw APP_ERROR(funcName: "\(RecOrganizationLangs.mCTAG).saveToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_MARKED_DELETED, userErrorDetails: nil, developerInfo: RecOrganizationLangs.TABLE_NAME, noAlert: true)
         }
+        guard !self.mDuringEditing_isPartial else {
+            throw APP_ERROR(funcName: "\(RecOrganizationLangs.mCTAG).saveToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_MARKED_PARTIAL, userErrorDetails: nil, developerInfo: RecOrganizationLangs.TABLE_NAME, noAlert: true)
+        }
+        
         var setters:[Setter]
         do {
             setters = try self.buildSetters()
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrganizationLangs.mCTAG).saveToDB", during: ".buildSetters", errorStruct: error, extra: RecOrganizationLangs.TABLE_NAME)
-            throw error
-        }
-        let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method: "\(RecOrganizationLangs.mCTAG).saveToDB", table: Table(RecOrganizationLangs.TABLE_NAME), cv: setters, orReplace: true, noAlert: false)
-        return rowID
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrganizationLangs.mCTAG).saveToDB")
+            throw appError
+        } catch { throw error}
+        
+        return try AppDelegate.mDatabaseHandler!.insertRec(method: "\(RecOrganizationLangs.mCTAG).saveToDB", table: Table(RecOrganizationLangs.TABLE_NAME), cv: setters, orReplace: true, noAlert: false)
     }
     
     // replace an Org entry; return is the quantity of replaced records (negative will not be returned);
@@ -295,11 +321,13 @@ public class RecOrganizationLangs {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
             throw NSError(domain:DatabaseHandler.ThrowErrorDomain, code:APP_ERROR_DATABASE_IS_NOT_ENABLED, userInfo: nil)
         }
-        let setters = self.buildSetters(exceptKey:true)
-        if setters == nil {
-            AppDelegate.postToErrorLogAndAlert(method: "\(RecOrganizationLangs.mCTAG).saveChangesToDB", during:"verification", errorMessage:"Required value is nil or empty", extra:RecOrganizationLangs.TABLE_NAME, noAlert:true)
-            throw NSError(domain:DatabaseHandler.ThrowErrorDomain, code:APP_ERROR_MISSING_REQUIRED_CONTENT, userInfo: nil)
-        }
+        var setters:[Setter]
+        do {
+            setters = try self.buildSetters()
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrganizationLangs.mCTAG).saveChangesToDB")
+            throw appError
+        } catch { throw error}
         let query = Table(RecOrganizationLangs.TABLE_NAME).select(*).filter(RecOrganizationLangs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == originalOrgRec.rOrg_Code_For_SV_File!)
         let qty = try AppDelegate.mDatabaseHandler!.updateRec(method:"\(RecOrganizationLangs.mCTAG).saveChangesToDB", tableQuery:query, cv:setters!)
         return qty
@@ -315,19 +343,17 @@ public class RecOrganizationLangs {
     // throws exceptions either for local errors or from the database
     public static func orgLangDeleteRec(orgShortName:String, langRegionCode:String) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgLangDeleteRec", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrganizationLangs.TABLE_NAME).select(*).filter(RecOrganizationLangs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == orgShortName && RecOrganizationLangs.COL_EXPRESSION_ORGLANG_LANGREGIONCODE == langRegionCode)
-        let qty = try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method: "\(self.mCTAG).orgLangDeleteRec", tableQuery: query)
-        
-        return qty
+        return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method: "\(self.mCTAG).orgLangDeleteRec", tableQuery: query)
     }
     
     // delete all Language records for an organization; return is the count of records deleted (negative will not be returned;
     // throws exceptions either for local errors or from the database
     public static func orgLangDeleteAllRecs(forOrgShortName:String) throws -> Int {
         guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw APP_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgLangDeleteAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrganizationLangs.TABLE_NAME).select(*).filter(RecOrganizationLangs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == forOrgShortName)
         return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method: "\(self.mCTAG).orgLangDeleteAllRecs", tableQuery: query)

@@ -75,24 +75,29 @@ class ChooserLangRegionViewController: UIViewController, UIPickerViewDelegate, U
         super.viewWillAppear(animated)
         
         // create the list of all shown languages; the first two shown languages are placed at the end
-        self.mLangRegions = []
-        if self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported.count > 0 {
-            for i:Int in 0...self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported.count - 1 {
-                if i > 1 {
-                    let title:String = self.mEFP!.mOrgRec.getLangNameInLang(langRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[i])
-                    self.mLangRegions.append(title)
+        do {
+            self.mLangRegions = []
+            if self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported.count > 0 {
+                for i:Int in 0...self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported.count - 1 {
+                    if i > 1 {
+                        let title:String = try self.mEFP!.mOrgRec.getLangNameInLang(langRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[i])
+                        self.mLangRegions.append(title)
+                    }
+                }
+                for i:Int in 0...self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported.count - 1 {
+                    if i == 0 {
+                        let title:String = try self.mEFP!.mOrgRec.getLangNameInLang(langRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[i])
+                        self.mLangRegions.append(title)
+                    } else if i == 1 {
+                        let title:String = try self.mEFP!.mOrgRec.getLangNameInLang(langRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[i])
+                        self.mLangRegions.append(title)
+                        break
+                    }
                 }
             }
-            for i:Int in 0...self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported.count - 1 {
-                if i == 0 {
-                    let title:String = self.mEFP!.mOrgRec.getLangNameInLang(langRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[i])
-                    self.mLangRegions.append(title)
-                } else if i == 1 {
-                    let title:String = self.mEFP!.mOrgRec.getLangNameInLang(langRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[i])
-                    self.mLangRegions.append(title)
-                    break
-                }
-            }
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewWillAppear", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
     }
     

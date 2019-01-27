@@ -15,6 +15,7 @@
 		D7BA6B6121EEDA6300F45AFC /* SQLite.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D7D852F221C9724200948408 /* PopupFirstTimeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */; };
 		D7D87FD621E67B7B002847DE /* ChooserLangRegionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */; };
+		D7EE5BEC21FB7E0700769CA6 /* App_Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */; };
 		D903B63A21778B110021A80E /* ChooserRatingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D903B63921778B110021A80E /* ChooserRatingViewController.swift */; };
 		D903B63C21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D903B63B21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift */; };
 		D9042EC22176B6DB0088CF7A /* ContactsMgmtViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9042EC12176B6DB0088CF7A /* ContactsMgmtViewController.swift */; };
@@ -207,6 +208,7 @@
 		D7C52D5F21EC12C800F84DEC /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Main.strings; sourceTree = "<group>"; };
 		D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupFirstTimeViewController.swift; sourceTree = "<group>"; };
 		D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserLangRegionViewController.swift; sourceTree = "<group>"; };
+		D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App_Error.swift; sourceTree = "<group>"; };
 		D903B63921778B110021A80E /* ChooserRatingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserRatingViewController.swift; sourceTree = "<group>"; };
 		D903B63B21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupEnterCollectorNotesViewController.swift; sourceTree = "<group>"; };
 		D9042EC12176B6DB0088CF7A /* ContactsMgmtViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsMgmtViewController.swift; sourceTree = "<group>"; };
@@ -320,6 +322,7 @@
 		D71FF33921D464AC00C4A370 /* Handlers_and_Core */ = {
 			isa = PBXGroup;
 			children = (
+				D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */,
 				D954DF5E215ABFC9003FD748 /* DatabaseHandler.swift */,
 				D94399E92169DD0600FC2AD8 /* FieldHandler.swift */,
 				D9278381217398EA00B9B88A /* SVFilesHandler.swift */,
@@ -844,6 +847,7 @@
 				D94CFCF12155A6D8009CE207 /* AppDelegate.swift in Sources */,
 				D9254B3521597572006FDBF8 /* RecOrgFormFieldDefs.swift in Sources */,
 				D7416EAE21F78A9D004850C6 /* ContactsReviewViewController.swift in Sources */,
+				D7EE5BEC21FB7E0700769CA6 /* App_Error.swift in Sources */,
 				D9E74A87217FA9D60049D844 /* AdminPrefsViewController.swift in Sources */,
 				D7D87FD621E67B7B002847DE /* ChooserLangRegionViewController.swift in Sources */,
 				D94CDF7121626F1200ABB052 /* OrgTitleViewController.swift in Sources */,
@@ -1107,7 +1111,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = CWMY2LW9A2;
+				DEVELOPMENT_TEAM = Z224ZX8APG;
 				INFOPLIST_FILE = "eContact CollectTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1130,7 +1134,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = CWMY2LW9A2;
+				DEVELOPMENT_TEAM = Z224ZX8APG;
 				INFOPLIST_FILE = "eContact CollectTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1230,6 +1234,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
+					"TESTING=1",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -1243,7 +1248,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				STRIP_INSTALLED_PRODUCT = NO;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG TESTING";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Testing;
@@ -1274,7 +1279,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = CWMY2LW9A2;
+				DEVELOPMENT_TEAM = Z224ZX8APG;
 				INFOPLIST_FILE = "eContact CollectTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

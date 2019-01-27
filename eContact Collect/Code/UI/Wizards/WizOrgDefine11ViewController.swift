@@ -83,7 +83,13 @@ class WizOrgDefine11ViewController: FormViewController {
         
         // although the internal RecOrganizationLangs and the rOrg_LangRegionCodes_Supported SHOULD be already correct,
         // we will re-evaluate and reset all of them according to the final state of the form's fields
-        self.mLangRows!.finalizeLangRegions()
+        do {
+            try self.mLangRows!.finalizeLangRegions()
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).shouldPerformSegue", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            // allow the segue to occur even though we get errors
+        }
         return true
     }
     

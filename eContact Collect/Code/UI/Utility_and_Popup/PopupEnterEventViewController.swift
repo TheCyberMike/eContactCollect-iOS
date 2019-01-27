@@ -79,7 +79,7 @@ class PopupEnterEventViewController: UIViewController, UITableViewDataSource, UI
         
         if AppDelegate.mEntryFormProvisioner != nil {
             if AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Event_Code_For_SV_File != nil {
-                textfield_event_short_name.text = AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Event_Code_For_SV_File!
+                self.textfield_event_short_name.text = AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Event_Code_For_SV_File!
             } else {
                 self.textfield_event_short_name.text = ""
             }
@@ -89,8 +89,10 @@ class PopupEnterEventViewController: UIViewController, UITableViewDataSource, UI
                 let tvc:PopupEnterEventTableViewCell = tableview_shown_names.cellForRow(at: inxPath) as! PopupEnterEventTableViewCell
                 do {
                     tvc.textfield_name_shown?.text = try AppDelegate.mEntryFormProvisioner!.mOrgRec.getEventTitleShown(langRegion: tvc.mLangRegion!)
-                } catch {}  // report no error
-
+                } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewWillAppear", errorStruct: error, extra: tvc.mLangRegion!)
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                }
             }
         } else {
             self.textfield_event_short_name.text = ""

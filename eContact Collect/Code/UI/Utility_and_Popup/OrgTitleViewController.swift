@@ -194,7 +194,11 @@ class OrgTitleViewController: UIViewController {
                 shown2ndTitle = try self.mEFP!.mOrgRec.getOrgTitleShown(langRegion: self.mEFP!.mShownBilingualLanguage)
             }
             
-        } catch {} // do no error reporting beyond what may have already been recorded
+        } catch {
+            // these are database errors when loading all the Org's language records
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).recompose", errorStruct: error, extra: nil)
+            // do not show error to end-user
+        }
         
         // choose the default Title Mode
         var showMode:RecOrganizationDefs.ORG_TITLE_MODE = RecOrganizationDefs.ORG_TITLE_MODE.ONLY_TITLE     // show textual title is the default

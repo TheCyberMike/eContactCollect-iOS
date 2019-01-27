@@ -129,7 +129,7 @@ class FormsMgmtViewController: UIViewController, UITableViewDataSource, UITableV
                 do {
                     try orgFormRec.clone(newFormName: newFormName, withOrgRec: self.mFor_orgRec!)
                 } catch {
-                    // error.log and alert already posted
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_CECVC", errorStruct: error, extra: orgFormRec.rForm_Code_For_SV_File+" of "+self.mFor_orgRec!.rOrg_Code_For_SV_File+" to "+newFormName)
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
                 self.build_database_list()
@@ -150,6 +150,7 @@ class FormsMgmtViewController: UIViewController, UITableViewDataSource, UITableV
             }
             self.tableview_form_list.reloadData()
         } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).build_database_list", errorStruct: error, extra: self.mFor_orgRec!.rOrg_Code_For_SV_File)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
@@ -180,7 +181,7 @@ class FormsMgmtViewController: UIViewController, UITableViewDataSource, UITableV
                     (UIApplication.shared.delegate as! AppDelegate).checkDeletionCurrentForm(withFormRecShortName: callbackString1!, withOrgRecShortName: callbackString2!)
                     self.build_database_list()
                 } catch {
-                    // error.log and alert already posted
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).doDelete", errorStruct: error, extra: callbackString1!+" of "+callbackString2!)
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
             }

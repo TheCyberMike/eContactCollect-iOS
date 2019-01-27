@@ -26,7 +26,7 @@ class AlertsMgmtViewController: UITableViewController {
                     _ = try RecAlert.alertDeleteAll()
                     self.refreshList()
                 } catch {
-                    // error.log and alert already done
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).button_delete_all", errorStruct: error, extra: nil)
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 }
             }
@@ -95,7 +95,7 @@ class AlertsMgmtViewController: UITableViewController {
             }
             self.tableview_alerts!.reloadData()
         } catch {
-            // error.log and alert already done
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refreshList", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
     }
@@ -107,7 +107,7 @@ class AlertsMgmtViewController: UITableViewController {
             _ = try RecAlert.alertDeleteRec(id:Int64(cell.tag))
             self.refreshList()
         } catch {
-            // alerts will have already been recorded
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).doDelete", errorStruct: error, extra: String(cell.tag))
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
     }
@@ -145,6 +145,10 @@ class AlertsMgmtViewController: UITableViewController {
         return UITableView.automaticDimension
     }
 }
+
+///////////////////////////////////////////////////
+// class definition for AlertsMgmtTableViewCell
+///////////////////////////////////////////////////
 
 class AlertsMgmtTableViewCell: UITableViewCell {
     // member variables
