@@ -504,7 +504,10 @@ class OrgEditFormViewController: FormViewController {
             $0.title = NSLocalizedString("Org Title for ", comment:"") + AppDelegate.makeFullDescription(forLangRegion: langRegionCode)
             do {
                 $0.value = try self.mOrgEditVC!.mWorking_orgRec!.getOrgTitleShown(langRegion: langRegionCode)
-            } catch {}  // ???
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).adjustForm", errorStruct: error, extra: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            }
             $0.textAreaHeight = .fixed(cellHeight: 50)
             $0.textAreaWidth = .fixed(cellWidth: 300)
             }.cellUpdate { cell, row in
@@ -517,7 +520,10 @@ class OrgEditFormViewController: FormViewController {
                 do {
                     try self!.mOrgEditVC!.mWorking_orgRec!.setOrgTitleShown_Editing(langRegion: langRegionCode, title: chgRow.value)
                     self!.mOrgEditVC!.mOrgTitleViewController!.refresh()
-                } catch {}  // ???
+                } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).adjustForm", errorStruct: error, extra: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
+                    AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                }
         }
 
         if self.mLangRows!.mSupportingMultLangs {
@@ -534,7 +540,10 @@ class OrgEditFormViewController: FormViewController {
                         $0.title = NSLocalizedString("Org Title for ", comment:"") + AppDelegate.makeFullDescription(forLangRegion: langRegionCode)
                         do {
                             $0.value = try self.mOrgEditVC!.mWorking_orgRec!.getOrgTitleShown(langRegion: langRegionCode)
-                        } catch {}  // ???
+                        } catch {
+                            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).adjustForm", errorStruct: error, extra: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
+                            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                        }
                         $0.textAreaHeight = .fixed(cellHeight: 50)
                         $0.textAreaWidth = .fixed(cellWidth: 300)
                         }.cellUpdate { cell, row in
@@ -547,7 +556,10 @@ class OrgEditFormViewController: FormViewController {
                             do {
                                 try self!.mOrgEditVC!.mWorking_orgRec!.setOrgTitleShown_Editing(langRegion: langRegionCode, title: chgRow.value)
                                 self!.mOrgEditVC!.mOrgTitleViewController!.refresh()
-                            } catch {}  // ???
+                            } catch {
+                                AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).adjustForm", errorStruct: error, extra: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
+                                AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                            }
                     }
                 }
             }
@@ -610,7 +622,10 @@ class OrgEditFormViewController: FormViewController {
                         let langRegionCode = String(hasRow.tag![pastIndex...])
                         do {
                             (hasRow as! TextAreaRowExt).value = try self.mOrgEditVC!.mWorking_orgRec!.getOrgTitleShown(langRegion: langRegionCode)
-                        } catch {}  // ???
+                        } catch {
+                            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).revalueForm", errorStruct: error, extra: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
+                            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                        }
                     }
                 }
                 break
@@ -735,7 +750,10 @@ public class OrgEditFormLangFields {
                                 let ar = self!.mForm!.rowBy(tag: "add_new_lang")
                                 do {
                                     try self!.mMVS_langs!.insert(row: br, before: ar!)
-                                } catch {}  // ???
+                                } catch {
+                                    AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).addFormLangRows", errorStruct: error, extra: nil)
+                                    // do not show an error to the end-user
+                                }
                             }
                         }
                     } else {
@@ -748,7 +766,10 @@ public class OrgEditFormLangFields {
                             let ar = self!.mForm!.rowBy(tag: "add_new_lang")
                             do {
                                 try self!.mMVS_langs!.insert(row: br, before: ar!)
-                            } catch {}  // ???
+                            } catch {
+                                AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).addFormLangRows", errorStruct: error, extra: nil)
+                                // do not show an error to the end-user
+                            }
                         }
                     }
                     self!.mChangesCallback?()   // not used on WizOrgDefine11ViewController
@@ -884,7 +905,10 @@ public class OrgEditFormLangFields {
                             let ar = self.mForm!.rowBy(tag: "add_new_lang")
                             do {
                                 try self.mMVS_langs!.insert(row: br, before: ar!)
-                            } catch {}  // ???
+                            } catch {
+                                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).revalueForm", errorStruct: error, extra: nil)
+                                // do not show an error to the end-user
+                            }
                         }
                     }
                     // now look if there are any straggler LangRegion records that are NOT in rOrg_LangRegionCodes_Supported;
@@ -899,7 +923,10 @@ public class OrgEditFormLangFields {
                                     let ar = self.mForm!.rowBy(tag: "add_new_lang")
                                     do {
                                         try self.mMVS_langs!.insert(row: br, before: ar!)
-                                    } catch {}  // ???
+                                    } catch {
+                                        AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).revalueForm", errorStruct: error, extra: nil)
+                                        // do not show an error to the end-user
+                                    }
                                 }
                             }
                         }

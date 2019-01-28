@@ -545,35 +545,30 @@ public class DatabaseHandler {
         // first load the chosen Org record and other preps
         var funcString:String = "\(self.CTAG).exportOrgOrForm"
         var orgRec:RecOrganizationDefs? = nil
+        var formRec:RecOrgFormDefs? = nil
         do {
             orgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: forOrgShortName)
+            if orgRec == nil {
+                // this should not happen
+                throw APP_ERROR(funcName: funcString, during: "orgGetSpecifiedRecOfShortName", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: NSLocalizedString("Export Preparation", comment:""), developerInfo: "orgRec == nil")
+            }
+            if forFormShortName != nil {
+                // this is a form-only export
+                funcString = funcString + ".formOnly"
+                
+                formRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName: forFormShortName!, forOrgShortName: forOrgShortName)
+                if formRec == nil {
+                    // this should not happen
+                    throw APP_ERROR(funcName: funcString, during: "orgFormGetSpecifiedRecOfShortName", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: NSLocalizedString("Export Preparation", comment:""), developerInfo: "formRec == nil")
+                }
+            } else {
+                // this is an entire-Org export
+                try orgRec!.loadLangRecs(method: funcString)
+            }
         } catch var appError as APP_ERROR {
             appError.prependCallStack(funcName: funcString)
             throw appError
         } catch { throw error }
-        if orgRec == nil {
-            // this should not happen
-            throw APP_ERROR(funcName: funcString, during: "orgGetSpecifiedRecOfShortName", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: NSLocalizedString("Export Preparation", comment:""), developerInfo: "orgRec == nil")
-        }
-        
-        var formRec:RecOrgFormDefs? = nil
-        if forFormShortName != nil {
-            // this is a form-only export
-            funcString = funcString + ".formOnly"
-            do {
-                formRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName: forFormShortName!, forOrgShortName: forOrgShortName)
-            } catch var appError as APP_ERROR {
-                appError.prependCallStack(funcName: funcString)
-                throw appError
-            } catch { throw error }
-            if formRec == nil {
-                // this should not happen
-                throw APP_ERROR(funcName: funcString, during: "orgFormGetSpecifiedRecOfShortName", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: NSLocalizedString("Export Preparation", comment:""), developerInfo: "formRec == nil")
-            }
-        } else {
-            // this is an entire-Org export
-            try orgRec!.loadLangRecs(method: funcString)
-        }
     
         let mydateFormatter = DateFormatter()
         mydateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
@@ -582,114 +577,119 @@ public class DatabaseHandler {
         var jsonOrgLangsObj:NSMutableDictionary? = nil
         var jsonFormsObj:NSMutableDictionary? = nil
         var jsonFormObj:NSMutableDictionary? = nil
-        if forFormShortName == nil {
-            // build the Org's json object and validate it
-            var jsonRecObj:NSMutableDictionary
-            do {
-                jsonRecObj = try orgRec!.buildJSONObject()
-            } catch var appError as APP_ERROR {
-                appError.prependCallStack(funcName: funcString)
-                throw appError
-            } catch { throw error }
-            
-            jsonOrgObj = NSMutableDictionary()
-            jsonOrgObj!["item"] = jsonRecObj
-            jsonOrgObj!["tableName"] = RecOrganizationDefs.TABLE_NAME
-            if !JSONSerialization.isValidJSONObject(jsonOrgObj!) {
-                throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonOrgObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
-            }
-            
-            // build the Org's Language records into json array and validate them all
-            let jsonOrgLangsItemsObj:NSMutableArray = NSMutableArray()
-            if orgRec!.mOrg_Lang_Recs != nil {
-                for orgLangRec in orgRec!.mOrg_Lang_Recs! {
-                    let jsonOrgLangObj = orgLangRec.buildJSONObject()
-                    jsonOrgLangsItemsObj.add(jsonOrgLangObj!)
+        let jsonFormFieldsObj:NSMutableDictionary = NSMutableDictionary()
+        let jsonFormFieldLocalesObj:NSMutableDictionary = NSMutableDictionary()
+        let jsonOptionSetLocalesObj:NSMutableDictionary = NSMutableDictionary()
+        do {
+            if forFormShortName == nil {
+                // build the Org's json object and validate it
+                var jsonRecObj:NSMutableDictionary
+                do {
+                    jsonRecObj = try orgRec!.buildJSONObject()
+                } catch var appError as APP_ERROR {
+                    appError.prependCallStack(funcName: funcString)
+                    throw appError
+                } catch { throw error }
+                
+                jsonOrgObj = NSMutableDictionary()
+                jsonOrgObj!["item"] = jsonRecObj
+                jsonOrgObj!["tableName"] = RecOrganizationDefs.TABLE_NAME
+                if !JSONSerialization.isValidJSONObject(jsonOrgObj!) {
+                    throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonOrgObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
+                }
+                
+                // build the Org's Language records into json array and validate them all
+                let jsonOrgLangsItemsObj:NSMutableArray = NSMutableArray()
+                if orgRec!.mOrg_Lang_Recs != nil {
+                    for orgLangRec in orgRec!.mOrg_Lang_Recs! {
+                        let jsonOrgLangObj = orgLangRec.buildJSONObject()
+                        jsonOrgLangsItemsObj.add(jsonOrgLangObj!)
+                    }
+                }
+                orgRec = nil    // clean up heap since no longer needed
+                jsonOrgLangsObj = NSMutableDictionary()
+                jsonOrgLangsObj!["items"] = jsonOrgLangsItemsObj
+                jsonOrgLangsObj!["tableName"] = RecOrganizationLangs.TABLE_NAME
+                if !JSONSerialization.isValidJSONObject(jsonOrgLangsObj!) {
+                    throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonOrgLangsObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
+                }
+                
+                // load and build all the Org's Form records into json array and validate them all
+                let jsonFormsItemsObj:NSMutableArray = NSMutableArray()
+                let records1:AnySequence<Row> = try RecOrgFormDefs.orgFormGetAllRecs(forOrgShortName: forOrgShortName)
+                for rowObj in records1 {
+                    let orgFormRec:RecOrgFormDefs = try RecOrgFormDefs(row:rowObj)
+                    let jsonFormObj = orgFormRec.buildJSONObject()
+                    jsonFormsItemsObj.add(jsonFormObj!)
+                }
+                jsonFormsObj = NSMutableDictionary()
+                jsonFormsObj!["items"] = jsonFormsItemsObj
+                jsonFormsObj!["tableName"] = RecOrgFormDefs.TABLE_NAME
+                if !JSONSerialization.isValidJSONObject(jsonFormsObj!) {
+                    throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonFormsObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
+                }
+            } else {
+                // build the Form's json object and validate it
+                let jsonRecObj = formRec!.buildJSONObject()
+                jsonFormObj = NSMutableDictionary()
+                jsonFormObj!["item"] = jsonRecObj!
+                jsonFormObj!["tableName"] = RecOrgFormDefs.TABLE_NAME
+                if !JSONSerialization.isValidJSONObject(jsonFormObj!) {
+                    throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonFormObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
                 }
             }
-            orgRec = nil    // clean up heap since no longer needed
-            jsonOrgLangsObj = NSMutableDictionary()
-            jsonOrgLangsObj!["items"] = jsonOrgLangsItemsObj
-            jsonOrgLangsObj!["tableName"] = RecOrganizationLangs.TABLE_NAME
-            if !JSONSerialization.isValidJSONObject(jsonOrgLangsObj!) {
-                throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonOrgLangsObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
+            
+            // load and build all the Org's or Form's FormField records into json array and validate them all
+            let jsonFormFieldsItemsObj:NSMutableArray = NSMutableArray()
+            let records2:AnySequence<Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: forOrgShortName, forFormShortName: nil, sortedBySVFileOrder: false)
+            for rowObj in records2 {
+                let orgFormFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(row:rowObj)
+                let jsonFormFieldObj = orgFormFieldRec.buildJSONObject()
+                jsonFormFieldsItemsObj.add(jsonFormFieldObj!)
+            }
+            jsonFormFieldsObj["items"] = jsonFormFieldsItemsObj
+            jsonFormFieldsObj["tableName"] = RecOrgFormFieldDefs.TABLE_NAME
+            if !JSONSerialization.isValidJSONObject(jsonFormFieldsObj) {
+                throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonFormFieldsObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
             }
             
-            // load and build all the Org's Form records into json array and validate them all
-            let jsonFormsItemsObj:NSMutableArray = NSMutableArray()
-            let records1:AnySequence<Row> = try RecOrgFormDefs.orgFormGetAllRecs(forOrgShortName: forOrgShortName)
-            for rowObj in records1 {
-                let orgFormRec:RecOrgFormDefs = try RecOrgFormDefs(row:rowObj)
-                let jsonFormObj = orgFormRec.buildJSONObject()
-                jsonFormsItemsObj.add(jsonFormObj!)
+            // load and build all the Org's or Form's FormFieldLocale records into json array and validate them all
+            let jsonFormFieldLocalesItemsObj:NSMutableArray = NSMutableArray()
+            let records3:AnySequence<Row> = try RecOrgFormFieldLocales.formFieldLocalesGetAllRecs(forOrgShortName: forOrgShortName, forFormShortName: nil)
+            for rowObj in records3 {
+                let orgFormFieldLocaleRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(row:rowObj)
+                let jsonFormFieldLocaleObj = orgFormFieldLocaleRec.buildJSONObject()
+                jsonFormFieldLocalesItemsObj.add(jsonFormFieldLocaleObj!)
             }
-            jsonFormsObj = NSMutableDictionary()
-            jsonFormsObj!["items"] = jsonFormsItemsObj
-            jsonFormsObj!["tableName"] = RecOrgFormDefs.TABLE_NAME
-            if !JSONSerialization.isValidJSONObject(jsonFormsObj!) {
-                throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonFormsObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
+            jsonFormFieldLocalesObj["items"] = jsonFormFieldLocalesItemsObj
+            jsonFormFieldLocalesObj["tableName"] = RecOrgFormFieldLocales.TABLE_NAME
+            if !JSONSerialization.isValidJSONObject(jsonFormFieldLocalesObj) {
+                throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonFormFieldLocalesObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
             }
-        } else {
-            // build the Form's json object and validate it
-            let jsonRecObj = formRec!.buildJSONObject()
-            jsonFormObj = NSMutableDictionary()
-            jsonFormObj!["item"] = jsonRecObj!
-            jsonFormObj!["tableName"] = RecOrgFormDefs.TABLE_NAME
-            if !JSONSerialization.isValidJSONObject(jsonFormObj!) {
-                throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonFormObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
+            
+            // load and build all the Org's CustomField records into json array and validate them all
+            // ??
+            
+            // load and build all the Org's CustomFieldLocale records into json array and validate them all
+            // ??
+            
+            // load and build all the custom OptionSetLocale records into json array and validate them all
+            let jsonOptionSetLocalesItemsObj:NSMutableArray = NSMutableArray()
+            let records6:AnySequence<Row> = try RecOptionSetLocales.optionSetLocalesGetAllRecs()
+            for rowObj in records6 {
+                let oslRec:RecOptionSetLocales = try RecOptionSetLocales(row:rowObj)
+                let jsonOptionSetLocaleObj = oslRec.buildJSONObject()
+                jsonOptionSetLocalesItemsObj.add(jsonOptionSetLocaleObj!)
             }
-        }
-        
-        // load and build all the Org's or Form's FormField records into json array and validate them all
-        let jsonFormFieldsItemsObj:NSMutableArray = NSMutableArray()
-        let records2:AnySequence<Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: forOrgShortName, forFormShortName: nil, sortedBySVFileOrder: false)
-        for rowObj in records2 {
-            let orgFormFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(row:rowObj)
-            let jsonFormFieldObj = orgFormFieldRec.buildJSONObject()
-            jsonFormFieldsItemsObj.add(jsonFormFieldObj!)
-        }
-        let jsonFormFieldsObj:NSMutableDictionary = NSMutableDictionary()
-        jsonFormFieldsObj["items"] = jsonFormFieldsItemsObj
-        jsonFormFieldsObj["tableName"] = RecOrgFormFieldDefs.TABLE_NAME
-        if !JSONSerialization.isValidJSONObject(jsonFormFieldsObj) {
-            throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonFormFieldsObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
-        }
-        
-        // load and build all the Org's or Form's FormFieldLocale records into json array and validate them all
-        let jsonFormFieldLocalesItemsObj:NSMutableArray = NSMutableArray()
-        let records3:AnySequence<Row> = try RecOrgFormFieldLocales.formFieldLocalesGetAllRecs(forOrgShortName: forOrgShortName, forFormShortName: nil)
-        for rowObj in records3 {
-            let orgFormFieldLocaleRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(row:rowObj)
-            let jsonFormFieldLocaleObj = orgFormFieldLocaleRec.buildJSONObject()
-            jsonFormFieldLocalesItemsObj.add(jsonFormFieldLocaleObj!)
-        }
-        let jsonFormFieldLocalesObj:NSMutableDictionary = NSMutableDictionary()
-        jsonFormFieldLocalesObj["items"] = jsonFormFieldLocalesItemsObj
-        jsonFormFieldLocalesObj["tableName"] = RecOrgFormFieldLocales.TABLE_NAME
-        if !JSONSerialization.isValidJSONObject(jsonFormFieldLocalesObj) {
-            throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonFormFieldLocalesObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
-        }
-        
-        // load and build all the Org's CustomField records into json array and validate them all
-        // ??
-        
-        // load and build all the Org's CustomFieldLocale records into json array and validate them all
-        // ??
-        
-        // load and build all the custom OptionSetLocale records into json array and validate them all
-        let jsonOptionSetLocalesItemsObj:NSMutableArray = NSMutableArray()
-        let records6:AnySequence<Row> = try RecOptionSetLocales.optionSetLocalesGetAllRecs()
-        for rowObj in records6 {
-            let oslRec:RecOptionSetLocales = try RecOptionSetLocales(row:rowObj)
-            let jsonOptionSetLocaleObj = oslRec.buildJSONObject()
-            jsonOptionSetLocalesItemsObj.add(jsonOptionSetLocaleObj!)
-        }
-        let jsonOptionSetLocalesObj:NSMutableDictionary = NSMutableDictionary()
-        jsonOptionSetLocalesObj["items"] = jsonOptionSetLocalesItemsObj
-        jsonOptionSetLocalesObj["tableName"] = RecOptionSetLocales.TABLE_NAME
-        if !JSONSerialization.isValidJSONObject(jsonOptionSetLocalesObj) {
-            throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonOptionSetLocalesObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
-        }
+            jsonOptionSetLocalesObj["items"] = jsonOptionSetLocalesItemsObj
+            jsonOptionSetLocalesObj["tableName"] = RecOptionSetLocales.TABLE_NAME
+            if !JSONSerialization.isValidJSONObject(jsonOptionSetLocalesObj) {
+                throw APP_ERROR(funcName: funcString, during: "isValidJSONObject.jsonOptionSetLocalesObj", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Export Generation", comment:""))
+            }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: funcString)
+            throw appError
+        } catch { throw error }
         
         // convert the entire JSON object structure to a serialized textual file
         var filename:String
@@ -843,7 +843,13 @@ public class DatabaseHandler {
         if jsonContents == nil {
             throw APP_ERROR(funcName: funcString, during: "FileManager.default.contents", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_OPEN, userErrorDetails: NSLocalizedString("Import File", comment:""), developerInfo: fromFileAtPath)
         }
-        let validationResult:DatabaseHandler.ValidateJSONdbFile_Result = try DatabaseHandler.validateJSONdbFile(contents: jsonContents!)
+        var validationResult:DatabaseHandler.ValidateJSONdbFile_Result
+        do {
+            validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents!)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: funcString)
+            throw appError
+        } catch { throw error }
         let methodStr:String = validationResult.jsonTopLevel!["method"] as! String  // these are verified as present and have content
         let contextStr:String = validationResult.jsonTopLevel!["context"] as! String
         
@@ -863,7 +869,12 @@ public class DatabaseHandler {
             }
             result.wasOrgShortName = nameComponents[0]
             result.wasFormShortName = nameComponents[1]
-            existingOrgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: nameComponents[0])
+            do {
+                existingOrgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: nameComponents[0])
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: funcString)
+                throw appError
+            } catch { throw error }
             if existingOrgRec == nil {
                 throw APP_ERROR(funcName: funcString, during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Organization for the Form must pre-exist: ", comment:"") + nameComponents[0], noPost: true)
             }

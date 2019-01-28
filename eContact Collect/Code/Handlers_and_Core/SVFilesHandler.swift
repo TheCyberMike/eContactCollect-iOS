@@ -250,36 +250,36 @@ public class SVFilesHandler {
     // generate new SV files for all pending contacts in the RecContactsCollected Table
     // throws exceptions for errors
     public func generateNewSVFiles() throws -> Bool {
-        // pre-parse the RecCollectedContacts building up a list of Org:Form pairs
-        // get all the RecContactsCollected for the particular Org and Form
-        let pairs:NSMutableArray = NSMutableArray()
-        if AppDelegate.mEntryFormProvisioner != nil {
-            let records:AnySequence<Row> = try RecContactsCollected.ccGetAllRecs(forOrgShortName: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
-            for rowRec in records {
-                let ccRec = try RecContactsCollected(row:rowRec)
-                let pair = OrgFormPair(org:ccRec.rOrg_Code_For_SV_File, form:ccRec.rForm_Code_For_SV_File)
-                var found:Bool = false
-                for po in pairs {
-                    let havePair:OrgFormPair = po as! OrgFormPair
-                    if havePair == pair { found = true }
+        do {
+            // pre-parse the RecCollectedContacts building up a list of Org:Form pairs
+            // get all the RecContactsCollected for the particular Org and Form
+            let pairs:NSMutableArray = NSMutableArray()
+            if AppDelegate.mEntryFormProvisioner != nil {
+                let records:AnySequence<Row> = try RecContactsCollected.ccGetAllRecs(forOrgShortName: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
+                for rowRec in records {
+                    let ccRec = try RecContactsCollected(row:rowRec)
+                    let pair = OrgFormPair(org:ccRec.rOrg_Code_For_SV_File, form:ccRec.rForm_Code_For_SV_File)
+                    var found:Bool = false
+                    for po in pairs {
+                        let havePair:OrgFormPair = po as! OrgFormPair
+                        if havePair == pair { found = true }
+                    }
+                    if !found { pairs.add(pair) }
                 }
-                if !found { pairs.add(pair) }
             }
-        }
-        
-        // generate a SV file for each Org:Form pair
-        for po in pairs {
-            let pair:OrgFormPair = po as! OrgFormPair
-            do {
+            
+            // generate a SV file for each Org:Form pair
+            for po in pairs {
+                let pair:OrgFormPair = po as! OrgFormPair
                 if try generateNewSVFile(forOrgShortName:pair.orgShortName, forFormShortName:pair.formShortName) {
                     // successful; delete any CC records that have status "Generated"
                     let _ = try RecContactsCollected.ccDeleteGeneratedRecs()
                 }
-            } catch var appError as APP_ERROR {
-                appError.prependCallStack(funcName: "\(self.mCTAG).generateNewSVFiles")
-                throw appError
-            } catch { throw error }
-        }
+            }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).generateNewSVFiles")
+            throw appError
+        } catch { throw error }
         
         return true
     }
@@ -351,6 +351,7 @@ public class SVFilesHandler {
             formRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName:forFormShortName, forOrgShortName:forOrgShortName)
         } catch var appError as APP_ERROR {
             appError.prependCallStack(funcName: "\(self.mCTAG).generateNewSVFile")
+            throw appError
         } catch { throw error }
         if orgRec == nil {
             throw APP_ERROR(funcName: "\(self.mCTAG).generateNewSVFile", during: "orgGetSpecifiedRecOfShortName", domain: self.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: NSLocalizedString("Export Preparation for ", comment:"")+NSLocalizedString("Organization record", comment:""), developerInfo: forOrgShortName)
@@ -410,7 +411,13 @@ public class SVFilesHandler {
         }
         
         // get all the RecContactsCollected for the particular Org and Form
-        let records:AnySequence<Row> = try RecContactsCollected.ccGetAllRecs(forOrgShortName:forOrgShortName, forFormShortName:forFormShortName)
+        var records:AnySequence<Row>
+        do {
+            records = try RecContactsCollected.ccGetAllRecs(forOrgShortName:forOrgShortName, forFormShortName:forFormShortName)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).generateNewSVFile")
+            throw appError
+        } catch { throw error }
         
         // step thru all the retrieved collected contacts
         var xmlRecordTag = "  <contact>\r\n"
@@ -420,54 +427,59 @@ public class SVFilesHandler {
             xmlRecordTagCloser = "  </\(formRec!.rForm_XML_Record_Tag)>\r\n"
         }
         var lastHeaders:String = ""
-        for rowRec in records {
-            let ccRec = try RecContactsCollected(row:rowRec)
-            if ccRec.rCC_Importance != nil || ccRec.rCC_Collector_Notes != nil {
-                var metaComponents = ccRec.rCC_MetadataValues.components(separatedBy: "\t")
-                if ccRec.rCC_Importance != nil {
-                    if !(ccRec.rCC_Importance!.isEmpty) {
-                        metaComponents[ccRec.rCC_Importance_Position] = ccRec.rCC_Importance!
+        do {
+            for rowRec in records {
+                let ccRec = try RecContactsCollected(row:rowRec)
+                if ccRec.rCC_Importance != nil || ccRec.rCC_Collector_Notes != nil {
+                    var metaComponents = ccRec.rCC_MetadataValues.components(separatedBy: "\t")
+                    if ccRec.rCC_Importance != nil {
+                        if !(ccRec.rCC_Importance!.isEmpty) {
+                            metaComponents[ccRec.rCC_Importance_Position] = ccRec.rCC_Importance!
+                        }
                     }
-                }
-                if ccRec.rCC_Collector_Notes != nil {
-                    if !(ccRec.rCC_Collector_Notes!.isEmpty) {
-                        metaComponents[ccRec.rCC_Collector_Notes_Position] = ccRec.rCC_Collector_Notes!
+                    if ccRec.rCC_Collector_Notes != nil {
+                        if !(ccRec.rCC_Collector_Notes!.isEmpty) {
+                            metaComponents[ccRec.rCC_Collector_Notes_Position] = ccRec.rCC_Collector_Notes!
+                        }
                     }
+                    ccRec.rCC_MetadataValues = metaComponents.joined(separator: "\t")
+    //debugPrint("\(mCTAG).generateNewSVFile \(ccRec.rCC_Composed_Name) INSERT=\(ccRec.rCC_MetadataValues)")
                 }
-                ccRec.rCC_MetadataValues = metaComponents.joined(separator: "\t")
-//debugPrint("\(mCTAG).generateNewSVFile \(ccRec.rCC_Composed_Name) INSERT=\(ccRec.rCC_MetadataValues)")
-            }
-            if formRec!.rForm_SV_File_Type == .XML_ATTTRIB_VALUE_PAIRS {
-                // XML format
-                var recordString = xmlRecordTag
-                recordString = recordString + self.makeXML(attribs:ccRec.rCC_EnteredAttribs, values:ccRec.rCC_EnteredValues)
-                recordString = recordString + self.makeXML(attribs:ccRec.rCC_MetadataAttribs, values:ccRec.rCC_MetadataValues)
-                recordString = recordString + xmlRecordTagCloser
-                fileHandle!.write(recordString.data(using:String.Encoding.utf8)!)
-            } else {
-                var headers = "H\t" + ccRec.rCC_EnteredAttribs + ccRec.rCC_MetadataAttribs + "\r\n"
-                if headers != lastHeaders {
+                if formRec!.rForm_SV_File_Type == .XML_ATTTRIB_VALUE_PAIRS {
+                    // XML format
+                    var recordString = xmlRecordTag
+                    recordString = recordString + self.makeXML(attribs:ccRec.rCC_EnteredAttribs, values:ccRec.rCC_EnteredValues)
+                    recordString = recordString + self.makeXML(attribs:ccRec.rCC_MetadataAttribs, values:ccRec.rCC_MetadataValues)
+                    recordString = recordString + xmlRecordTagCloser
+                    fileHandle!.write(recordString.data(using:String.Encoding.utf8)!)
+                } else {
+                    var headers = "H\t" + ccRec.rCC_EnteredAttribs + ccRec.rCC_MetadataAttribs + "\r\n"
+                    if headers != lastHeaders {
+                        if formRec!.rForm_SV_File_Type == .TEXT_COMMA_DELIMITED_WITH_HEADERS {
+                            headers = headers.replacingOccurrences(of: "\t", with: ",")
+                        } else if formRec!.rForm_SV_File_Type == .TEXT_SEMICOLON_DELIMITED_WITH_HEADERS {
+                            headers = headers.replacingOccurrences(of: "\t", with: ";")
+                        }
+                        fileHandle!.write(headers.data(using:String.Encoding.utf8)!)
+                        lastHeaders = headers
+                    }
+                    var recordString = "D\t" + ccRec.rCC_EnteredValues + ccRec.rCC_MetadataValues + "\r\n"
                     if formRec!.rForm_SV_File_Type == .TEXT_COMMA_DELIMITED_WITH_HEADERS {
-                        headers = headers.replacingOccurrences(of: "\t", with: ",")
+                        recordString = recordString.replacingOccurrences(of: "\t", with: ",")
                     } else if formRec!.rForm_SV_File_Type == .TEXT_SEMICOLON_DELIMITED_WITH_HEADERS {
-                        headers = headers.replacingOccurrences(of: "\t", with: ";")
+                        recordString = recordString.replacingOccurrences(of: "\t", with: ";")
                     }
-                    fileHandle!.write(headers.data(using:String.Encoding.utf8)!)
-                    lastHeaders = headers
+                    fileHandle!.write(recordString.data(using:String.Encoding.utf8)!)
                 }
-                var recordString = "D\t" + ccRec.rCC_EnteredValues + ccRec.rCC_MetadataValues + "\r\n"
-                if formRec!.rForm_SV_File_Type == .TEXT_COMMA_DELIMITED_WITH_HEADERS {
-                    recordString = recordString.replacingOccurrences(of: "\t", with: ",")
-                } else if formRec!.rForm_SV_File_Type == .TEXT_SEMICOLON_DELIMITED_WITH_HEADERS {
-                    recordString = recordString.replacingOccurrences(of: "\t", with: ";")
-                }
-                fileHandle!.write(recordString.data(using:String.Encoding.utf8)!)
+                
+                // tag the record as having been generated into a SV File
+                ccRec.rCC_Status = .Generated
+                _ = try ccRec.saveChangesToDB(originalCCRec:ccRec)
             }
-            
-            // tag the record as having been generated into a SV File
-            ccRec.rCC_Status = .Generated
-            _ = try ccRec.saveChangesToDB(originalCCRec:ccRec)
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).generateNewSVFile")
+            throw appError
+        } catch { throw error }
         
         // handle any final insertions before closing the file
         switch formRec!.rForm_SV_File_Type {

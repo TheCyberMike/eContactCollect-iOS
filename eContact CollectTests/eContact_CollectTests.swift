@@ -36,11 +36,18 @@ extension UIFont {
 }
 
 class eContact_CollectTests_001_Error: XCTestCase {
+    public static var baseOrgRec1:RecOrganizationDefs? = nil
+    
     // This is the setUp() class method.
     // It is called before the first test method begins.
     // Set up any overall initial state here.
     override class func setUp() {
         super.setUp()   // should be first
+        
+        self.baseOrgRec1 = RecOrganizationDefs(org_code_sv_file: "Test Org1", org_title_mode: RecOrganizationDefs.ORG_TITLE_MODE.ONLY_TITLE, org_logo_image_png_blob: nil, org_email_to: "email1@email.com", org_email_cc: "emailcc1@smail.net", org_email_subject: "Subject1")
+        do {
+            let _ = try self.baseOrgRec1!.saveNewToDB()
+        } catch {}
     }
     
     // This is the setUp() instance method.
@@ -61,6 +68,10 @@ class eContact_CollectTests_001_Error: XCTestCase {
     // It is called after all test methods complete.
     // Perform any overall cleanup here.
     override class func tearDown() {
+        do {
+            let _ = try self.baseOrgRec1!.deleteFromDB()
+        } catch {}
+        
         // teardown code here
         super.tearDown()    // should be last
     }
@@ -105,7 +116,7 @@ class eContact_CollectTests_001_Error: XCTestCase {
             }
             
             appError.prependCallStack(funcName: "TestPrepend")
-            XCTAssertEqual(appError.callStack, "TestPrepend:test_001_FileSystemErrors", "APP_ERROR.*.\(stage):  appError.callStack prepending wrong")
+            XCTAssertEqual(appError.callStack, "TestPrepend:test_001_FileSystemErrors", "APP_ERROR.prependCallStack.\(stage):  appError.callStack prepending wrong")
         }
         
         // stage 2 - test an APP_ERROR throw from a one-level-deep function; filesystem type error
@@ -124,6 +135,35 @@ class eContact_CollectTests_001_Error: XCTestCase {
         } catch {
             XCTFail("APP_ERROR.*.\(stage): did not return an APP_ERROR")
         }
+    }
+    
+    func test_002_DatabaseErrors() {
+        continueAfterFailure = false
+
+        // stage 1 - test building an invalid query
+        let stage:Int = 1
+#if TESTING
+        let refAppError1:APP_ERROR = APP_ERROR(funcName: "RO.higherFunc:RO.orgGetSpecifiedRecOfShortName:\(DatabaseHandler.CTAG).genericQueryOne", during: "Pluck", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DATABASE_ERROR, userErrorDetails: nil, developerInfo: "DB table INVALID")
+        do {
+            let _ = try RecOrganizationDefs.higherFunc_TESTING_APP_ERROR()
+            XCTFail("APP_ERROR.*.\(stage): improperly returned a result")
+        } catch let appError as APP_ERROR {
+            XCTAssertTrue(refAppError1.sameAs(baseError: appError), "APP_ERROR.*.\(stage): error obtained not as expected")
+            XCTAssertNotNil(appError.error, "APP_ERROR.*.\(stage):  appError.error is nil")
+            if let sqlError = appError.error! as? Result {
+                switch sqlError {
+                case let .error(message, code, _):
+                    XCTAssertEqual(code, 1, "APP_ERROR.*.\(stage):  sqlError.code code wrong")
+                    XCTAssertEqual(message, "no such table: INVALID", "APP_ERROR.*.\(stage):  sqlError.code message wrong")
+                    break
+                }
+            } else {
+                XCTFail("APP_ERROR.*.\(stage): did not return SQLite.swift RESULT")
+            }
+        } catch {
+            XCTFail("APP_ERROR.*.\(stage): did not return an APP_ERROR")
+        }
+#endif
     }
 }
 

@@ -60,10 +60,7 @@ public struct APP_ERROR:Error, CustomStringConvertible {
             if self.domain != appError.domain { return false }
             if self.errorCode != appError.errorCode { return false }
             if self.userErrorDetails != appError.userErrorDetails { return false }
-            if self.developerInfo != appError.developerInfo { return false }
-            
-            if (self.error != nil && appError.error == nil) || (self.error == nil && appError.error != nil) { return false }
-            
+            if self.developerInfo != appError.developerInfo { return false }            
         } else { return false }
         return true
     }

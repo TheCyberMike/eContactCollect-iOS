@@ -743,6 +743,27 @@ public class RecOrganizationDefs {
         return try RecOrganizationDefs(row:record!)
     }
     
+#if TESTING
+    public static func higherFunc_TESTING_APP_ERROR() throws -> RecOrganizationDefs? {
+        do {
+            return try RecOrganizationDefs.orgGetSpecifiedRecOfShortName_TESTING_APP_ERROR(orgShortName: "Test Org1")
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).higherFunc")
+            throw appError
+        } catch { throw error}
+    }
+    
+    public static func orgGetSpecifiedRecOfShortName_TESTING_APP_ERROR(orgShortName:String) throws -> RecOrganizationDefs? {
+        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+            throw APP_ERROR(funcName: "\(self.mCTAG).orgGetSpecifiedRecOfShortName", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
+        }
+        let query = Table("INVALID").select(*).filter(COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == orgShortName)
+        let record = try AppDelegate.mDatabaseHandler!.genericQueryOne(method:"\(self.mCTAG).orgGetSpecifiedRecOfShortName", tableQuery:query)
+        if record == nil { return nil }
+        return try RecOrganizationDefs(row:record!)
+    }
+#endif
+    
     // add an Org entry; return is the RowID of the new record (negative will not be returned);
     // WARNING: if the key field has been changed, all existing records in all Tables will need renaming;
     // throws exceptions either for local errors or from the database
@@ -807,7 +828,12 @@ public class RecOrganizationDefs {
         if self.rOrg_Code_For_SV_File.isEmpty {
             throw APP_ERROR(funcName: "\(RecOrganizationDefs.mCTAG).deleteFromDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .MISSING_REQUIRED_CONTENT, userErrorDetails: nil, developerInfo: "self.rOrg_Code_For_SV_File.isEmpty")
         }
-        return try RecOrganizationDefs.orgDeleteRec(orgShortName:self.rOrg_Code_For_SV_File)
+        do {
+            return try RecOrganizationDefs.orgDeleteRec(orgShortName:self.rOrg_Code_For_SV_File)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).deleteFromDB")
+            throw appError
+        } catch { throw error }
     }
     
     // delete the indicated Org record; return is the count of records deleted (negative will not be returned;
@@ -818,8 +844,8 @@ public class RecOrganizationDefs {
             throw APP_ERROR(funcName: "\(self.mCTAG).orgDeleteRec", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrganizationDefs.TABLE_NAME).select(*).filter(RecOrganizationDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == orgShortName)
-        let qty = try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).orgDeleteRec", tableQuery:query)
-
+        let qty:Int = try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).orgDeleteRec", tableQuery:query)
+        
         // maintain referential integrity
         // ?? the custom Fields and FieldLocales
         do {

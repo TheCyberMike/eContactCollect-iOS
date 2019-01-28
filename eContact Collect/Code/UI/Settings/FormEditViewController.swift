@@ -1169,7 +1169,10 @@ class FormEditFormViewController: FormViewController {
                                 let ar = form.rowBy(tag: "add_new_field")
                                 do {
                                     try mvsSection.insert(row: br, before: ar!)
-                                } catch {}  // ???
+                                } catch {
+                                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).revalueForm", errorStruct: error, extra: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
+                                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                                }
                             }
                         }
                     }
@@ -1647,7 +1650,10 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
                     let ar = form.rowBy(tag: "add_new_option")
                     do {
                         try self.mMVS_field_options!.insert(row: br, before: ar!)
-                    } catch {}  // ???
+                    } catch {
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).buildForm", errorStruct: error, extra: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
+                        AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                    }
                 }
             }
         }

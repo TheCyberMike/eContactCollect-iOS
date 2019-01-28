@@ -336,7 +336,12 @@ public class RecOrganizationLangs {
     // delete the OrgLang record; return is the count of records deleted (negative will not be returned;
     // throws exceptions either for local errors or from the database
     public func deleteFromDB() throws -> Int {
-        return try RecOrganizationLangs.orgLangDeleteRec(orgShortName: self.rOrg_Code_For_SV_File, langRegionCode: self.rOrgLang_LangRegionCode)
+        do {
+            return try RecOrganizationLangs.orgLangDeleteRec(orgShortName: self.rOrg_Code_For_SV_File, langRegionCode: self.rOrgLang_LangRegionCode)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrganizationLangs.mCTAG).deleteFromDB")
+            throw appError
+        } catch { throw error }
     }
     
     // delete the indicated OrgLang record; return is the count of records deleted (negative will not be returned;

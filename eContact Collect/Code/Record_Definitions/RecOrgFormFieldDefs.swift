@@ -770,8 +770,13 @@ public class RecOrgFormFieldDefs {
         
         // need to also delete any and all RecFieldLocales that are specific to this FormField record
         // and if this is a container form field, delete any sub-fields linked to it
-        _ = try RecOrgFormFieldLocales.formFieldLocalesDeleteAllRecWithFormFieldIndex(index: self.rFormField_Index)
-        _ = try RecOrgFormFieldDefs.orgFormFieldDeleteAllRecsWithSubfieldIndex(index: self.rFormField_Index)
+        do {
+            _ = try RecOrgFormFieldLocales.formFieldLocalesDeleteAllRecWithFormFieldIndex(index: self.rFormField_Index)
+            _ = try RecOrgFormFieldDefs.orgFormFieldDeleteAllRecsWithSubfieldIndex(index: self.rFormField_Index)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecOrgFormFieldDefs.mCTAG).deleteFromDB")
+            throw appError
+        } catch { throw error }
         
         return qty
     }

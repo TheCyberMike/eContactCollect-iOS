@@ -170,7 +170,12 @@ public class RecAlert {
     // delete the Alert record; return is the count of records deleted (negative will not be returned;
     // throws exceptions either for local errors or from the database
     public func deleteFromDB() throws -> Int {
-        return try RecAlert.alertDeleteRec(id:self.rAlert_DBID)
+        do {
+            return try RecAlert.alertDeleteRec(id:self.rAlert_DBID)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(RecAlert.mCTAG).deleteFromDB")
+            throw appError
+        } catch { throw error }
      }
     
     // delete the indicated Alert; return is the count of records deleted (negative will not be returned;

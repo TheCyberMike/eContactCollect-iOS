@@ -138,35 +138,34 @@ public class FieldHandler {
     public func addMetadataFormFieldsToNewForm(forFormRec:RecOrgFormDefs, withOrgRec:RecOrganizationDefs) throws {
         do {
             let _ = try self.loadPotentialFieldsForForm(forFormRec: forFormRec, withOrgRec: withOrgRec)
-        } catch var appError as APP_ERROR {
-            appError.prependCallStack(funcName: "\(self.mCTAG).addMetadataFormFieldsToNewForm")
-            throw appError
-        } catch { throw error }
-        
-        for jsonFieldDefRec:RecJsonFieldDefs in self.mFields_json! {
-            if jsonFieldDefRec.isMetaData() {
-            
-                let jsonFieldLocalesRec:RecJsonFieldLocales = jsonFieldDefRec.mJsonFieldLocalesRecs![0] // the SV-File language is always first
+            for jsonFieldDefRec:RecJsonFieldDefs in self.mFields_json! {
+                if jsonFieldDefRec.isMetaData() {
+                
+                    let jsonFieldLocalesRec:RecJsonFieldLocales = jsonFieldDefRec.mJsonFieldLocalesRecs![0] // the SV-File language is always first
 
-                // add the meta-data RecOrgFormFieldDefs
-                let formFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRec: jsonFieldDefRec, forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: forFormRec.rForm_Code_For_SV_File, withJsonFieldLocaleRec: jsonFieldLocalesRec)
-                if formFieldRecOpt.validate() {
-                    let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(existingRec: formFieldRecOpt)
-                    formFieldRec.rFormField_Order_SV_File =  RecOrgFormFieldDefs.getInternalSortOrderFromString(fromString: jsonFieldDefRec.rField_Sort_Order!)
-                    formFieldRec.rFormField_Order_Shown = formFieldRec.rFormField_Order_SV_File
-                    formFieldRec.rFormField_Index = try formFieldRec.saveNewToDB()
-                    
-                    // add all the associated RecJsonFieldLocales
-                    for jsonFieldLocalesRec:RecJsonFieldLocales in jsonFieldDefRec.mJsonFieldLocalesRecs! {
-                        let formFieldLocalesOptRec:RecOrgFormFieldLocales_Optionals = RecOrgFormFieldLocales_Optionals(jsonRec: jsonFieldLocalesRec, forFormFieldRec: formFieldRec, withJsonFormFieldRec: jsonFieldDefRec)
-                        if formFieldLocalesOptRec.validate() {
-                            let formFieldLocalesRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(existingRec: formFieldLocalesOptRec)
-                            let _ = try formFieldLocalesRec.saveNewToDB()
+                    // add the meta-data RecOrgFormFieldDefs
+                    let formFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRec: jsonFieldDefRec, forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: forFormRec.rForm_Code_For_SV_File, withJsonFieldLocaleRec: jsonFieldLocalesRec)
+                    if formFieldRecOpt.validate() {
+                        let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(existingRec: formFieldRecOpt)
+                        formFieldRec.rFormField_Order_SV_File =  RecOrgFormFieldDefs.getInternalSortOrderFromString(fromString: jsonFieldDefRec.rField_Sort_Order!)
+                        formFieldRec.rFormField_Order_Shown = formFieldRec.rFormField_Order_SV_File
+                        formFieldRec.rFormField_Index = try formFieldRec.saveNewToDB()
+                        
+                        // add all the associated RecJsonFieldLocales
+                        for jsonFieldLocalesRec:RecJsonFieldLocales in jsonFieldDefRec.mJsonFieldLocalesRecs! {
+                            let formFieldLocalesOptRec:RecOrgFormFieldLocales_Optionals = RecOrgFormFieldLocales_Optionals(jsonRec: jsonFieldLocalesRec, forFormFieldRec: formFieldRec, withJsonFormFieldRec: jsonFieldDefRec)
+                            if formFieldLocalesOptRec.validate() {
+                                let formFieldLocalesRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(existingRec: formFieldLocalesOptRec)
+                                let _ = try formFieldLocalesRec.saveNewToDB()
+                            }
                         }
                     }
                 }
             }
-        }
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).addMetadataFormFieldsToNewForm")
+            throw appError
+        } catch { throw error }
         
         self.flushInMemoryObjects()
     }
@@ -180,54 +179,55 @@ public class FieldHandler {
         if field_IDCodes.count == 0 { return }
         do {
             let _ = try self.loadPotentialFieldsForForm(forFormRec: forFormRec, withOrgRec: withOrgRec)
+    
+            // step through all the submitted field_IDcodes; note that all errors are handled in the called functions
+            for field_IDCode:String in field_IDCodes {
+                let jsonFieldDefRec:RecJsonFieldDefs? = self.getJsonFormField(forFieldIDCode: field_IDCode)
+                if jsonFieldDefRec != nil {
+                    let jsonFieldLocalesRec:RecJsonFieldLocales = jsonFieldDefRec!.mJsonFieldLocalesRecs![0] // SV-File language is always first
+                    
+                    // add the RecOrgFormFieldDefs as a field or a subfield as appropriate
+                    let formFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRec: jsonFieldDefRec!, forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: forFormRec.rForm_Code_For_SV_File, withJsonFieldLocaleRec: jsonFieldLocalesRec)
+                    if formFieldRecOpt.validate() {
+                        let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(existingRec: formFieldRecOpt)
+                        if asSubfieldsOf != nil {
+                            formFieldRec.rFormField_SubField_Within_FormField_Index = asSubfieldsOf!
+                            formFieldRec.rFormField_Order_SV_File =  orderSVfile
+                            formFieldRec.rFormField_Order_Shown = orderShown
+                            orderSVfile = orderSVfile + 10
+                            orderShown = orderShown + 1
+                        } else {
+                            formFieldRec.rFormField_Order_SV_File =  orderSVfile
+                            formFieldRec.rFormField_Order_Shown = orderShown
+                            orderSVfile = orderSVfile + 10
+                            orderShown = orderShown + 10
+                        }
+                        formFieldRec.rFormField_Index = -1
+                        formFieldRec.rFormField_Index = try formFieldRec.saveNewToDB()
+                        
+                        // add all the associated RecJsonFieldLocales
+                        for jsonFieldLocalesRec:RecJsonFieldLocales in jsonFieldDefRec!.mJsonFieldLocalesRecs! {
+                            let formFieldLocalesOptRec:RecOrgFormFieldLocales_Optionals = RecOrgFormFieldLocales_Optionals(jsonRec: jsonFieldLocalesRec, forFormFieldRec: formFieldRec, withJsonFormFieldRec: jsonFieldDefRec!)
+                            if formFieldLocalesOptRec.validate() {
+                                let formFieldLocalesRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(existingRec: formFieldLocalesOptRec)
+                                formFieldLocalesRec.rFormFieldLoc_Index = -1
+                                let _ = try formFieldLocalesRec.saveNewToDB()
+                            }
+                        }
+                        
+                        // are there any subfields?
+                        if (jsonFieldDefRec!.rFieldProp_Initial_Field_IDCodes?.count ?? 0) > 0 {
+                            // recursive call to immediately add the additional subfields so the sort ordering is correct
+                            try self.addFieldstoForm(field_IDCodes: jsonFieldDefRec!.rFieldProp_Initial_Field_IDCodes!, forFormRec: forFormRec, withOrgRec: withOrgRec, orderSVfile: &orderSVfile, orderShown: &orderShown, asSubfieldsOf: formFieldRec.rFormField_Index)
+                        }
+                    }
+                }
+            }
         } catch var appError as APP_ERROR {
             appError.prependCallStack(funcName: "\(self.mCTAG).addFieldstoForm")
             throw appError
         } catch { throw error }
         
-        // step through all the submitted field_IDcodes; note that all errors are handled in the called functions
-        for field_IDCode:String in field_IDCodes {
-            let jsonFieldDefRec:RecJsonFieldDefs? = self.getJsonFormField(forFieldIDCode: field_IDCode)
-            if jsonFieldDefRec != nil {
-                let jsonFieldLocalesRec:RecJsonFieldLocales = jsonFieldDefRec!.mJsonFieldLocalesRecs![0] // SV-File language is always first
-                
-                // add the RecOrgFormFieldDefs as a field or a subfield as appropriate
-                let formFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRec: jsonFieldDefRec!, forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: forFormRec.rForm_Code_For_SV_File, withJsonFieldLocaleRec: jsonFieldLocalesRec)
-                if formFieldRecOpt.validate() {
-                    let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(existingRec: formFieldRecOpt)
-                    if asSubfieldsOf != nil {
-                        formFieldRec.rFormField_SubField_Within_FormField_Index = asSubfieldsOf!
-                        formFieldRec.rFormField_Order_SV_File =  orderSVfile
-                        formFieldRec.rFormField_Order_Shown = orderShown
-                        orderSVfile = orderSVfile + 10
-                        orderShown = orderShown + 1
-                    } else {
-                        formFieldRec.rFormField_Order_SV_File =  orderSVfile
-                        formFieldRec.rFormField_Order_Shown = orderShown
-                        orderSVfile = orderSVfile + 10
-                        orderShown = orderShown + 10
-                    }
-                    formFieldRec.rFormField_Index = -1
-                    formFieldRec.rFormField_Index = try formFieldRec.saveNewToDB()
-                    
-                    // add all the associated RecJsonFieldLocales
-                    for jsonFieldLocalesRec:RecJsonFieldLocales in jsonFieldDefRec!.mJsonFieldLocalesRecs! {
-                        let formFieldLocalesOptRec:RecOrgFormFieldLocales_Optionals = RecOrgFormFieldLocales_Optionals(jsonRec: jsonFieldLocalesRec, forFormFieldRec: formFieldRec, withJsonFormFieldRec: jsonFieldDefRec!)
-                        if formFieldLocalesOptRec.validate() {
-                            let formFieldLocalesRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(existingRec: formFieldLocalesOptRec)
-                            formFieldLocalesRec.rFormFieldLoc_Index = -1
-                            let _ = try formFieldLocalesRec.saveNewToDB()
-                        }
-                    }
-                    
-                    // are there any subfields?
-                    if (jsonFieldDefRec!.rFieldProp_Initial_Field_IDCodes?.count ?? 0) > 0 {
-                        // recursive call to immediately add the additional subfields so the sort ordering is correct
-                        try self.addFieldstoForm(field_IDCodes: jsonFieldDefRec!.rFieldProp_Initial_Field_IDCodes!, forFormRec: forFormRec, withOrgRec: withOrgRec, orderSVfile: &orderSVfile, orderShown: &orderShown, asSubfieldsOf: formFieldRec.rFormField_Index)
-                    }
-                }
-            }
-        }
         orderShown = ((orderShown / 10) + 1) * 10   // used when popping out of a recursive call
         if asSubfieldsOf == nil { self.flushInMemoryObjects() }
     }
@@ -329,7 +329,7 @@ public class FieldHandler {
         var formFieldRec:RecOrgFormFieldDefs
         do {
             formFieldRec = try RecOrgFormFieldDefs(existingRec: formFieldRecOpt)
-        } catch { return nil }  // ???
+        } catch { return nil }  // will never happen since !formFieldRecOpt.validate() already detected the throwable conditions
         if jsonFieldDefRec.isMetaData() {
             formFieldRec.rFormField_Order_SV_File =  RecOrgFormFieldDefs.getInternalSortOrderFromString(fromString: jsonFieldDefRec.rField_Sort_Order!)
             formFieldRec.rFormField_Order_Shown = formFieldRec.rFormField_Order_SV_File
@@ -347,7 +347,7 @@ public class FieldHandler {
                 var formFieldLocalesRec:RecOrgFormFieldLocales
                 do {
                     formFieldLocalesRec = try RecOrgFormFieldLocales(existingRec: formFieldLocalesOptRec)
-                } catch { return nil }  // ??? cannot occur since validate passed
+                } catch { return nil }  // will never happen since formFieldLocalesOptRec.validate() already detected the throwable conditions
                 formFieldLocalesComposedRec.mLocale1LangRegion = formFieldLocalesRec.rFormFieldLoc_LangRegionCode
                 formFieldLocalesRec.rFormFieldLoc_Index = -1
                 formFieldRec.mFormFieldLocalesRecs!.append(formFieldLocalesRec)
@@ -1001,7 +1001,7 @@ public class FieldHandler {
             returnRec!.mLocale1LangRegion = forLangSVFile
             returnRec!.mLocale2LangRegion = forLangSVFile
 
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).makeComposedFormFieldLocale", during: "stepThruFFLs", errorMessage: "FF missing all FFLs", extra: "O=\(forFormFieldRec.rOrg_Code_For_SV_File), F=\(forFormFieldRec.rForm_Code_For_SV_File), FF#=\(forFormFieldRec.rFormField_Index)") // ???
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).makeComposedFormFieldLocale", during: "stepThruFFLs", errorMessage: "FF missing all FFLs", extra: "O=\(forFormFieldRec.rOrg_Code_For_SV_File), F=\(forFormFieldRec.rForm_Code_For_SV_File), FF#=\(forFormFieldRec.rFormField_Index)")
             return returnRec!
         } else if foundCollector && found1st && found2nd { return returnRec! }     // found all necessary languages?
         
