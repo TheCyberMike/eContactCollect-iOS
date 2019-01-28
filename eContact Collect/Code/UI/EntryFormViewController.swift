@@ -179,14 +179,15 @@ class EntryFormViewController: FormViewController {
         tableView.reloadData()
         if self.mEntryVC!.mEFP == nil { return }
         if self.mEntryVC!.mEFP!.mFormRec == nil { return }
-        
+        let funcName:String = "buildForm" + (self.mEntryVC!.mEFP!.mPreviewMode ? ".previewMode":"")
+
         // setups
         self.mFullNameHiddenInserted = nil
         if !self.mEntryVC!.mEFP!.mPreviewMode {
             do {
                 self.mEntryVC!.mEFP!.mFormFieldEntries = try AppDelegate.mFieldHandler!.getOrgFormFields(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false)
             } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).buildForm", errorStruct: error, extra: nil)
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 return
             }
@@ -194,7 +195,7 @@ class EntryFormViewController: FormViewController {
             do {
                 try AppDelegate.mFieldHandler!.changeOrgFormFieldsLanguageShown(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil)
             } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).buildForm", errorStruct: error, extra: nil)
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             }
         }
@@ -1361,11 +1362,12 @@ class EntryFormViewController: FormViewController {
         
         if self.mEntryVC!.mEFP == nil { return }
         if self.mEntryVC!.mEFP!.mFormRec == nil { return }
+        let funcName:String = "retitleForm" + (self.mEntryVC!.mEFP!.mPreviewMode ? ".previewMode":"")
         if !self.mEntryVC!.mEFP!.mPreviewMode {
             do {
                 self.mEntryVC!.mEFP!.mFormFieldEntries = try AppDelegate.mFieldHandler!.getOrgFormFields(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false)
             } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).retitleForm", errorStruct: error, extra: nil)
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 return
             }
@@ -1373,7 +1375,7 @@ class EntryFormViewController: FormViewController {
             do {
                 try AppDelegate.mFieldHandler!.changeOrgFormFieldsLanguageShown(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil)
             } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).retitleForm", errorStruct: error, extra: nil)
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             }
         }
@@ -1952,8 +1954,9 @@ class EntryFormViewController: FormViewController {
         if (forFormFieldEntry.mFormFieldRec.rFieldProp_Metadatas_Code_For_SV_File?.count() ?? 0) == 0 &&
            (forFormFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Metadatas_Name_Shown?.count() ?? 0) == 0 {
             
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).prepareMetadata", during: "precheck", errorMessage: "Missing entries", extra: extra)
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Form Field Error", comment:""), endUserDuring: endUserDuring, errorStruct: APP_ERROR(funcName: "\(self.mCTAG).prepareMetadata", domain: self.mThrownDomain, errorCode: .MISSING_OR_MISMATCHED_FIELD_METADATA, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+            let funcName:String = "prepareMetadata" + (self.mEntryVC!.mEFP!.mPreviewMode ? ".previewMode":"")
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", during: "precheck", errorMessage: "Missing entries", extra: extra)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Form Field Error", comment:""), endUserDuring: endUserDuring, errorStruct: APP_ERROR(funcName: "\(self.mCTAG).\(funcName)", domain: self.mThrownDomain, errorCode: .MISSING_OR_MISMATCHED_FIELD_METADATA, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
             return nil
         }
         
@@ -1989,10 +1992,12 @@ class EntryFormViewController: FormViewController {
     private func prepareOptions(forFormFieldEntry:OrgFormFieldsEntry, forExtension:String?=nil) -> [CodePair]? {
         let endUserDuring:String = NSLocalizedString("Form-Field#", comment:"") + " \(forFormFieldEntry.mFormFieldRec.rFormField_Index)"
         let extra:String = "\(forFormFieldEntry.mFormFieldRec.rFormField_Index): \(forFormFieldEntry.mFormFieldRec.rFieldProp_IDCode) is \(forFormFieldEntry.mFormFieldRec.rFieldProp_Row_Type.rawValue)"
+        let funcName:String = "prepareOptions" + (self.mEntryVC!.mEFP!.mPreviewMode ? ".previewMode":"")
+        
         // does the FormFieldEntry have any attributes?
         if (forFormFieldEntry.mFormFieldRec.rFieldProp_Options_Code_For_SV_File?.count() ?? 0) == 0 {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).prepareOptions", during: "precheck1", errorMessage: "Missing all entries", extra: extra)
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Form Field Error", comment:""), endUserDuring: endUserDuring, errorStruct: APP_ERROR(funcName: "\(self.mCTAG).prepareOptions", domain: self.mThrownDomain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONS, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", during: "precheck1", errorMessage: "Missing all entries", extra: extra)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Form Field Error", comment:""), endUserDuring: endUserDuring, errorStruct: APP_ERROR(funcName: "\(self.mCTAG).\(funcName)", domain: self.mThrownDomain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONS, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
             return nil
         }
         var optionSetLocaleComposedRec:RecOptionSetLocales_Composed? = nil
@@ -2003,8 +2008,8 @@ class EntryFormViewController: FormViewController {
             if svCP.codeString.starts(with: "***OSLC_") {
                 // yes, need to pull in a complete set from RecFieldAttribLocales; pre-checks; these are never shown bi-lingual
                 if (forFormFieldEntry.mComposedOptionSetLocalesRecs?.count ?? 0) == 0 {
-                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).prepareOptions", during: "precheck2", errorMessage: "Missing records", extra: extra + "; for " + svCP.codeString)
-                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Form Field Error", comment:""), endUserDuring: endUserDuring, errorStruct: APP_ERROR(funcName: "\(self.mCTAG).prepareOptions", domain: self.mThrownDomain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONSET, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", during: "precheck2", errorMessage: "Missing records", extra: extra + "; for " + svCP.codeString)
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Form Field Error", comment:""), endUserDuring: endUserDuring, errorStruct: APP_ERROR(funcName: "\(self.mCTAG).\(funcName)", domain: self.mThrownDomain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONSET, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
                 } else {
                     // is an extension needed to choose the partcular set?  This is used for State codes;
                     // if missing it is not reported as an error since state codes for most countries have not been encoded in the App's datafiles
@@ -2030,8 +2035,8 @@ class EntryFormViewController: FormViewController {
                         } catch {
                             var changedError:APP_ERROR = error as! APP_ERROR
                             changedError.errorCode = .MISSING_OR_MISMATCHED_FIELD_OPTIONSET
-                            changedError.prependCallStack(funcName: "\(self.mCTAG).prepareOptions")
-                            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).prepareOptions", during: "precheck3", errorStruct: changedError, extra: extra + "; for " + svCP.codeString)
+                            changedError.prependCallStack(funcName: "\(self.mCTAG).\(funcName)")
+                            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", during: "precheck3", errorStruct: changedError, extra: extra + "; for " + svCP.codeString)
                             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Form Field Error", comment:""), endUserDuring: endUserDuring, errorStruct: changedError, buttonText: NSLocalizedString("Okay", comment:""))
                         }
                     }
@@ -2047,7 +2052,7 @@ class EntryFormViewController: FormViewController {
                                             shown: forFormFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Options_Name_Shown,
                                             deepSync: true)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).prepareOptions", during: "precheck4", errorStruct: error, extra: extra)
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", during: "precheck4", errorStruct: error, extra: extra)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Form Field Error", comment:""), endUserDuring: endUserDuring, errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return nil
         }

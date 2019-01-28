@@ -289,6 +289,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
     private func refresh() {
         if !self.isVisible { return }
         if self.mEFP == nil { return }
+        let funcName:String = "refresh" + (self.mEFP!.mPreviewMode ? ".previewMode":"")
         
         // multi-lingual buttons
         if self.mEFP!.mShowMode == .MULTI_LINGUAL {
@@ -305,7 +306,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
                 self.button_lang2.isHidden = false
                 self.mButton_lang2_langRegion = self.mEFP!.mOrgRec.rOrg_LangRegionCodes_Supported[1]
             } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refresh", during:"Lang Button refresh", errorStruct: error, extra: nil)
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", during:"Lang Button refresh", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             }
             
@@ -324,7 +325,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
             if !(shownEventTitle ?? "").isEmpty { self.label_event.text = shownEventTitle! }
             else { self.label_event.text = "" }
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refresh", during:"Event refresh", errorStruct: error, extra: nil)
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", during:"Event refresh", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
     }
@@ -335,6 +336,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
         if self.mEFP == nil { return }
         if self.mEFP!.mPreviewMode || self.mEFP!.mFormRec == nil { return } // will not be performed in preview mode
         if (self.mEnteredDataDict?.count ?? 0) == 0 { return }  // will not be performed if errors are pending
+        let funcName:String = "recordSubmission" + (self.mEFP!.mPreviewMode ? ".previewMode":"")
         
         // capture the desired metadata for this submission
         let formatter = DateFormatter()
@@ -347,7 +349,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
         do {
             self.mEFP!.mFormFieldEntries = try AppDelegate.mFieldHandler!.getOrgFormFields(forEFP: self.mEFP!, forceLangRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCode_SV_File, includeOptionSets: false, metaDataOnly: false, sortedBySVFileOrder: true)
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).recordSubmission", errorStruct: error, extra: nil)
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
@@ -537,113 +539,8 @@ debugPrint("\(self.mCTAG).recordSubmission NAME=\(composedName)")
         do {
             _ = try ccRec.saveNewToDB()
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).recordSubmission", errorStruct: error, extra: nil)
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
     }
-    
-    ///////////////////////////////////////////////////////////////////
-    // Methods related to the extended keyboard
-    ///////////////////////////////////////////////////////////////////
-    
-    /*@objc func keyboardDoneClicked(sender:UIButton) {
-        self.view.endEditing(true)
-    }
-    
-    @objc func keyboardPrevClicked(sender:UIButton) {
-        self.keyboardTab(direction:-1)
-    }
-    
-    @objc func keyboardNextClicked(sender:UIButton) {
-        self.keyboardTab(direction:1)
-    }
-    
-    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        self.keyboardTab(direction:1)
-        return true
-    }
-    
-    // search view's subviews for a UITextField or UITextView which is first responder
-    // if no view is passed in, start w/ the self.view
-    func countTaggedTextFieldsOrViews(inViewsSubviewsOf view:UIView? = nil) {
-        // check all the child views
-        for v in view?.subviews ?? self.view.subviews {
-            // found a match? return it
-            if v is UITextField, v.tag > 0 {
-                self.mTextFieldViewTagCount = self.mTextFieldViewTagCount + 1
-            } else if v is UITextView, v.tag > 0 {
-                self.mTextFieldViewTagCount = self.mTextFieldViewTagCount + 1
-            } else if v.subviews.count > 0 {
-                // check the child view's subviews
-                countTaggedTextFieldsOrViews(inViewsSubviewsOf:v)
-            }
-        }
-    }
-    
-    // note: the Tag field in each textfield and textview must be set properly for the order of the fields; starting at 1
-    private func keyboardTab(direction:Int, checkTag:Int? = nil) {
-        // find the current first responder
-        var newTag:Int = 0
-        if checkTag == nil {
-            let ffr:UIView? = self.view.findFirstResponder()
-            if ffr == nil { return }
-            newTag = ffr!.tag + direction
-        } else {
-            newTag = checkTag!
-        }
-        
-        // find the next (or previous) text field based on the tag
-        if newTag < 1 { newTag = self.mTextFieldViewTagCount }
-        if newTag > self.mTextFieldViewTagCount { newTag = 1 }
-        if let tf = findTextFieldOrView(withTag:newTag) {
-            tf.becomeFirstResponder()
-        } else {
-            self.keyboardTab(direction:direction, checkTag:newTag + direction)
-        }
-    }
-    
-    // search view's subviews for a UITextField or UITextView which is first responder
-    // if no view is passed in, start w/ the self.view
-    func findTextFieldOrView(withTag tag:Int, inViewsSubviewsOf view:UIView? = nil) -> UIView? {
-        // check all the child views
-        for v in view?.subviews ?? self.view.subviews {
-            // found a match? return it
-            if v is UITextField, (v as! UITextField).isEnabled, v.tag == tag {
-                return v
-            } else if v is UITextView, v.tag == tag {
-                return v
-            } else if v.subviews.count > 0 {
-                // check the child view's subviews
-                if let tf = findTextFieldOrView(withTag:tag, inViewsSubviewsOf:v) {
-                    return tf
-                }
-            }
-        }
-        return nil // not found
-    }*/
-    
-    ///////////////////////////////////////////////////////////////////
-    // Methods related to the dynamic layout
-    ///////////////////////////////////////////////////////////////////
-    
-    // create standard full-row constraints for the UI component;
-    // adding the ID is helpful when debugging constraint auto-layout errors
-    /*private func makeFullRowConstraints(forComponent:UIView, typeString:String, labelString:String, componentString:String) {
-        let constraint1 = forComponent.heightAnchor.constraint(equalToConstant: forComponent.frame.size.height)
-        constraint1.identifier = "G hi \(componentString) \(labelString)"
-        constraint1.isActive = true
-        
-        let constraint2 = forComponent.rightAnchor.constraint(equalTo: view_scrollableContent.rightAnchor, constant: 0)
-        constraint2.identifier = "G trail \(componentString) \(labelString) right to CV right"
-        constraint2.isActive = true
-        
-        let constraint3 = forComponent.leftAnchor.constraint(equalTo: view_scrollableContent.leftAnchor, constant: 0)
-        constraint3.identifier = "G lead \(componentString) \(labelString) left to CV left"
-        constraint3.isActive = true
-        
-        let constraint4 = forComponent.topAnchor.constraint(equalTo: self.mLayout_lastComponent!.bottomAnchor, constant: 0)
-        constraint4.identifier = "G top \(componentString) \(labelString) top to prior top"
-        constraint4.isActive = true
-
-    }*/
 }
