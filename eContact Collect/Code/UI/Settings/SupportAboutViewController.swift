@@ -209,7 +209,7 @@ class SupportAboutViewController: FormViewController {
     }
 }
 
-class SupportOptionsViewController: FormViewController, UIActivityItemSource, MFMailComposeViewControllerDelegate {
+class SupportOptionsViewController: FormViewController, UIActivityItemSource {
     // member variables
     private var mSharedFileURL:URL? = nil
     private var mSharedFileUTI:String? = nil
@@ -297,64 +297,81 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource, MF
                 UIApplication.shared.open(NSURL(string:"https://stackoverflow.com/questions/tagged/econtactcollect")! as URL)
         }
         section1 <<< ButtonRow() {
-            $0.tag = "sendEmailLog"
-            $0.title = NSLocalizedString("Send email to Developer", comment:"") + ": theCyberMike@yahoo.com"
-            }.cellUpdate { cell, row in
-                cell.textLabel?.textAlignment = .left
-                cell.textLabel?.font = .systemFont(ofSize: 15.0)
-                cell.textLabel?.textColor = UIColor.black
-                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-            }.onCellSelection { [weak self] cell, row in
-                self!.emailDeveloper(includeErrorLog: true)
-        }
-        section1 <<< ButtonRow() {
             $0.tag = "shareLog"
-            $0.title = NSLocalizedString("Share to Developer", comment:"") + ": theCyberMike@yahoo.com"
+            $0.title = NSLocalizedString("Share error.log to Developer", comment:"") + ":\n theCyberMike@yahoo.com"
             }.cellUpdate { cell, row in
                 cell.textLabel?.textAlignment = .left
                 cell.textLabel?.font = .systemFont(ofSize: 15.0)
                 cell.textLabel?.textColor = UIColor.black
+                cell.textLabel?.numberOfLines = 2
                 cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
             }.onCellSelection { [weak self] cell, row in
                 self!.shareDeveloper(selfViewAnchorRect: cell.frame)
         }
+        let section2 = Section(NSLocalizedString("Email the Developer", comment:""))
+        form +++ section2
+        let bodyRow = TextAreaRowExt() {
+            $0.tag = "emailDeveloperBody"
+            $0.title = NSLocalizedString("Message in English", comment:"")
+            $0.textAreaHeight = .dynamic(initialTextViewHeight: 50)
+            }.cellUpdate { cell, row in
+                cell.textView.autocapitalizationType = .sentences
+                cell.textView.font = .systemFont(ofSize: 15.0)
+                cell.textView.layer.cornerRadius = 0
+                cell.textView.layer.borderColor = UIColor.gray.cgColor
+                cell.textView.layer.borderWidth = 1
+        }
+        section2 <<< bodyRow
+        let attachRow = SwitchRow() {
+            $0.tag = "emailDeveloperErrorLog"
+            $0.title = NSLocalizedString("Include error.log?", comment:"")
+            $0.value = true
+        }
+        section2 <<< attachRow
+        section2 <<< ButtonRow() {
+            $0.tag = "sendEmailLog"
+            $0.title = NSLocalizedString("Send email to Developer", comment:"") + ":\n theCyberMike@yahoo.com"
+            }.cellUpdate { cell, row in
+                cell.textLabel?.textAlignment = .left
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.textColor = UIColor.black
+                cell.textLabel?.numberOfLines = 2
+                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
+            }.onCellSelection { [weak self] cell, row in
+                if !(bodyRow.value ?? "").isEmpty {
+                    self!.emailDeveloper(body: bodyRow.value!, includeErrorLog: (attachRow.value ?? false))
+                } else {
+                    AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("Message must contain some text", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
+                }
+        }
     }
 
     // email the developer
-    private func emailDeveloper(includeErrorLog:Bool) {
-        // invoke the emailer
-        if MFMailComposeViewController.canSendMail() {
-            var subject:String = "eContactCollect Support Email"
-            let mail = MFMailComposeViewController()
-            mail.title = NSLocalizedString("Email the Developer", comment:"")
-            mail.mailComposeDelegate = self
-            mail.setToRecipients(["theCyberMike@yahoo.com"])
-            mail.setMessageBody("?Your message here?", isHTML: false)
-            if includeErrorLog {
-                let fileData:Data? = FileManager.default.contents(atPath: AppDelegate.getErrorLogFullPath())
-                if fileData != nil {
-                    mail.addAttachmentData(fileData!, mimeType: "text/plain", fileName: "error.log")
-                    subject = subject + " with error.log"
-                }
+    private func emailDeveloper(body:String, includeErrorLog:Bool) {
+        // preparations
+        var subject:String = "eContactCollect Support Email"
+        var attachmentURL:URL? = nil
+        if includeErrorLog {
+            attachmentURL = URL(fileURLWithPath: AppDelegate.getErrorLogFullPath())
+            subject = subject + " with error.log"
+        }
+        
+        // send the email; this may or may not invoke an email compose view controller;
+        // in this case, do not need the delegate callback (the EmailHandler will post any error to error.log in this situation)
+        do {
+            try AppDelegate.mEmailHandler!.sendEmailToDeveloper(vc: self, tagI: 1, tagS: nil, delegate: nil, localizedTitle: NSLocalizedString("Email the Developer", comment:""), subject: subject, body: body, includingAttachment: attachmentURL)
+        } catch let appError as APP_ERROR {
+            if appError.errorCode == .IOS_EMAIL_SUBSYSTEM_DISABLED {
+                // do not error log or alert for this particular error
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), message: NSLocalizedString("iOS is not allowing App to send email", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
+            } else {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailDeveloper", during:"sendEmailToDeveloper", errorStruct: appError, extra: nil)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: appError, buttonText: NSLocalizedString("Okay", comment:""))
             }
-            mail.setSubject(subject)
-            self.present(mail, animated: true, completion: nil)
-        } else {
-            // do not error log or alert
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("iOS eMail Error", comment:""), message: NSLocalizedString("iOS is not allowing App to send email", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailDeveloper", during:"sendEmailToDeveloper", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
-    }
-    
-    // email the developer:  callback from iOS indicating rejection or initial success
-    public func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: Error?) {
-//debugPrint("\(self.mCTAG).mailComposeController.didFinishWith for \(controller.title!)")
-        if error != nil {
-            // do not error.log
-            let msg:String = NSLocalizedString("Error was returned from the iOS eMail System", comment:"") + ": " + AppDelegate.endUserErrorMessage(errorStruct: error!)
-            AppDelegate.postAlert(message: msg)
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("iOS eMail Error", comment:""), message: msg, buttonText: NSLocalizedString("Okay", comment:""))
-        }
-        controller.dismiss(animated: true, completion: nil)
     }
     
     // share the SV-File

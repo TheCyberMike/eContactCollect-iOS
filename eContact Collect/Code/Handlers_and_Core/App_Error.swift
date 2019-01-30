@@ -132,6 +132,8 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
     case MISSING_OR_MISMATCHED_FIELD_METADATA = -54
     case MISSING_OR_MISMATCHED_FIELD_OPTIONS = -55
     case MISSING_OR_MISMATCHED_FIELD_OPTIONSET = -56
+    case IOS_EMAIL_SUBSYSTEM_DISABLED = -57
+    case IOS_EMAIL_SUBSYSTEM_ERROR = -58
     
     // provide a description for the end-user in proper language
     public var localizedDescription:String {
@@ -174,6 +176,10 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
             return NSLocalizedString("Field's options are missing or mismatched", comment:"")
         case .MISSING_OR_MISMATCHED_FIELD_OPTIONSET:
             return NSLocalizedString("Field's optionSet is missing or mismatched", comment:"")
+        case .IOS_EMAIL_SUBSYSTEM_DISABLED:
+            return NSLocalizedString("iOS Email Subsystem is disabled", comment:"")
+        case .IOS_EMAIL_SUBSYSTEM_ERROR:
+            return NSLocalizedString("iOS Email Subsystem returned error", comment:"")
         }
     }
     
@@ -218,6 +224,10 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
             return "Field's options are missing or mismatched"
         case .MISSING_OR_MISMATCHED_FIELD_OPTIONSET:
             return "Field's optionSet is missing or mismatched"
+        case .IOS_EMAIL_SUBSYSTEM_DISABLED:
+            return "iOS Email Subsystem is disabled"
+        case .IOS_EMAIL_SUBSYSTEM_ERROR:
+            return "iOS Email Subsystem returned error"
         }
     }
 }

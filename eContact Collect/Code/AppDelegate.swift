@@ -150,6 +150,7 @@ internal class AppDelegate: UIResponder, UIApplicationDelegate {
     public static var mDatabaseHandler:DatabaseHandler? = nil           // common pointer to the DatabaseHandler Object
     public static var mFieldHandler:FieldHandler? = nil                 // common pointer to the FieldHandler Object
     public static var mSVFilesHandler:SVFilesHandler? = nil             // common pointer to the SVFilesHandler Object
+    public static var mEmailHandler:EmailHandler? = nil                 // common pointer to the EmailHandler Object
     public static var mEntryFormProvisioner:EntryFormProvisioner? = nil // common pointer to the EFP for the mainline EntryViewController
 
     // basic states of the iOS Device and App regions
@@ -237,10 +238,13 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         let _ = AppDelegate.mFieldHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
         AppDelegate.mSVFilesHandler = SVFilesHandler()
         let _ = AppDelegate.mSVFilesHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
+        AppDelegate.mEmailHandler = EmailHandler()
+        let _ = AppDelegate.mEmailHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
         if AppDelegate.mFirstTImeStages == 0 {
             AppDelegate.mDatabaseHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
             AppDelegate.mFieldHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
             AppDelegate.mSVFilesHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
+            AppDelegate.mEmailHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
         }
         
         // prepare the mainline EFP if possible; for first time setup this will not be possible

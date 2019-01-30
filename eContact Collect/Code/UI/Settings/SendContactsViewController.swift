@@ -76,7 +76,7 @@ class SendContactsViewController: UIViewController {
 // Child FormViewController
 /////////////////////////////////////////////////////////////////////////
 
-class SendContactsFormViewController: FormViewController, UIActivityItemSource, MFMailComposeViewControllerDelegate {
+class SendContactsFormViewController: FormViewController, UIActivityItemSource, HEM_Delegate {
     // member variables
     private var mNoDelete:Bool = false
     private var mMVSfilesPending:MultivaluedSection? = nil
@@ -380,72 +380,42 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
             email_subject = orgRec!.rOrg_Email_Subject!
         }
         
-        var emailToArray:[String] = []
-        var emailCCArray:[String] = []
-        if !((email_to ?? "").isEmpty) {
-            emailToArray = email_to!.components(separatedBy: ",")
-        }
-        if !((email_cc ?? "").isEmpty) {
-            emailCCArray = email_cc!.components(separatedBy: ",")
-        }
-        
-        // determine the mime type
-        var mimeType = "text/plain"
-        let extString = (fileName as NSString).pathExtension
-        switch extString {
-        case "txt":
-            mimeType = "text/tab-separated-values"
-            break
-        case "csv":
-            mimeType = "text/csv"
-            break
-        case "xml":
-            mimeType = "text/xml"
-            break
-        default:
-            break
-        }
-
-        // invoke the emailer
-        if MFMailComposeViewController.canSendMail() {
-            let mail = MFMailComposeViewController()
-            mail.title = fileName
-            mail.mailComposeDelegate = self
-            mail.setToRecipients(emailToArray)
-            mail.setCcRecipients(emailCCArray)
-            mail.setSubject((email_subject != nil) ? email_subject! : "")
-            //mail.setMessageBody("Message body", isHTML: false)
-            let fileData:Data = FileManager.default.contents(atPath:filePath)!
-            mail.addAttachmentData(fileData, mimeType: mimeType, fileName: fileName)
-            self.present(mail, animated: true, completion: nil)
-        } else {
-            // do not error log or alert
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("iOS eMail Error", comment:""), message: NSLocalizedString("iOS is not allowing App to send email", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
+        // send the email; this may or may not invoke an email compose view controller
+        do {
+            try AppDelegate.mEmailHandler!.sendEmail(vc: self, tagI: 1, tagS: fileName, delegate: self, localizedTitle: NSLocalizedString("Email SV-File", comment:""), to: email_to, cc: email_cc, subject: email_subject, body: nil, includingAttachment: URL(fileURLWithPath: filePath))
+        } catch let appError as APP_ERROR {
+            if appError.errorCode == .IOS_EMAIL_SUBSYSTEM_DISABLED {
+                // do not error log or alert for this particular error
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), message: NSLocalizedString("iOS is not allowing App to send email", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
+            } else {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", during:"sendEmail", errorStruct: appError, extra: nil)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: appError, buttonText: NSLocalizedString("Okay", comment:""))
+            }
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", during:"sendEmail", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
     }
     
-    // email the SV-File:  callback from iOS indicating rejection or initial success
-    public func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: Error?) {
-//debugPrint("\(self.mCTAG).mailComposeController.didFinishWith for \(controller.title!)")
+    // callback from the EmailHandler regarding eventual success or failure of the sent email
+    public func completed_HEM(tagI:Int, tagS:String?, result:EmailHandler.EmailHandlerResults, error:APP_ERROR?) {
+//debugPrint("\(self.mCTAG).mailComposeController.didFinishWith for \(tagS)")
         if error != nil {
-            // do not error.log
-            let msg:String = NSLocalizedString("Error was returned from the iOS eMail System", comment:"") + ": " + AppDelegate.endUserErrorMessage(errorStruct: error!)
-            AppDelegate.postAlert(message: msg)
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("iOS eMail Error", comment:""), message: msg, buttonText: NSLocalizedString("Okay", comment:""))
-        }
-        if result == .sent || result == .saved {
-            let fileName:String = controller.title!
-            do {
-                try AppDelegate.mSVFilesHandler!.movePendingToSent(fileName:fileName)
-                self.displayListOfFiles()
-            } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).mailComposeController.didFinishWith", errorStruct: error, extra: nil)
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("File Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_HEM", errorStruct: error!, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error!, buttonText: NSLocalizedString("Okay", comment:""))
+        } else {
+            if tagS != nil && (result == .Sent || result == .Saved) {
+                do {
+                    try AppDelegate.mSVFilesHandler!.movePendingToSent(fileName: tagS!)
+                    self.displayListOfFiles()
+                } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_HEM", errorStruct: error, extra: nil)
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("File Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                }
             }
         }
-        controller.dismiss(animated: true, completion: nil)
     }
-    
+
     // share the SV-File
     private func shareSVfile(filePath:String, fileName:String, selfViewAnchorRect:CGRect) {
 //debugPrint("\(self.mCTAG).shareSVfile STARTED PATH=\(filePath)")

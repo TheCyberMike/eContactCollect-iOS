@@ -5,9 +5,7 @@
 //  Created by Yo on 9/21/18.
 //
 
-// AppDelegate.swift
-"App Error" = "App Error";
-"File Error" = "File Error";
+// App_error
 "No error" = "No error";
 "Unknown error" = "Unknown error";
 "Suberror:" = "Suberror:";
@@ -27,17 +25,20 @@
 "Field's metadata is missing or mismatched" = "Field's metadata is missing or mismatched";
 "Field's options are missing or mismatched" = "Field's options are missing or mismatched";
 "Field's optionSet is missing or mismatched" = "Field's optionSet is missing or mismatched";
+
+// AppDelegate.swift
 "Common Languages" = "Common Languages";
 "Base Languages" = "Base Languages";
 "Extended Languages" = "Extended Languages";
 "Regionalized Common Languages" = "Regionalized Common Languages";
 "Regionalized Base Languages" = "Regionalized Base Languages";
 "Regionalized Extended Languages" = "Regionalized Extended Languages";
-"Severe error has occured; see error.log for details" = "Severe error has occured; see error.log for details";
 "Rating Reminder" = "Rating Reminder";
 "Are you willing to rate/review this App in the AppStore?" = "Are you willing to rate/review this App in the AppStore?";
+"Yes" = "Yes";
 "Later" = "Later";
 "Never" = "Never";
+"Severe error has occured; see error.log for details" = "Severe error has occured; see error.log for details";
 
 // FieldHandler.swift
 "Field-Handler" = "Field-Handler";
@@ -71,6 +72,10 @@
 "level improperly formatted" = "level improperly formatted";
 "level improperly formatted record" = "level improperly formatted record";
 "Organization for the Form must pre-exist: " = "Organization for the Form must pre-exist: ";
+
+// EmailHandler.swift
+"Email-Handler" = "Email-Handler";
+"Email eContact Collect" = "Email eContact Collect";
 
 // PopupFirstTimeViewController.swift
 "Entry Error" = "Entry Error";
@@ -128,11 +133,12 @@
 "Submit Issues/Bugs/Requests at" = "Submit Issues/Bugs/Requests at";
 "Submit Questions at" = "Submit Questions at";
 "\nPlease include tag:" = "\nPlease include tag:";
-"Send email to Developer" = "Send email to Developer";
-"Share to Developer" = "Share to Developer";
+"Share error.log to Developer" = "Share error.log to Developer";
 "Email the Developer" = "Email the Developer";
-"iOS eMail Error" = "iOS eMail Error";
-"Error was returned from the iOS eMail System" = "Error was returned from the iOS eMail System";
+"Message in English" = "Message in English";
+"Include error.log?" = "Include error.log?";
+"Send email to Developer" = "Send email to Developer";
+"Email Error" = "Email Error";
 "iOS is not allowing App to send email" = "iOS is not allowing App to send email";
 
 // AlertsMgmtViewController.swift
@@ -236,6 +242,9 @@
 "Delete Contact?" = "Delete Contact?";
 
 // SendContactsViewController.swift
+"App Error" = "App Error";
+"File Error" = "File Error";
+"Email SV-File" = "Email SV-File";
 "Generate Attachments" = "Generate Attachments";
 "Contacts not-yet-sent" = "Contacts not-yet-sent";
 "Generate new attachments" = "Generate new attachments";
@@ -257,6 +266,7 @@
 "The handler that manages basic definitions of form fields " = "The handler that manages basic definitions of form fields ";
 "has experienced critical error(s) which should be in the error.log; the App may need to be shutdown and restarted; or possibly uninstalled and reinstalled." = "has experienced critical error(s) which should be in the error.log; the App may need to be shutdown and restarted; or possibly uninstalled and reinstalled.";
 "The handler that manages your SV files " = "The handler that manages your SV files ";
+"The handler that manages sending emails " = "The handler that manages sending emails ";
 "Notice" = "Notice";
 "There are attachments waiting to be sent" = "There are attachments waiting to be sent";
 

@@ -147,6 +147,10 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
                     var msg:String = NSLocalizedString("The handler that manages your SV files ", comment:"") + NSLocalizedString("has experienced critical error(s) which should be in the error.log; the App may need to be shutdown and restarted; or possibly uninstalled and reinstalled.", comment:"")
                             if AppDelegate.mSVFilesHandler!.mAppError != nil { msg = msg + "\n\n" + AppDelegate.endUserErrorMessage(errorStruct: AppDelegate.mSVFilesHandler!.mAppError!)}
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Severe Error", comment:""), message: msg, buttonText: NSLocalizedString("Okay", comment:""))
+                } else if AppDelegate.mEmailHandler == nil || !(AppDelegate.mEmailHandler!.isReady()) {
+                    var msg:String = NSLocalizedString("The handler that manages sending emails ", comment:"") + NSLocalizedString("has experienced critical error(s) which should be in the error.log; the App may need to be shutdown and restarted; or possibly uninstalled and reinstalled.", comment:"")
+                    if AppDelegate.mEmailHandler!.mAppError != nil { msg = msg + "\n\n" + AppDelegate.endUserErrorMessage(errorStruct: AppDelegate.mEmailHandler!.mAppError!)}
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Severe Error", comment:""), message: msg, buttonText: NSLocalizedString("Okay", comment:""))
                 } else {
                     do {
                         if try AppDelegate.mSVFilesHandler!.anyPendingFiles() {

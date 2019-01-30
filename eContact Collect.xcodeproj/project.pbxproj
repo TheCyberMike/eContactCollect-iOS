@@ -13,6 +13,7 @@
 		D7BA6B4321EED9F400F45AFC /* Eureka.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D7BA6B6021EEDA6300F45AFC /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; };
 		D7BA6B6121EEDA6300F45AFC /* SQLite.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		D7CC2A982201456200F39E36 /* EmailHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CC2A972201456200F39E36 /* EmailHandler.swift */; };
 		D7D852F221C9724200948408 /* PopupFirstTimeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */; };
 		D7D87FD621E67B7B002847DE /* ChooserLangRegionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */; };
 		D7EE5BEC21FB7E0700769CA6 /* App_Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */; };
@@ -206,6 +207,7 @@
 		D7BA6B4821EEDA4F00F45AFC /* SQLite.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SQLite.xcodeproj; path = "../SubModules/SQLite.swift-master/SQLite.xcodeproj"; sourceTree = "<group>"; };
 		D7BA6C0121EF901500F45AFC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
 		D7C52D5F21EC12C800F84DEC /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Main.strings; sourceTree = "<group>"; };
+		D7CC2A972201456200F39E36 /* EmailHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailHandler.swift; sourceTree = "<group>"; };
 		D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupFirstTimeViewController.swift; sourceTree = "<group>"; };
 		D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserLangRegionViewController.swift; sourceTree = "<group>"; };
 		D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App_Error.swift; sourceTree = "<group>"; };
@@ -326,6 +328,7 @@
 				D954DF5E215ABFC9003FD748 /* DatabaseHandler.swift */,
 				D94399E92169DD0600FC2AD8 /* FieldHandler.swift */,
 				D9278381217398EA00B9B88A /* SVFilesHandler.swift */,
+				D7CC2A972201456200F39E36 /* EmailHandler.swift */,
 				D91378C621B843A1000E667D /* EntryFormProvisioner.swift */,
 				D91378C821B843BC000E667D /* OrgFormFields.swift */,
 			);
@@ -816,6 +819,7 @@
 				D93957932161799E004E9BE9 /* WizDefineNicknameViewController.swift in Sources */,
 				D90D6EA421823807000A90EB /* RecOrganizationLangs.swift in Sources */,
 				D94399E42169115B00FC2AD8 /* WizFormDefine16ViewController.swift in Sources */,
+				D7CC2A982201456200F39E36 /* EmailHandler.swift in Sources */,
 				D9A654D82167308C00F0CD1E /* WizOrgDefine26ViewController.swift in Sources */,
 				D9A043E0215C4786008BE46F /* AdminMenuViewController.swift in Sources */,
 				D9229EAC219F46C300404079 /* UIColorExtension.swift in Sources */,
