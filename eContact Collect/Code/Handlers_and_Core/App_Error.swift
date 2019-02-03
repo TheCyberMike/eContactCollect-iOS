@@ -134,6 +134,11 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
     case MISSING_OR_MISMATCHED_FIELD_OPTIONSET = -56
     case IOS_EMAIL_SUBSYSTEM_DISABLED = -57
     case IOS_EMAIL_SUBSYSTEM_ERROR = -58
+    case EMAIL_NO_TO_AND_CC = -59
+    case SECURE_STORAGE_ERROR = -60
+    case MISSING_SAVED_EMAIL_ACCOUNT = -61
+    case MISSING_KNOWN_EMAIL_PROVIDER = -62
+    case MISSING_EMAIL_ACCOUNT_CREDENTIALS = -63
     
     // provide a description for the end-user in proper language
     public var localizedDescription:String {
@@ -180,6 +185,16 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
             return NSLocalizedString("iOS Email Subsystem is disabled", comment:"")
         case .IOS_EMAIL_SUBSYSTEM_ERROR:
             return NSLocalizedString("iOS Email Subsystem returned error", comment:"")
+        case .EMAIL_NO_TO_AND_CC:
+            return NSLocalizedString("Email has no To and no CC", comment:"")
+        case .SECURE_STORAGE_ERROR:
+            return NSLocalizedString("Secure Storage Error", comment:"")
+        case .MISSING_SAVED_EMAIL_ACCOUNT:
+            return NSLocalizedString("Missing saved Email Account", comment:"")
+        case .MISSING_KNOWN_EMAIL_PROVIDER:
+            return NSLocalizedString("Missing known Email Provider", comment:"")
+        case .MISSING_EMAIL_ACCOUNT_CREDENTIALS:
+            return NSLocalizedString("Missing Email Account Credentials", comment:"")
         }
     }
     
@@ -228,6 +243,16 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
             return "iOS Email Subsystem is disabled"
         case .IOS_EMAIL_SUBSYSTEM_ERROR:
             return "iOS Email Subsystem returned error"
+        case .EMAIL_NO_TO_AND_CC:
+            return "Email has no To and no CC"
+        case .SECURE_STORAGE_ERROR:
+            return "Secure Storage Error"
+        case .MISSING_SAVED_EMAIL_ACCOUNT:
+            return "Missing saved Email Account"
+        case .MISSING_KNOWN_EMAIL_PROVIDER:
+            return "Missing known Email Provider"
+        case .MISSING_EMAIL_ACCOUNT_CREDENTIALS:
+            return "Missing Email Account Credentials"
         }
     }
 }

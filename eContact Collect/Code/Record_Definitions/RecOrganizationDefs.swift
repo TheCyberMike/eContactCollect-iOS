@@ -60,6 +60,7 @@ public class RecOrganizationDefs_Optionals {
     public var rOrg_Logo_Image_PNG_Blob:Data?
     public var rOrg_Event_Code_For_SV_File:String?
     public var rOrg_Visuals:OrgVisuals?
+    public var rOrg_Email_Via:String?
     public var rOrg_Email_To:String?
     public var rOrg_Email_CC:String?
     public var rOrg_Email_Subject:String? = NSLocalizedString("Contacts collected from eContact Collect", comment:"do not translate the portion: eContact Collect")
@@ -71,6 +72,7 @@ public class RecOrganizationDefs_Optionals {
         self.rOrg_LangRegionCode_SV_File = row[Expression<String?>(RecOrganizationDefs.COLUMN_ORG_LANGREGIONCODE_SV_FILE)]
         self.rOrg_Logo_Image_PNG_Blob = row[Expression<Data?>(RecOrganizationDefs.COL_EXPRESSION_ORG_LOGO_IMAGE_PNG_BLOB)]
         self.rOrg_Event_Code_For_SV_File = row[Expression<String?>(RecOrganizationDefs.COLUMN_ORG_EVENT_CODE_FOR_SV_FILE)]
+        self.rOrg_Email_Via = row[Expression<String?>(RecOrganizationDefs.COLUMN_ORG_EMAIL_VIA)]
         self.rOrg_Email_To = row[Expression<String?>(RecOrganizationDefs.COLUMN_ORG_EMAIL_TO)]
         self.rOrg_Email_CC = row[Expression<String?>(RecOrganizationDefs.COLUMN_ORG_EMAIL_CC)]
         self.rOrg_Email_Subject = row[Expression<String?>(RecOrganizationDefs.COLUMN_ORG_EMAIL_SUBJECT)]
@@ -92,10 +94,12 @@ public class RecOrganizationDefs_Optionals {
     }
     
     // constructor creates the record from a JSON object; is tolerant of missing columns;
-    // must be tolerant that Int64's may be encoded as Strings, especially OIDs
-    init(jsonObj:NSDictionary) {
+    // must be tolerant that Int64's may be encoded as Strings, especially OIDs;
+    // context is provided in case database version or language of the JSON file is important
+    init(jsonObj:NSDictionary, context:DatabaseHandler.ValidateJSONdbFile_Result) {
         self.rOrg_Code_For_SV_File = jsonObj[RecOrganizationDefs.COLUMN_ORG_CODE_FOR_SV_FILE] as? String
         self.rOrg_LangRegionCode_SV_File = jsonObj[RecOrganizationDefs.COLUMN_ORG_LANGREGIONCODE_SV_FILE] as? String
+        self.rOrg_Email_Via = jsonObj[RecOrganizationDefs.COLUMN_ORG_EMAIL_VIA] as? String
         self.rOrg_Email_To = jsonObj[RecOrganizationDefs.COLUMN_ORG_EMAIL_TO] as? String
         self.rOrg_Email_CC = jsonObj[RecOrganizationDefs.COLUMN_ORG_EMAIL_CC] as? String
         self.rOrg_Email_Subject = jsonObj[RecOrganizationDefs.COLUMN_ORG_EMAIL_SUBJECT] as? String
@@ -161,6 +165,7 @@ public class RecOrganizationDefs {
     public var rOrg_Logo_Image_PNG_Blob:Data?                       // organization's logo (stored in 3x size as PNG)
     public var rOrg_Event_Code_For_SV_File:String?                  // optional-event: code for the SV-File
     public var rOrg_Visuals:OrgVisuals                              // visual settings
+    public var rOrg_Email_Via:String?                               // email Via:  see EmailHandler.swift
     public var rOrg_Email_To:String?                                // email TO
     public var rOrg_Email_CC:String?                                // email CC
                                                                     // email Subject
@@ -179,6 +184,7 @@ public class RecOrganizationDefs {
     public static let COLUMN_ORG_TITLE_MODE = "org_title_mode"
     public static let COLUMN_ORG_LOGO_IMAGE_PNG_BLOB = "org_logo_image_png_blob"
     public static let COLUMN_ORG_EVENT_CODE_FOR_SV_FILE = "org_event_code_sv_file"
+    public static let COLUMN_ORG_EMAIL_VIA = "org_email_via"
     public static let COLUMN_ORG_EMAIL_TO = "org_email_to"
     public static let COLUMN_ORG_EMAIL_CC = "org_email_cc"
     public static let COLUMN_ORG_EMAIL_SUBJECT = "org_email_subject"
@@ -191,6 +197,7 @@ public class RecOrganizationDefs {
     public static let COL_EXPRESSION_ORG_TITLE_MODE = Expression<Int>(RecOrganizationDefs.COLUMN_ORG_TITLE_MODE)
     public static let COL_EXPRESSION_ORG_LOGO_IMAGE_PNG_BLOB = Expression<Data?>(RecOrganizationDefs.COLUMN_ORG_LOGO_IMAGE_PNG_BLOB)
     public static let COL_EXPRESSION_ORG_EVENT_CODE_FOR_SV_FILE = Expression<String?>(RecOrganizationDefs.COLUMN_ORG_EVENT_CODE_FOR_SV_FILE)
+    public static let COL_EXPRESSION_ORG_EMAIL_VIA = Expression<String?>(RecOrganizationDefs.COLUMN_ORG_EMAIL_VIA)
     public static let COL_EXPRESSION_ORG_EMAIL_TO = Expression<String?>(RecOrganizationDefs.COLUMN_ORG_EMAIL_TO)
     public static let COL_EXPRESSION_ORG_EMAIL_CC = Expression<String?>(RecOrganizationDefs.COLUMN_ORG_EMAIL_CC)
     public static let COL_EXPRESSION_ORG_EMAIL_SUBJECT = Expression<String?>(RecOrganizationDefs.COLUMN_ORG_EMAIL_SUBJECT)
@@ -205,10 +212,22 @@ public class RecOrganizationDefs {
             t.column(COL_EXPRESSION_ORG_TITLE_MODE)
             t.column(COL_EXPRESSION_ORG_LOGO_IMAGE_PNG_BLOB)
             t.column(COL_EXPRESSION_ORG_EVENT_CODE_FOR_SV_FILE)
+            t.column(COL_EXPRESSION_ORG_EMAIL_VIA)
             t.column(COL_EXPRESSION_ORG_EMAIL_TO)
             t.column(COL_EXPRESSION_ORG_EMAIL_CC)
             t.column(COL_EXPRESSION_ORG_EMAIL_SUBJECT)
             t.column(COL_EXPRESSION_ORG_VISUALS)
+        }
+    }
+    
+    // upgrade the table going from db version 1 to 2;
+    // upgrades:  add column "org_email_via"
+    public static func upgrade_1_to_2(db:Connection) throws {
+        do {
+            try db.run(Table(TABLE_NAME).addColumn(COL_EXPRESSION_ORG_EMAIL_VIA))
+        } catch {
+            let appError = APP_ERROR(funcName: "\(self.mCTAG).upgrade_1_to_2", during: "Run(addColumn).org_email_via", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: "DB table \(TABLE_NAME)", noAlert: false)
+            throw appError
         }
     }
     
@@ -222,7 +241,10 @@ public class RecOrganizationDefs {
     
     // destructor
     deinit {
-        if self.mOrg_Lang_Recs != nil { self.mOrg_Lang_Recs = nil } // likely not needed for heap management but cannot hurt
+        if self.mOrg_Lang_Recs != nil {     // likely not needed for heap management but cannot hurt
+            self.mOrg_Lang_Recs!.removeAll()
+            self.mOrg_Lang_Recs = nil
+        }
     }
     
     // create a duplicate of an existing record
@@ -233,6 +255,7 @@ public class RecOrganizationDefs {
         self.rOrg_Title_Mode = existingRec.rOrg_Title_Mode
         self.rOrg_Logo_Image_PNG_Blob = existingRec.rOrg_Logo_Image_PNG_Blob
         self.rOrg_Event_Code_For_SV_File = existingRec.rOrg_Event_Code_For_SV_File
+        self.rOrg_Email_Via = existingRec.rOrg_Email_Via
         self.rOrg_Email_To = existingRec.rOrg_Email_To
         self.rOrg_Email_CC = existingRec.rOrg_Email_CC
         self.rOrg_Email_Subject = existingRec.rOrg_Email_Subject
@@ -258,6 +281,7 @@ public class RecOrganizationDefs {
         self.rOrg_Title_Mode = existingRec.rOrg_Title_Mode!
         self.rOrg_Logo_Image_PNG_Blob = existingRec.rOrg_Logo_Image_PNG_Blob
         self.rOrg_Event_Code_For_SV_File = existingRec.rOrg_Event_Code_For_SV_File
+        self.rOrg_Email_Via = existingRec.rOrg_Email_Via
         self.rOrg_Email_To = existingRec.rOrg_Email_To
         self.rOrg_Email_CC = existingRec.rOrg_Email_CC
         self.rOrg_Email_Subject = existingRec.rOrg_Email_Subject
@@ -277,6 +301,7 @@ public class RecOrganizationDefs {
         self.rOrg_Title_Mode = org_title_mode
         self.rOrg_Logo_Image_PNG_Blob = org_logo_image_png_blob
         self.rOrg_Event_Code_For_SV_File = nil
+        self.rOrg_Email_Via = nil
         self.rOrg_Email_To = org_email_to
         self.rOrg_Email_CC = org_email_cc
         self.rOrg_Email_Subject = org_email_subject
@@ -298,6 +323,7 @@ public class RecOrganizationDefs {
             self.rOrg_Title_Mode = ORG_TITLE_MODE(rawValue:Int(exactly:value2)!)!
             self.rOrg_Logo_Image_PNG_Blob = try row.get(RecOrganizationDefs.COL_EXPRESSION_ORG_LOGO_IMAGE_PNG_BLOB)
             self.rOrg_Event_Code_For_SV_File = try row.get(RecOrganizationDefs.COL_EXPRESSION_ORG_EVENT_CODE_FOR_SV_FILE)
+            self.rOrg_Email_Via = try row.get(RecOrganizationDefs.COL_EXPRESSION_ORG_EMAIL_VIA)
             self.rOrg_Email_To = try row.get(RecOrganizationDefs.COL_EXPRESSION_ORG_EMAIL_TO)
             self.rOrg_Email_CC = try row.get(RecOrganizationDefs.COL_EXPRESSION_ORG_EMAIL_CC)
             self.rOrg_Email_Subject = try row.get(RecOrganizationDefs.COL_EXPRESSION_ORG_EMAIL_SUBJECT)
@@ -327,6 +353,7 @@ public class RecOrganizationDefs {
         retArray.append(RecOrganizationDefs.COL_EXPRESSION_ORG_LANGREGIONCODES_SUPPORTED <- self.rOrg_LangRegionCodes_Supported.joined(separator:","))
         retArray.append(RecOrganizationDefs.COL_EXPRESSION_ORG_LOGO_IMAGE_PNG_BLOB <- self.rOrg_Logo_Image_PNG_Blob)
         retArray.append(RecOrganizationDefs.COL_EXPRESSION_ORG_EVENT_CODE_FOR_SV_FILE <- self.rOrg_Event_Code_For_SV_File)
+        retArray.append(RecOrganizationDefs.COL_EXPRESSION_ORG_EMAIL_VIA <- self.rOrg_Email_Via)
         retArray.append(RecOrganizationDefs.COL_EXPRESSION_ORG_EMAIL_TO <- self.rOrg_Email_To)
         retArray.append(RecOrganizationDefs.COL_EXPRESSION_ORG_EMAIL_CC <- self.rOrg_Email_CC)
         retArray.append(RecOrganizationDefs.COL_EXPRESSION_ORG_EMAIL_SUBJECT <- self.rOrg_Email_Subject)
@@ -349,6 +376,7 @@ public class RecOrganizationDefs {
         jsonObj[RecOrganizationDefs.COLUMN_ORG_LANGREGIONCODES_SUPPORTED] = self.rOrg_LangRegionCodes_Supported.joined(separator:",")
         jsonObj[RecOrganizationDefs.COLUMN_ORG_LANGREGIONCODE_SV_FILE] = self.rOrg_LangRegionCode_SV_File
         jsonObj[RecOrganizationDefs.COLUMN_ORG_EVENT_CODE_FOR_SV_FILE] = self.rOrg_Event_Code_For_SV_File
+        jsonObj[RecOrganizationDefs.COLUMN_ORG_EMAIL_VIA] = self.rOrg_Email_Via
         jsonObj[RecOrganizationDefs.COLUMN_ORG_EMAIL_TO] = self.rOrg_Email_To
         jsonObj[RecOrganizationDefs.COLUMN_ORG_EMAIL_CC] = self.rOrg_Email_CC
         jsonObj[RecOrganizationDefs.COLUMN_ORG_EMAIL_SUBJECT] = self.rOrg_Email_Subject
@@ -373,6 +401,7 @@ public class RecOrganizationDefs {
         if self.rOrg_Code_For_SV_File != baseRec.rOrg_Code_For_SV_File { return false }
         if self.rOrg_LangRegionCode_SV_File != baseRec.rOrg_LangRegionCode_SV_File { return false }
         if self.rOrg_Event_Code_For_SV_File != baseRec.rOrg_Event_Code_For_SV_File { return false }
+        if self.rOrg_Email_Via != baseRec.rOrg_Email_Via { return false }
         if self.rOrg_Email_To != baseRec.rOrg_Email_To { return false }
         if self.rOrg_Email_CC != baseRec.rOrg_Email_CC { return false }
         if self.rOrg_Email_Subject != baseRec.rOrg_Email_Subject { return false }

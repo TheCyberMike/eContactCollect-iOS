@@ -837,7 +837,7 @@ class FormEditFormViewController: FormViewController {
                         // !!! MMM use of PushRow is an extension to the Eureka code
                         // REMEMBER: CANNOT do a buildForm() from viewWillAppear() ... the form must remain intact for this to work
                         // must buildForm() from viewDidLoad() then populate field values separately
-                        row.title = "Select new field to add"
+                        row.title = NSLocalizedString("Select new field to add", comment:"")
                         row.tag = "add_new_field"
                         row.selectorTitle = NSLocalizedString("Choose one", comment:"")
                         row.options = ["Field-1"]   // temporary placeholder; will be populated in .onPresent()
@@ -1171,7 +1171,7 @@ class FormEditFormViewController: FormViewController {
                                     try mvsSection.insert(row: br, before: ar!)
                                 } catch {
                                     AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).revalueForm", errorStruct: error, extra: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
-                                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                                    // do not show an error to the end-user
                                 }
                             }
                         }
@@ -1348,6 +1348,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
         super.viewDidLoad()
         
         // define navigations buttons and capture their press
+        navigationItem.title = NSLocalizedString("Edit Field", comment:"")
         let button1 = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(FormEditFieldFormViewController.tappedDone(_:)))
         button1.title = NSLocalizedString("Done", comment:"")
         navigationItem.rightBarButtonItem = button1
@@ -1652,7 +1653,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
                         try self.mMVS_field_options!.insert(row: br, before: ar!)
                     } catch {
                         AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).buildForm", errorStruct: error, extra: AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File)
-                        AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                        // do not show an error to the end-user
                     }
                 }
             }
@@ -1915,6 +1916,7 @@ class FormEditAttributeFormViewController: FormViewController, RowControllerType
         super.viewDidLoad()
         
         // define navigations buttons and capture their press
+        navigationItem.title = NSLocalizedString("Edit Attribute", comment:"")
         let button1 = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(FormEditAttributeFormViewController.tappedDone(_:)))
         button1.title = NSLocalizedString("Done", comment:"")
         navigationItem.rightBarButtonItem = button1
@@ -2194,6 +2196,7 @@ class FormEditFormSVFileOrderViewController: FormViewController {
         self.buildForm()
         
         // set overall form options
+        navigationItem.title = NSLocalizedString("Order of Fields", comment:"")
         navigationOptions = RowNavigationOptions.Enabled.union(.SkipCanNotBecomeFirstResponderRow)
         rowKeyboardSpacing = 5
     }

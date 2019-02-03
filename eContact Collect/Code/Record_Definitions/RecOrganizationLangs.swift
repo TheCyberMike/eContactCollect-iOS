@@ -47,8 +47,9 @@ public class RecOrganizationLangs_Optionals {
     }
 
     // constructor creates the record from a JSON object; is tolerant of missing columns;
-    // must be tolerant that Int64's may be encoded as Strings, especially OIDs
-    init(jsonObj:NSDictionary) {
+    // must be tolerant that Int64's may be encoded as Strings, especially OIDs;
+    // context is provided in case database version or language of the JSON file is important
+    init(jsonObj:NSDictionary, context:DatabaseHandler.ValidateJSONdbFile_Result) {
         self.rOrg_Code_For_SV_File = jsonObj[RecOrganizationLangs.COLUMN_ORG_CODE_FOR_SV_FILE] as? String
         self.rOrgLang_LangRegionCode = jsonObj[RecOrganizationLangs.COLUMN_ORGLANG_LANGREGIONCODE] as? String
         self.rOrgLang_Lang_Title_EN = jsonObj[RecOrganizationLangs.COLUMN_ORGLANG_LANG_TITLE_EN] as? String

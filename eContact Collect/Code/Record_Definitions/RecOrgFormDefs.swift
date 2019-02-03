@@ -51,6 +51,7 @@ public class RecOrgFormDefs_Optionals {
     public var rForm_SV_File_Type:RecOrgFormDefs.FORMFIELD_SV_FILE_TYPE? = .TEXT_TAB_DELIMITED_WITH_HEADERS
     public var rForm_XML_Collection_Tag:String? = "contacts"
     public var rForm_XML_Record_Tag:String? = "contact"
+    public var rForm_Override_Email_Via:String?
     public var rForm_Override_Email_To:String?
     public var rForm_Override_Email_CC:String?
     public var rForm_Override_Email_Subject:String?
@@ -63,6 +64,7 @@ public class RecOrgFormDefs_Optionals {
         self.rForm_Code_For_SV_File = row[Expression<String?>(RecOrgFormDefs.COLUMN_FORM_CODE_FOR_SV_FILE)]
         self.rForm_XML_Collection_Tag  = row[Expression<String?>(RecOrgFormDefs.COLUMN_FORM_XML_COLLECTION_TAG)]
         self.rForm_XML_Record_Tag = row[Expression<String?>(RecOrgFormDefs.COLUMN_FORM_XML_RECORD_TAG)]
+        self.rForm_Override_Email_Via = row[Expression<String?>(RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_VIA)]
         self.rForm_Override_Email_To = row[Expression<String?>(RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_TO)]
         self.rForm_Override_Email_CC = row[Expression<String?>(RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_CC)]
         self.rForm_Override_Email_Subject = row[Expression<String?>(RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_SUBJECT)]
@@ -84,10 +86,12 @@ public class RecOrgFormDefs_Optionals {
     }
     
     // constructor creates the record from a JSON object; is tolerant of missing columns;
-    // must be tolerant that Int64's may be encoded as Strings, especially OIDs
-    init(jsonObj:NSDictionary) {
+    // must be tolerant that Int64's may be encoded as Strings, especially OIDs;
+    // context is provided in case database version or language of the JSON file is important
+    init(jsonObj:NSDictionary, context:DatabaseHandler.ValidateJSONdbFile_Result) {
         self.rOrg_Code_For_SV_File = jsonObj[RecOrgFormDefs.COLUMN_ORG_CODE_FOR_SV_FILE] as? String
         self.rForm_Code_For_SV_File = jsonObj[RecOrgFormDefs.COLUMN_FORM_CODE_FOR_SV_FILE] as? String
+        self.rForm_Override_Email_Via = jsonObj[RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_VIA] as? String
         self.rForm_Override_Email_To = jsonObj[RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_TO] as? String
         self.rForm_Override_Email_CC = jsonObj[RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_CC] as? String
         self.rForm_Override_Email_Subject = jsonObj[RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_SUBJECT] as? String
@@ -146,6 +150,7 @@ public class RecOrgFormDefs {
     public var rForm_Lingual_LangRegions:[String]?              // show the form as MonoLingual or BiLingual if specified
     public var rForm_XML_Collection_Tag:String = "contacts"     // tag used for the collection of records
     public var rForm_XML_Record_Tag:String = "contact"          // tag used for each record
+    public var rForm_Override_Email_Via:String?                 // override email Via; see EmailHandler.swift
     public var rForm_Override_Email_To:String?                  // override email TO
     public var rForm_Override_Email_CC:String?                  // override email CC
     public var rForm_Override_Email_Subject:String?             // override email Subject
@@ -158,6 +163,7 @@ public class RecOrgFormDefs {
     public static let COLUMN_FORM_CODE_FOR_SV_FILE = "form_code_sv_file"
     public static let COLUMN_FORM_SV_FILE_TYPE = "form_sv_file_type"
     public static let COLUMN_FORM_LINGUAL_LANGREGIONS = "form_lingual_langregions"
+    public static let COLUMN_FORM_OVERRIDE_EMAIL_VIA = "form_override_email_via"
     public static let COLUMN_FORM_OVERRIDE_EMAIL_TO = "form_override_email_to"
     public static let COLUMN_FORM_OVERRIDE_EMAIL_CC = "form_override_email_cc"
     public static let COLUMN_FORM_OVERRIDE_EMAIL_SUBJECT = "form_override_email_subject"
@@ -170,6 +176,7 @@ public class RecOrgFormDefs {
     public static let COL_EXPRESSION_FORM_CODE_FOR_SV_FILE = Expression<String>(RecOrgFormDefs.COLUMN_FORM_CODE_FOR_SV_FILE)
     public static let COL_EXPRESSION_FORM_SV_FILE_TYPE = Expression<Int>(RecOrgFormDefs.COLUMN_FORM_SV_FILE_TYPE)
     public static let COL_EXPRESSION_FORM_LINGUAL_LANGREGIONS = Expression<String?>(RecOrgFormDefs.COLUMN_FORM_LINGUAL_LANGREGIONS)
+    public static let COL_EXPRESSION_FORM_OVERRIDE_EMAIL_VIA = Expression<String?>(RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_VIA)
     public static let COL_EXPRESSION_FORM_OVERRIDE_EMAIL_TO = Expression<String?>(RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_TO)
     public static let COL_EXPRESSION_FORM_OVERRIDE_EMAIL_CC = Expression<String?>(RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_CC)
     public static let COL_EXPRESSION_FORM_OVERRIDE_EMAIL_SUBJECT = Expression<String?>(RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_SUBJECT)
@@ -184,6 +191,7 @@ public class RecOrgFormDefs {
             t.column(COL_EXPRESSION_FORM_CODE_FOR_SV_FILE)
             t.column(COL_EXPRESSION_FORM_SV_FILE_TYPE)
             t.column(COL_EXPRESSION_FORM_LINGUAL_LANGREGIONS)
+            t.column(COL_EXPRESSION_FORM_OVERRIDE_EMAIL_VIA)
             t.column(COL_EXPRESSION_FORM_OVERRIDE_EMAIL_TO)
             t.column(COL_EXPRESSION_FORM_OVERRIDE_EMAIL_CC)
             t.column(COL_EXPRESSION_FORM_OVERRIDE_EMAIL_SUBJECT)
@@ -191,6 +199,17 @@ public class RecOrgFormDefs {
             t.column(COL_EXPRESSION_FORM_XML_RECORD_TAG)
             t.column(COL_EXPRESSION_FORM_VISUALS)
             t.primaryKey(COL_EXPRESSION_ORG_CODE_FOR_SV_FILE, COL_EXPRESSION_FORM_CODE_FOR_SV_FILE)
+        }
+    }
+    
+    // upgrade the table going from db version 1 to 2;
+    // upgrades:  add column "form_override_email_via"
+    public static func upgrade_1_to_2(db:Connection) throws {
+        do {
+            try db.run(Table(TABLE_NAME).addColumn(COL_EXPRESSION_FORM_OVERRIDE_EMAIL_VIA))
+        } catch {
+            let appError = APP_ERROR(funcName: "\(self.mCTAG).upgrade_1_to_2", during: "Run(addColumn).form_override_email_via", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: "DB table \(TABLE_NAME)", noAlert: false)
+            throw appError
         }
     }
     
@@ -207,6 +226,7 @@ public class RecOrgFormDefs {
         self.rForm_Code_For_SV_File = existingRec.rForm_Code_For_SV_File
         self.rForm_Lingual_LangRegions = existingRec.rForm_Lingual_LangRegions
         self.rForm_SV_File_Type = existingRec.rForm_SV_File_Type
+        self.rForm_Override_Email_Via = existingRec.rForm_Override_Email_Via
         self.rForm_Override_Email_To = existingRec.rForm_Override_Email_To
         self.rForm_Override_Email_CC = existingRec.rForm_Override_Email_CC
         self.rForm_Override_Email_Subject = existingRec.rForm_Override_Email_Subject
@@ -232,6 +252,7 @@ public class RecOrgFormDefs {
         if existingRec.rForm_XML_Record_Tag != nil { self.rForm_XML_Record_Tag = existingRec.rForm_XML_Record_Tag! }
 
         self.rForm_Lingual_LangRegions = existingRec.rForm_Lingual_LangRegions
+        self.rForm_Override_Email_Via = existingRec.rForm_Override_Email_Via
         self.rForm_Override_Email_To = existingRec.rForm_Override_Email_To
         self.rForm_Override_Email_CC = existingRec.rForm_Override_Email_CC
         self.rForm_Override_Email_Subject = existingRec.rForm_Override_Email_Subject
@@ -250,6 +271,7 @@ public class RecOrgFormDefs {
             self.rForm_SV_File_Type = FORMFIELD_SV_FILE_TYPE(rawValue:Int(exactly:value1)!)!
             self.rForm_XML_Collection_Tag = try row.get(RecOrgFormDefs.COL_EXPRESSION_FORM_XML_COLLECTION_TAG)
             self.rForm_XML_Record_Tag = try row.get(RecOrgFormDefs.COL_EXPRESSION_FORM_XML_RECORD_TAG)
+            self.rForm_Override_Email_Via = try row.get(RecOrgFormDefs.COL_EXPRESSION_FORM_OVERRIDE_EMAIL_VIA)
             self.rForm_Override_Email_To = try row.get(RecOrgFormDefs.COL_EXPRESSION_FORM_OVERRIDE_EMAIL_TO)
             self.rForm_Override_Email_CC = try row.get(RecOrgFormDefs.COL_EXPRESSION_FORM_OVERRIDE_EMAIL_CC)
             self.rForm_Override_Email_Subject = try row.get(RecOrgFormDefs.COL_EXPRESSION_FORM_OVERRIDE_EMAIL_SUBJECT)
@@ -280,6 +302,7 @@ public class RecOrgFormDefs {
             retArray.append(RecOrgFormDefs.COL_EXPRESSION_FORM_CODE_FOR_SV_FILE <- self.rForm_Code_For_SV_File)
         }
         retArray.append(RecOrgFormDefs.COL_EXPRESSION_FORM_SV_FILE_TYPE <- self.rForm_SV_File_Type.rawValue)
+        retArray.append(RecOrgFormDefs.COL_EXPRESSION_FORM_OVERRIDE_EMAIL_VIA <- self.rForm_Override_Email_Via)
         retArray.append(RecOrgFormDefs.COL_EXPRESSION_FORM_OVERRIDE_EMAIL_TO <- self.rForm_Override_Email_To)
         retArray.append(RecOrgFormDefs.COL_EXPRESSION_FORM_OVERRIDE_EMAIL_CC <- self.rForm_Override_Email_CC)
         retArray.append(RecOrgFormDefs.COL_EXPRESSION_FORM_OVERRIDE_EMAIL_SUBJECT <- self.rForm_Override_Email_Subject)
@@ -304,6 +327,7 @@ public class RecOrgFormDefs {
         jsonObj[RecOrgFormDefs.COLUMN_ORG_CODE_FOR_SV_FILE] = self.rOrg_Code_For_SV_File
         jsonObj[RecOrgFormDefs.COLUMN_FORM_CODE_FOR_SV_FILE] = self.rForm_Code_For_SV_File
         jsonObj[RecOrgFormDefs.COLUMN_FORM_SV_FILE_TYPE] = self.rForm_SV_File_Type.rawValue
+        jsonObj[RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_VIA] = self.rForm_Override_Email_Via
         jsonObj[RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_TO] = self.rForm_Override_Email_To
         jsonObj[RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_CC] = self.rForm_Override_Email_CC
         jsonObj[RecOrgFormDefs.COLUMN_FORM_OVERRIDE_EMAIL_SUBJECT] = self.rForm_Override_Email_Subject

@@ -14,6 +14,9 @@
 		D7BA6B6021EEDA6300F45AFC /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; };
 		D7BA6B6121EEDA6300F45AFC /* SQLite.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D7CC2A982201456200F39E36 /* EmailHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CC2A972201456200F39E36 /* EmailHandler.swift */; };
+		D7CC2AA122027DED00F39E36 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AA022027DED00F39E36 /* CFNetwork.framework */; };
+		D7CC2AA322027E0E00F39E36 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AA222027E0E00F39E36 /* Security.framework */; };
+		D7CC2ABF22027EAB00F39E36 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AB222027E4500F39E36 /* libMailCore-ios.a */; };
 		D7D852F221C9724200948408 /* PopupFirstTimeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */; };
 		D7D87FD621E67B7B002847DE /* ChooserLangRegionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */; };
 		D7EE5BEC21FB7E0700769CA6 /* App_Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */; };
@@ -169,6 +172,62 @@
 			remoteGlobalIDString = EE247AD21C3F04ED00AE3E12;
 			remoteInfo = "SQLite iOS";
 		};
+		D7CC2AAF22027E4500F39E36 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C64EA537169E772200778456;
+			remoteInfo = "static mailcore2 osx";
+		};
+		D7CC2AB122027E4500F39E36 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C6BA2C191705F4E6003F0E9E;
+			remoteInfo = "static mailcore2 ios";
+		};
+		D7CC2AB322027E4500F39E36 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C64EA78C169F259200778456;
+			remoteInfo = tests;
+		};
+		D7CC2AB522027E4500F39E36 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C6A81B911706840C00882C15;
+			remoteInfo = "test-ios";
+		};
+		D7CC2AB722027E4500F39E36 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C6BD288D170BD71100A91AC1;
+			remoteInfo = "mailcore osx";
+		};
+		D7CC2AB922027E4500F39E36 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 27780C3A19CF9CD100C77E44;
+			remoteInfo = "mailcore ios";
+		};
+		D7CC2ABB22027E4500F39E36 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C6B5AE0219F630B3001352A6;
+			remoteInfo = unittest;
+		};
+		D7CC2ABD22027E4500F39E36 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C600B6141A242C3F000728F1;
+			remoteInfo = unittestcpp;
+		};
 		D94CFD042155A6E1009CE207 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = D94CFCE52155A6D8009CE207 /* Project object */;
@@ -208,6 +267,10 @@
 		D7BA6C0121EF901500F45AFC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
 		D7C52D5F21EC12C800F84DEC /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Main.strings; sourceTree = "<group>"; };
 		D7CC2A972201456200F39E36 /* EmailHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailHandler.swift; sourceTree = "<group>"; };
+		D7CC2AA022027DED00F39E36 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
+		D7CC2AA222027E0E00F39E36 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../SubModules/mailcore2-master/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
+		D7CC2AC222027F4400F39E36 /* Project-Name-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Project-Name-Bridging-Header.h"; path = "Code/Project-Name-Bridging-Header.h"; sourceTree = "<group>"; };
 		D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupFirstTimeViewController.swift; sourceTree = "<group>"; };
 		D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserLangRegionViewController.swift; sourceTree = "<group>"; };
 		D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App_Error.swift; sourceTree = "<group>"; };
@@ -299,6 +362,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D7CC2ABF22027EAB00F39E36 /* libMailCore-ios.a in Frameworks */,
+				D7CC2AA322027E0E00F39E36 /* Security.framework in Frameworks */,
+				D7CC2AA122027DED00F39E36 /* CFNetwork.framework in Frameworks */,
 				D7BA6B6021EEDA6300F45AFC /* SQLite.framework in Frameworks */,
 				D7BA6B4221EED9F400F45AFC /* Eureka.framework in Frameworks */,
 			);
@@ -355,6 +421,21 @@
 				D7BA6B5B21EEDA5000F45AFC /* SQLite.framework */,
 				D7BA6B5D21EEDA5000F45AFC /* SQLiteTests tvOS.xctest */,
 				D7BA6B5F21EEDA5000F45AFC /* SQLite.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D7CC2AA522027E4400F39E36 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D7CC2AB022027E4500F39E36 /* libMailCore.a */,
+				D7CC2AB222027E4500F39E36 /* libMailCore-ios.a */,
+				D7CC2AB422027E4500F39E36 /* tests */,
+				D7CC2AB622027E4500F39E36 /* test-ios.app */,
+				D7CC2AB822027E4500F39E36 /* MailCore.framework */,
+				D7CC2ABA22027E4500F39E36 /* MailCore.framework */,
+				D7CC2ABC22027E4500F39E36 /* unittest.xctest */,
+				D7CC2ABE22027E4500F39E36 /* unittestcpp */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -470,6 +551,7 @@
 				D9A043D8215C3ABC008BE46F /* UI */,
 				D71FF33921D464AC00C4A370 /* Handlers_and_Core */,
 				D9EAF0B2215870F300B4EB2A /* Record_Definitions */,
+				D7CC2AC222027F4400F39E36 /* Project-Name-Bridging-Header.h */,
 				D94CFCF02155A6D8009CE207 /* AppDelegate.swift */,
 				D94CFCF62155A6D8009CE207 /* Main.storyboard */,
 				D97ED56F2156E20C000D5647 /* eContact Collect.entitlements */,
@@ -545,6 +627,9 @@
 		D9EAF0AB21586F7800B4EB2A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */,
+				D7CC2AA222027E0E00F39E36 /* Security.framework */,
+				D7CC2AA022027DED00F39E36 /* CFNetwork.framework */,
 				D7BA6B4821EEDA4F00F45AFC /* SQLite.xcodeproj */,
 				D7BA6B3621EED9BC00F45AFC /* Eureka.xcodeproj */,
 			);
@@ -677,6 +762,10 @@
 					ProjectRef = D7BA6B3621EED9BC00F45AFC /* Eureka.xcodeproj */;
 				},
 				{
+					ProductGroup = D7CC2AA522027E4400F39E36 /* Products */;
+					ProjectRef = D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */;
+				},
+				{
 					ProductGroup = D7BA6B4921EEDA4F00F45AFC /* Products */;
 					ProjectRef = D7BA6B4821EEDA4F00F45AFC /* SQLite.xcodeproj */;
 				},
@@ -752,6 +841,62 @@
 			fileType = wrapper.framework;
 			path = SQLite.framework;
 			remoteRef = D7BA6B5E21EEDA5000F45AFC /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		D7CC2AB022027E4500F39E36 /* libMailCore.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libMailCore.a;
+			remoteRef = D7CC2AAF22027E4500F39E36 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		D7CC2AB222027E4500F39E36 /* libMailCore-ios.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libMailCore-ios.a";
+			remoteRef = D7CC2AB122027E4500F39E36 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		D7CC2AB422027E4500F39E36 /* tests */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = tests;
+			remoteRef = D7CC2AB322027E4500F39E36 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		D7CC2AB622027E4500F39E36 /* test-ios.app */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.application;
+			path = "test-ios.app";
+			remoteRef = D7CC2AB522027E4500F39E36 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		D7CC2AB822027E4500F39E36 /* MailCore.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = MailCore.framework;
+			remoteRef = D7CC2AB722027E4500F39E36 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		D7CC2ABA22027E4500F39E36 /* MailCore.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = MailCore.framework;
+			remoteRef = D7CC2AB922027E4500F39E36 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		D7CC2ABC22027E4500F39E36 /* unittest.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = unittest.xctest;
+			remoteRef = D7CC2ABB22027E4500F39E36 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		D7CC2ABE22027E4500F39E36 /* unittestcpp */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = unittestcpp;
+			remoteRef = D7CC2ABD22027E4500F39E36 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -1082,9 +1227,23 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = (
+					"-lctemplate-ios",
+					"-letpan-ios",
+					"-lxml2",
+					"-lsasl2",
+					"-liconv",
+					"-ltidy",
+					"-lz",
+					"-lc++",
+					"-lresolv",
+					"-stdlib=libc++",
+					"-ObjC",
+				);
 				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = opensource.theCyberMike.eContactCollect;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "eContact Collect/Code/Project-Name-Bridging-Header.h";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -1102,8 +1261,22 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = (
+					"-lctemplate-ios",
+					"-letpan-ios",
+					"-lxml2",
+					"-lsasl2",
+					"-liconv",
+					"-ltidy",
+					"-lz",
+					"-lc++",
+					"-lresolv",
+					"-stdlib=libc++",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = opensource.theCyberMike.eContactCollect;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "eContact Collect/Code/Project-Name-Bridging-Header.h";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -1269,9 +1442,23 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = (
+					"-lctemplate-ios",
+					"-letpan-ios",
+					"-lxml2",
+					"-lsasl2",
+					"-liconv",
+					"-ltidy",
+					"-lz",
+					"-lc++",
+					"-lresolv",
+					"-stdlib=libc++",
+					"-ObjC",
+				);
 				OTHER_SWIFT_FLAGS = "-DTESTING";
 				PRODUCT_BUNDLE_IDENTIFIER = opensource.theCyberMike.eContactCollect;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "eContact Collect/Code/Project-Name-Bridging-Header.h";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

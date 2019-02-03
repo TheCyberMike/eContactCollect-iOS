@@ -228,9 +228,9 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
                 $0.cellSetup { cell, row in
                     cell.textLabel?.font = .systemFont(ofSize: 12.0)
                 }
-                $0.onCellSelection { cell, row in
-                    self.emailSVfile(filePath:AppDelegate.mSVFilesHandler!.makePendingFullPath(fileName:row.title!), fileName:row.title!)
-                }
+                //$0.onCellSelection { cell, row in
+                    //self.emailSVfile(filePath:AppDelegate.mSVFilesHandler!.makePendingFullPath(fileName:row.title!), fileName:row.title!)
+                //}
                 $0.onChange { row in
                     switch row.cell.segmentedControl.selectedSegmentIndex {
                     case 0:
@@ -244,8 +244,8 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
                     default:
                         break
                     }
-                    row.value = nil
                     row.cell.segmentedControl.selectedSegmentIndex = -1
+                    row.value = nil     // this will cause another .onChange
                     row.updateCell()
                 }
             }
@@ -268,9 +268,9 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
                 $0.cellSetup { cell, row in
                     cell.textLabel?.font = .systemFont(ofSize: 12.0)
                 }
-                $0.onCellSelection { cell, row in
-                    self.emailSVfile(filePath:AppDelegate.mSVFilesHandler!.makeSentFullPath(fileName:row.title!), fileName:row.title!)
-                }
+                //$0.onCellSelection { cell, row in
+                    //self.emailSVfile(filePath:AppDelegate.mSVFilesHandler!.makeSentFullPath(fileName:row.title!), fileName:row.title!)
+                //}
                 $0.onChange { row in
                     switch row.cell.segmentedControl.selectedSegmentIndex {
                     case 0:
@@ -284,8 +284,8 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
                     default:
                         break
                     }
-                    row.value = nil
                     row.cell.segmentedControl.selectedSegmentIndex = -1
+                    row.value = nil     // this will cause another .onChange
                     row.updateCell()
                 }
             }
@@ -331,32 +331,33 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
     // email the SV-File:  prep it and place it into an email
     private func emailSVfile(filePath:String, fileName:String) {
 //debugPrint("\(self.mCTAG).emailSVfile STARTED")
-        // obtain the Org and Form records; assumes the SVFile's name is composed in a certain order
+        // obtain the Org and Form records; assumes the SVFile's name is composed in a certain order: <date>_<time>_<org>_<form>.<ext>
         let splits:[String] = fileName.components(separatedBy: "_")
         if splits.count < 4 {
-            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"fileName.components(separatedBy:)", errorMessage:"Filename mis-composed", extra:fileName)
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).emailSVfile", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: NSLocalizedString("Filename mis-composed", comment:"")), buttonText: NSLocalizedString("Okay", comment:""))
+            let appError = APP_ERROR(funcName: "\(self.mCTAG).emailSVfile", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: NSLocalizedString("Filename mis-composed", comment:""), developerInfo: "splits.count >= 4")
+            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"fileName.components(separatedBy:)", errorStruct: appError, extra:fileName)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: appError, buttonText: NSLocalizedString("Okay", comment:""))
         }
         let formSplits:[String] = splits[3].components(separatedBy: ".")
         var orgRec:RecOrganizationDefs? = nil
         var formRec:RecOrgFormDefs? = nil
+        let commonAppError = APP_ERROR(funcName: "\(self.mCTAG).emailSVfile", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil)
         do {
             orgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName:splits[2])
             formRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName:formSplits[0], forOrgShortName:splits[2])
-            
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", errorStruct: error, extra: nil)
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).emailSVfile", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", errorStruct: error, extra: "org: \(splits[2]), form: \(formSplits[0])")
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: commonAppError, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         if orgRec == nil {
-            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"orgGetSpecifiedRecOfShortName", errorMessage:"Could not get Org record", extra:splits[2])
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).emailSVfile", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"orgGetSpecifiedRecOfShortName", errorStruct: commonAppError, extra:splits[2])
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: commonAppError, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         if formRec == nil {
-            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"orgFormGetSpecifiedRecOfShortName", errorMessage:"Could not get Form record", extra:formSplits[0])
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).emailSVfile", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"orgFormGetSpecifiedRecOfShortName", errorStruct: commonAppError, extra:formSplits[0])
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: commonAppError, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         
@@ -364,25 +365,35 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
         var email_to:String? = nil
         var email_cc:String? = nil
         var email_subject:String? = nil
-        if !((formRec!.rForm_Override_Email_To ?? "").isEmpty) {
-            email_to = formRec!.rForm_Override_Email_To!
-        } else if !((orgRec!.rOrg_Email_To ?? "").isEmpty) {
+        var email_via:EmailVia? = nil
+        if !(formRec!.rForm_Override_Email_Via ?? "").isEmpty {
+            email_via = EmailVia(fromEncode: formRec!.rForm_Override_Email_Via!, fromCredentials: nil)
+        } else if !(orgRec!.rOrg_Email_Via ?? "").isEmpty {
+            email_via = EmailVia(fromEncode: orgRec!.rOrg_Email_Via!, fromCredentials: nil)
+        }
+        if !(formRec!.rForm_Override_Email_To ?? "").isEmpty {
+            if formRec!.rForm_Override_Email_To! != "-" {
+                email_to = formRec!.rForm_Override_Email_To!
+            }
+        } else if !(orgRec!.rOrg_Email_To ?? "").isEmpty {
             email_to = orgRec!.rOrg_Email_To!
         }
-        if !((formRec!.rForm_Override_Email_CC ?? "").isEmpty) {
-            email_cc = formRec!.rForm_Override_Email_CC!
-        } else if !((orgRec!.rOrg_Email_CC ?? "").isEmpty) {
+        if !(formRec!.rForm_Override_Email_CC ?? "").isEmpty {
+            if formRec!.rForm_Override_Email_CC! != "-" {
+                email_cc = formRec!.rForm_Override_Email_CC!
+            }
+        } else if !(orgRec!.rOrg_Email_CC ?? "").isEmpty {
             email_cc = orgRec!.rOrg_Email_CC!
         }
-        if !((formRec!.rForm_Override_Email_Subject ?? "").isEmpty) {
+        if !(formRec!.rForm_Override_Email_Subject ?? "").isEmpty {
             email_subject = formRec!.rForm_Override_Email_Subject!
-        } else if !((orgRec!.rOrg_Email_Subject ?? "").isEmpty) {
+        } else if !(orgRec!.rOrg_Email_Subject ?? "").isEmpty {
             email_subject = orgRec!.rOrg_Email_Subject!
         }
         
         // send the email; this may or may not invoke an email compose view controller
         do {
-            try AppDelegate.mEmailHandler!.sendEmail(vc: self, tagI: 1, tagS: fileName, delegate: self, localizedTitle: NSLocalizedString("Email SV-File", comment:""), to: email_to, cc: email_cc, subject: email_subject, body: nil, includingAttachment: URL(fileURLWithPath: filePath))
+            try AppDelegate.mEmailHandler!.sendEmail(vc: self, tagI: 1, tagS: fileName, delegate: self, localizedTitle: NSLocalizedString("Email SV-File", comment:""), via: email_via, to: email_to, cc: email_cc, subject: email_subject, body: nil, includingAttachment: URL(fileURLWithPath: filePath))
         } catch let appError as APP_ERROR {
             if appError.errorCode == .IOS_EMAIL_SUBSYSTEM_DISABLED {
                 // do not error log or alert for this particular error

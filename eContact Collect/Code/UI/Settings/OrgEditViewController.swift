@@ -786,7 +786,7 @@ public class OrgEditFormLangFields {
                         // !!! MMM use of PushRow is an extension to the Eureka code
                         // REMEMBER: CANNOT do a buildForm() from viewWillAppear() ... the form must remain intact for this to work
                         // must buildForm() from viewDidLoad() then populate field values separately
-                        row.title = "Select new language to add"
+                        row.title = NSLocalizedString("Select new language to add", comment:"")
                         row.tag = "add_new_lang"
                         row.selectorTitle = NSLocalizedString("Choose one", comment:"")
                         row.options = controlPairs.map { $0.codeString }

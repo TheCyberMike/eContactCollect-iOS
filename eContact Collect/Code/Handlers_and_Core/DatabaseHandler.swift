@@ -32,7 +32,7 @@ public class DatabaseHandler {
     public static let ThrowErrorDomain:String = NSLocalizedString("Database-Handler", comment:"")
     private let mThrowErrorDomain:String = ThrowErrorDomain
     internal let mDATABASE_NAME:String = "eContactCollect_DB.sqlite"
-    internal var mDATABASE_VERSION:Int64 = 1    // WARNING: changing this value will cause invocation of init_onUpgrade
+    internal var mDATABASE_VERSION:Int64 = 2    // WARNING: changing this value will cause invocation of init_onUpgrade
 
     // constructor;
     public init() {}
@@ -72,7 +72,7 @@ public class DatabaseHandler {
         if self.mDB == nil {
             // this should never happen as Connection does not return a nil
             self.mDBstatus_state = .Errors
-            self.mAppError = APP_ERROR(funcName: "\(method):\(self.mCTAG).initialize", during: "Connection", domain: self.mThrowErrorDomain, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Connection", comment:""), developerInfo: "Failed: self.mDB == nil; unknown error")
+            self.mAppError = APP_ERROR(funcName: "\(method):\(self.mCTAG).initialize", during: "Connection", domain: self.mThrowErrorDomain, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Connect to Database", comment:""), developerInfo: "Failed: self.mDB == nil; unknown error")
             AppDelegate.postToErrorLogAndAlert(method: "\(method):\(self.mCTAG).initialize", errorStruct: self.mAppError!, extra: fullPath, noAlert: true)
             return false
         }
@@ -109,6 +109,8 @@ public class DatabaseHandler {
                     AppDelegate.postToErrorLogAndAlert(method: "\(method):\(self.mCTAG).initialize", errorStruct: self.mAppError!, extra: fullPath, noAlert: true)
                     return false
                 }
+debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self.mVersion)")
+                AppDelegate.postAlert(message: NSLocalizedString("Database successfully upgraded to version ", comment:"") + String(self.mVersion))
             } else {
                 self.mDBstatus_state = .Valid
             }
@@ -161,33 +163,90 @@ public class DatabaseHandler {
     }
     
     // called only when the database 'user_version' does not match the expected version;
-    // perform the necessary upgrade actions
+    // perform the necessary upgrade actions;
+    // be sure to also update DatabaseHandler.validateJSONdbFile() databaseVersion logic as needed;
+    // be sure to also update <record>_Optionals.init(jsonObj:, context:) methods as needed
     internal func init_onUpgrade(currentVersion:Int64, targetVersion:Int64) throws {
         self.mVersion = currentVersion
         
-        // placeholder for future database upgrade actions;
-        // attempt to post upgrade failures into the Alerts
-        
-        // all succeeded; set the versioning properly
-        do {
-            try self.mDB!.setUserVersion(newVersion: self.mDATABASE_VERSION)
-        } catch {
-            self.mDBstatus_state = .Invalid
-            self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onUpgrade", during: "setUserVersion", domain: self.mThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: self.mDATABASE_NAME)
-            throw self.mAppError!
+        // upgrade from version 1 to version 2
+        if self.mVersion == 1 {
+            do {
+                // invoke/perform upgrade activities inside a transaction so database integrity is preserved
+                try self.mDB!.transaction {     // throws Result
+                    try RecOrganizationDefs.upgrade_1_to_2(db: self.mDB!)   // throws APP_ERROR
+                    try RecOrgFormDefs.upgrade_1_to_2(db: self.mDB!)        // throws APP_ERROR
+                }
+            } catch let appError as APP_ERROR {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = appError
+                self.mAppError?.prependCallStack(funcName: "\(self.mCTAG).init_onUpgrade.1")
+                throw self.mAppError!
+            } catch let sqlResult as Result {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onUpgrade.1", during:"self.mDB!.transaction", domain: self.mThrowErrorDomain, error: sqlResult, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: self.mDATABASE_NAME)
+                throw self.mAppError!
+            } catch {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onUpgrade.1", domain: self.mThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: self.mDATABASE_NAME)
+                throw self.mAppError!
+            }
+            // success; set the intermediate/final version state in-case of later throws
+            do {
+                try self.mDB!.setUserVersion(newVersion: 2)     // throws Result
+                self.mVersion = 2
+            } catch {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onUpgrade.1", during: "setUserVersion", domain: self.mThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: self.mDATABASE_NAME)
+                throw self.mAppError!
+            }
         }
         
+        // for future upgrades
+        /*if self.mVersion == 2 {
+            do {
+                // invoke/perform upgrade activities inside a transaction so database integrity is preserved
+                try self.mDB!.transaction {     // throws Result
+                    // FUTURE
+                }
+            } catch let appError as APP_ERROR {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = appError
+                self.mAppError?.prependCallStack(funcName: "\(self.mCTAG).init_onUpgrade.2")
+                throw self.mAppError!
+            } catch let sqlResult as Result {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onUpgrade.2", during:"self.mDB!.transaction", domain: self.mThrowErrorDomain, error: sqlResult, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: self.mDATABASE_NAME)
+                throw self.mAppError!
+            } catch {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onUpgrade.2", domain: self.mThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: self.mDATABASE_NAME)
+                throw self.mAppError!
+            }
+            // success; set the intermediate/final version state in-case of later throws
+            do {
+                try self.mDB!.setUserVersion(newVersion: 3)     // throws Result
+                self.mVersion = 3
+            } catch {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onUpgrade.2", during: "setUserVersion", domain: self.mThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: self.mDATABASE_NAME)
+                throw self.mAppError!
+            }
+        }*/
+        
         // all good; finalize
-        self.mVersion = self.mDATABASE_VERSION
         self.mDBstatus_state = .Valid
     }
     
-    // perform any App first time setups that have not already been performed;
+    // perform any handler first time setups that have not already been performed; the sequence# allows later versions to retro-add a first-time setup;
     // the database handler must be especially mindful that it may not have properly initialized and should bypass this;
     // errors are stored via the class members and will already be posted to the error.log
     public func firstTimeSetup(method:String) {
 //debugPrint("\(mCTAG).firstTimeSetup STARTED")
-        // none at this time
+        if AppDelegate.getPreferenceInt(prefKey: PreferencesKeys.Ints.APP_Handler_Database_FirstTime_Done) != 1 {
+            // none at this time; this handler auto-detects database create/upgrade situations in its initialize() method
+            AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_Handler_Database_FirstTime_Done, value: 1)
+        }
     }
     
     // return whether the database is fully operational
@@ -890,7 +949,7 @@ public class DatabaseHandler {
                 let getResult1:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "org", forTableName: RecOrganizationDefs.TABLE_NAME, needsItem: true, priorResult: validationResult)
                 userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult1.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
 
-                let tempNewOrgRec:RecOrganizationDefs_Optionals = RecOrganizationDefs_Optionals(jsonObj: getResult1.jsonItemLevel!)
+                let tempNewOrgRec:RecOrganizationDefs_Optionals = RecOrganizationDefs_Optionals(jsonObj: getResult1.jsonItemLevel!, context: validationResult)
                 
                 if !tempNewOrgRec.validate() {
                     var developer_error_message = "Validate \(getResult1.tableName) 'table' entries; ; record \(inx) did not validate"
@@ -916,7 +975,7 @@ public class DatabaseHandler {
                 for jsonItemObj in getResult2.jsonItemsLevel! {
                     let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
                     if jsonItem != nil {
-                        let newOrgLangRecOpt:RecOrganizationLangs_Optionals = RecOrganizationLangs_Optionals(jsonObj: jsonItem!)
+                        let newOrgLangRecOpt:RecOrganizationLangs_Optionals = RecOrganizationLangs_Optionals(jsonObj: jsonItem!, context: validationResult)
                         if !newOrgLangRecOpt.validate() {
                             var developer_error_message = "record \(inx) did not validate"
                             if !(newOrgLangRecOpt.rOrgLang_LangRegionCode ?? "").isEmpty {
@@ -942,7 +1001,7 @@ public class DatabaseHandler {
                 for jsonItemObj in getResult3.jsonItemsLevel! {
                     let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
                     if jsonItem != nil {
-                        let newFormRecOpt:RecOrgFormDefs_Optionals = RecOrgFormDefs_Optionals(jsonObj: jsonItem!)
+                        let newFormRecOpt:RecOrgFormDefs_Optionals = RecOrgFormDefs_Optionals(jsonObj: jsonItem!, context: validationResult)
                         if !newFormRecOpt.validate() {
                             var developer_error_message = "record \(inx) did not validate"
                             if !(newFormRecOpt.rForm_Code_For_SV_File ?? "").isEmpty {
@@ -965,7 +1024,7 @@ public class DatabaseHandler {
                 let getResult1:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "form", forTableName: RecOrgFormDefs.TABLE_NAME, needsItem: true, priorResult: validationResult)
                 userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult1.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
                 
-                let newFormRecOpt:RecOrgFormDefs_Optionals = RecOrgFormDefs_Optionals(jsonObj: getResult1.jsonItemLevel!)
+                let newFormRecOpt:RecOrgFormDefs_Optionals = RecOrgFormDefs_Optionals(jsonObj: getResult1.jsonItemLevel!, context: validationResult)
                 inx = 1
                 if !newFormRecOpt.validate() {
                     var developer_error_message = "record \(inx) did not validate"
@@ -994,7 +1053,7 @@ public class DatabaseHandler {
             for jsonItemObj in getResult4.jsonItemsLevel! {
                 let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
                 if jsonItem != nil {
-                    let newFormFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRecObj: jsonItem!)
+                    let newFormFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRecObj: jsonItem!, context: validationResult)
                     if !newFormFieldRecOpt.validate() {
                         var developer_error_message = "Validate \(getResult4.tableName) 'table' entries; ; record \(inx) did not validate"
                         if newFormFieldRecOpt.rFormField_Index != nil {
@@ -1017,7 +1076,7 @@ public class DatabaseHandler {
             for jsonItemObj in getResult4.jsonItemsLevel! {
                 let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
                 if jsonItem != nil {
-                    let newFormFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRecObj: jsonItem!)
+                    let newFormFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRecObj: jsonItem!, context: validationResult)
                     if !newFormFieldRecOpt.validate() {
                         var developer_error_message = "record \(inx) did not validate"
                         if newFormFieldRecOpt.rFormField_Index != nil {
@@ -1049,7 +1108,7 @@ public class DatabaseHandler {
             for jsonItemObj in getResult5.jsonItemsLevel! {
                 let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
                 if jsonItem != nil {
-                    let newFormFieldLocaleOptRec:RecOrgFormFieldLocales_Optionals = RecOrgFormFieldLocales_Optionals(jsonObj: jsonItem!)
+                    let newFormFieldLocaleOptRec:RecOrgFormFieldLocales_Optionals = RecOrgFormFieldLocales_Optionals(jsonObj: jsonItem!, context: validationResult)
                     if !newFormFieldLocaleOptRec.validate() {
                         var developer_error_message = "record \(inx) did not validate"
                         if newFormFieldLocaleOptRec.rFormFieldLoc_Index != nil {
@@ -1078,7 +1137,7 @@ public class DatabaseHandler {
             for jsonItemObj in getResult6.jsonItemsLevel! {
                 let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
                 if jsonItem != nil {
-                    let newOSLoptRec:RecOptionSetLocales_Optionals = RecOptionSetLocales_Optionals(jsonObj: jsonItem!)
+                    let newOSLoptRec:RecOptionSetLocales_Optionals = RecOptionSetLocales_Optionals(jsonObj: jsonItem!, context: validationResult)
                     if !newOSLoptRec.validate() {
                         let developer_error_message = "record \(inx) did not validate"
                         throw APP_ERROR(funcName: funcString, during: "Validate \(getResult6.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
@@ -1149,7 +1208,10 @@ public class DatabaseHandler {
         
         result.databaseVersion = (result.jsonDataLevel!["forDatabaseVersion"] as! String)
         result.language = (result.jsonDataLevel!["language"] as! String)
-        if result.databaseVersion != "1" {
+        
+        // this logic needs to be revised as the database version grows;
+        // database versions 1 and 2 are safe to import with no modifications
+        if result.databaseVersion != "1" && result.databaseVersion != "2" {
             throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate 'data' level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level 'forDatabaseVersion' is incompatible: \(result.databaseVersion)")
         }
 

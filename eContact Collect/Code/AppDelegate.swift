@@ -96,21 +96,35 @@ public struct PreferencesKeys {
         case APP_LastOrganization = "TESTapp_LastOrganization"
         case APP_LastForm = "TESTapp_LastForm"
         case APP_Rating_LastDate = "TESTapp_rating_lastDate"
+        case EmailVia_Stored_Named = "TESTemailVia_stored_named_"
+        case EmailVia_Default_Name = "TESTemailVia_default_name"
 #else
         case APP_Pin = "app_PIN"                                // PIN needed to get into the Settings; may be nil or empty
         case Collector_Nickname = "collector_Nickname"          // Nickname of the app's end-user; will be inserted into all collected records
         case APP_LastOrganization = "app_LastOrganization"      // Org short name that was last currently active
         case APP_LastForm = "app_LastForm"                      // Form short name that was last currently active
         case APP_Rating_LastDate = "app_rating_lastDate"        // last date-of-use (part of ask-for-a-rating); YYYYMMDD
+        case EmailVia_Stored_Named = "emailVia_stored_named_"   // storage of one or more EmailVia as set by the Collector
+        case EmailVia_Default_Name = "emailVia_default_name"    // the name of the default EmailVia as chosen by the Collector
 #endif
     }
     enum Ints: String {
 #if TESTING
         case APP_FirstTime = "TESTapp_firstTimeStages"
         case APP_Rating_DaysCountdown = "TESTapp_rating_daysCountdown"
+        case APP_Handler_Database_FirstTime_Done = "TESTapp_handler_database_firsttime_done"
+        case APP_Handler_Field_FirstTime_Done = "TESTapp_handler_field_firsttime_done"
+        case APP_Handler_SVFiles_FirstTime_Done = "TESTapp_handler_svfiles_firsttime_done"
+        case APP_Handler_Email_FirstTime_Done = "TESTapp_handler_email_firsttime_done"
+
 #else
-        case APP_FirstTime = "app_firstTimeStages"              // nil=first time stage 1 needed; -1=first time fully completed; 1,2... currently in the indicated first time stage
+        case APP_FirstTime = "app_firstTimeStages"                  // nil=first time stage 1 needed; -1=first time fully completed; 1,2... currently in the indicated first time stage
         case APP_Rating_DaysCountdown = "app_rating_daysCountdown"  // countdown of unique days of use (part of ask-for-a-rating)
+        case APP_Handler_Database_FirstTime_Done = "app_handler_database_firsttime_done"
+        case APP_Handler_Field_FirstTime_Done = "app_handler_field_firsttime_done"
+        case APP_Handler_SVFiles_FirstTime_Done = "app_handler_svfiles_firsttime_done"
+        case APP_Handler_Email_FirstTime_Done = "app_handler_email_firsttime_done"
+
 #endif
     }
 }
@@ -146,6 +160,8 @@ internal class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // member constants and other static content
     internal static let mCTAG:String = "AppD"
+    public static let mDeveloperEmailAddress:String = "theCyberMike@yahoo.com"
+    public static let mKeychainThrownDomain:String = NSLocalizedString("Secure Storage", comment:"")
     public static var mFirstTImeStages:Int = 0                          // -1=first time fully done; 1,2,... is the first time stage presently in; 0=stage 1 is needed
     public static var mDatabaseHandler:DatabaseHandler? = nil           // common pointer to the DatabaseHandler Object
     public static var mFieldHandler:FieldHandler? = nil                 // common pointer to the FieldHandler Object
@@ -230,7 +246,7 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value:0)
         }
         
-        // startup any App's Handlers and Coordinators, and perform first time setups if warranted;
+        // startup any App's Handlers and Coordinators
         // errors are logged to error.log, and a user message stored within; errors will be reported to the end-user when the UI launches
         AppDelegate.mDatabaseHandler = DatabaseHandler()        // must create and initialize the database handler first
         let _ = AppDelegate.mDatabaseHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
@@ -240,12 +256,13 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         let _ = AppDelegate.mSVFilesHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
         AppDelegate.mEmailHandler = EmailHandler()
         let _ = AppDelegate.mEmailHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
-        if AppDelegate.mFirstTImeStages == 0 {
-            AppDelegate.mDatabaseHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
-            AppDelegate.mFieldHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
-            AppDelegate.mSVFilesHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
-            AppDelegate.mEmailHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
-        }
+
+        // allow handlers to perform any additional first-time-of-use initializations that a particular handler may require;
+        // their interrnal logic prevents repeated first-time setups, but also allow later versions of the app to retro-perform missed first-time setups
+        AppDelegate.mDatabaseHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
+        AppDelegate.mFieldHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
+        AppDelegate.mSVFilesHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
+        AppDelegate.mEmailHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
         
         // prepare the mainline EFP if possible; for first time setup this will not be possible
         if AppDelegate.mFirstTImeStages < 0 { AppDelegate.setupMainlineEFP() }
@@ -645,24 +662,54 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
     // Methods related to preferences
     ///////////////////////////////////////////////////////////////////
     
+    public static func getAllPreferenceKeys(keyPrefix:String? = nil) -> [String] {
+        var check:Bool = false
+        if !(keyPrefix ?? "").isEmpty { check = true }
+        var result:[String] = []
+        for pair in AppDelegate.mPrefsApp.dictionaryRepresentation() {
+            if !check {
+                result.append(pair.key)
+            } else if pair.key.starts(with: keyPrefix!) {
+                result.append(pair.key)
+            }
+        }
+        return result
+    }
+    public static func getAllPreferencePairs(keyPrefix:String? = nil) -> [String:Any] {
+        if !(keyPrefix ?? "").isEmpty { return AppDelegate.mPrefsApp.dictionaryRepresentation() }
+        
+        var result:[String:Any] = [:]
+        for pair in AppDelegate.mPrefsApp.dictionaryRepresentation() {
+            if pair.key.starts(with: keyPrefix!) {
+                result[pair.key] = pair.value
+            }
+        }
+        return result
+    }
     public static func doesPreferenceStringExist(prefKey:PreferencesKeys.Strings) -> Bool {
         if AppDelegate.mPrefsApp.object(forKey: prefKey.rawValue) != nil { return true }
         return false
     }
-    public static func getPreferenceString(prefKey: PreferencesKeys.Strings) -> String? {
+    public static func getPreferenceString(prefKey:PreferencesKeys.Strings) -> String? {
         return AppDelegate.mPrefsApp.string(forKey: prefKey.rawValue)
     }
-    public static func setPreferenceString(prefKey: PreferencesKeys.Strings, value: String?) {
+    public static func setPreferenceString(prefKey:PreferencesKeys.Strings, value:String?) {
         AppDelegate.mPrefsApp.set(value, forKey: prefKey.rawValue)
+    }
+    public static func getPreferenceString(prefKeyString:String) -> String? {
+        return AppDelegate.mPrefsApp.string(forKey: prefKeyString)
+    }
+    public static func setPreferenceString(prefKeyString:String, value:String?) {
+        AppDelegate.mPrefsApp.set(value, forKey: prefKeyString)
     }
     public static func doesPreferenceIntExist(prefKey:PreferencesKeys.Ints) -> Bool {
         if AppDelegate.mPrefsApp.object(forKey: prefKey.rawValue) != nil { return true }
         return false
     }
-    public static func getPreferenceInt(prefKey: PreferencesKeys.Ints) -> Int {
+    public static func getPreferenceInt(prefKey:PreferencesKeys.Ints) -> Int {
         return AppDelegate.mPrefsApp.integer(forKey: prefKey.rawValue)
     }
-    public static func setPreferenceInt(prefKey: PreferencesKeys.Ints, value: Int?) {
+    public static func setPreferenceInt(prefKey:PreferencesKeys.Ints, value:Int?) {
         if value == nil { AppDelegate.mPrefsApp.set(nil, forKey: prefKey.rawValue) }
         else { AppDelegate.mPrefsApp.set(value, forKey: prefKey.rawValue) }
     }
@@ -670,12 +717,207 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         if AppDelegate.mPrefsApp.object(forKey: prefKey.rawValue) != nil { return true }
         return false
     }
-    public static func getPreferenceBool(prefKey: PreferencesKeys.Bools) -> Bool {
+    public static func getPreferenceBool(prefKey:PreferencesKeys.Bools) -> Bool {
         return AppDelegate.mPrefsApp.bool(forKey: prefKey.rawValue)
     }
-    public static func setPreferenceBool(prefKey: PreferencesKeys.Bools, value: Bool?) {
+    public static func setPreferenceBool(prefKey:PreferencesKeys.Bools, value:Bool?) {
         if value == nil { AppDelegate.mPrefsApp.set(nil, forKey: prefKey.rawValue) }
         else { AppDelegate.mPrefsApp.set(value, forKey: prefKey.rawValue) }
+    }
+    
+    ///////////////////////////////////////////////////////////////////
+    // Methods related to KeyChain secured storage
+    ///////////////////////////////////////////////////////////////////
+    
+    /*
+     For internet passwords, the primary keys include:  kSecAttrAccount, kSecAttrSecurityDomain, kSecAttrServer,
+                                                        kSecAttrProtocol, kSecAttrAuthenticationType, kSecAttrPort, and kSecAttrPath.
+    */
+
+    // store a secured item; key is key or key+label
+    public static func storeSecureItem(key:String, label:String, data:Data) throws {
+        // build first the read query
+        var query:[String:Any] = [kSecClass as String: kSecClassInternetPassword,
+                                  kSecAttrAccount as String: key,
+                                  kSecAttrSecurityDomain as String: label,
+                                  kSecMatchLimit as String: kSecMatchLimitOne,
+                                  kSecReturnAttributes as String: kCFBooleanTrue,
+                                  kSecReturnData as String: kCFBooleanFalse]
+        
+        // perform the read query
+        var queryResult: AnyObject?
+        let status = withUnsafeMutablePointer(to: &queryResult) {
+            SecItemCopyMatching(query as CFDictionary, UnsafeMutablePointer($0))
+        }
+        if status == errSecItemNotFound {   // -25300
+            // perform an add; build the add query
+            query = [kSecClass as String: kSecClassInternetPassword,
+                     kSecAttrAccount as String: key,
+                     kSecAttrSecurityDomain as String: label,
+                     kSecValueData as String: data as AnyObject]
+            // perform the add query
+            let status1 = SecItemAdd(query as CFDictionary, nil)
+            if status1 != errSecSuccess {
+                var devInfo:String
+                if #available(iOS 11.3, *) {
+                    devInfo = "(\(status1)) \(SecCopyErrorMessageString(status1, nil) as String? ?? "")"
+                } else {
+                    devInfo = "\(status1)"
+                }
+                throw APP_ERROR(funcName: "\(AppDelegate.mCTAG).storeSecureItem", during: "SecItemAdd", domain: AppDelegate.mKeychainThrownDomain, errorCode: .SECURE_STORAGE_ERROR, userErrorDetails: NSLocalizedString("Store Credentials", comment:""), developerInfo: devInfo)
+            }
+            return
+        }
+        if status != errSecSuccess {
+            var devInfo:String
+            if #available(iOS 11.3, *) {
+                devInfo = "(\(status)) \(SecCopyErrorMessageString(status, nil) as String? ?? "")"
+            } else {
+                devInfo = "\(status)"
+            }
+            throw APP_ERROR(funcName: "\(AppDelegate.mCTAG).storeSecureItem", during: "SecItemCopyMatching", domain: AppDelegate.mKeychainThrownDomain, errorCode: .SECURE_STORAGE_ERROR, userErrorDetails: NSLocalizedString("Retrieve Credentials", comment:""), developerInfo: devInfo)
+        }
+        // perform an update; build the changes dictionary
+        let updates:[String:Any] = [kSecValueData as String: data as AnyObject]
+        // build the update query
+        query = [kSecClass as String: kSecClassInternetPassword,
+                 kSecAttrAccount as String: key,
+                 kSecAttrSecurityDomain as String: label]
+        // perform the update query
+        let status2 = SecItemUpdate(query as CFDictionary, updates as CFDictionary)
+        if status2 != errSecSuccess {
+            var devInfo:String
+            if #available(iOS 11.3, *) {
+                devInfo = "(\(status2)) \(SecCopyErrorMessageString(status2, nil) as String? ?? "")"
+            } else {
+                devInfo = "\(status2)"
+            }
+            throw APP_ERROR(funcName: "\(AppDelegate.mCTAG).storeSecureItem", during: "SecItemUpdate", domain: AppDelegate.mKeychainThrownDomain, errorCode: .SECURE_STORAGE_ERROR, userErrorDetails: NSLocalizedString("Store Credentials", comment:""), developerInfo: devInfo)
+        }
+    }
+    
+    // does a secured item exist?; key is key or key+label
+    public static func secureItemExists(key:String, label:String) throws -> Bool {
+        // build the read query
+        let query:[String:Any] = [kSecClass as String: kSecClassInternetPassword,
+                                  kSecAttrAccount as String: key,
+                                  kSecAttrSecurityDomain as String: label,
+                                  kSecMatchLimit as String: kSecMatchLimitOne,
+                                  kSecReturnAttributes as String: kCFBooleanTrue,
+                                  kSecReturnData as String: kCFBooleanFalse]
+        
+        // perform the read query
+        var queryResult: AnyObject?
+        let status = withUnsafeMutablePointer(to: &queryResult) {
+            SecItemCopyMatching(query as CFDictionary, UnsafeMutablePointer($0))
+        }
+        if status == errSecItemNotFound { return false }    // -25300
+        if status != errSecSuccess {
+            var devInfo:String
+            if #available(iOS 11.3, *) {
+                devInfo = "(\(status)) \(SecCopyErrorMessageString(status, nil) as String? ?? "")"
+            } else {
+                devInfo = "\(status)"
+            }
+            throw APP_ERROR(funcName: "\(AppDelegate.mCTAG).secureItemExists", during: "SecItemCopyMatching", domain: AppDelegate.mKeychainThrownDomain, errorCode: .SECURE_STORAGE_ERROR, userErrorDetails: NSLocalizedString("Retrieve Credentials", comment:""), developerInfo: devInfo)
+        }
+        return true
+    }
+
+    // retrieve a secured item; key is key or key+label
+    public static func retrieveSecureItem(key:String, label:String) throws -> Data? {
+        // build the read query
+        let query:[String:Any] = [kSecClass as String: kSecClassInternetPassword,
+                                  kSecAttrAccount as String: key,
+                                  kSecAttrSecurityDomain as String: label,
+                                  kSecMatchLimit as String: kSecMatchLimitOne,
+                                  kSecReturnAttributes as String: kCFBooleanTrue,
+                                  kSecReturnData as String: kCFBooleanTrue]
+        
+        // perform the read query
+        var queryResult: AnyObject?
+        let status = withUnsafeMutablePointer(to: &queryResult) {
+            SecItemCopyMatching(query as CFDictionary, UnsafeMutablePointer($0))
+        }
+        if status == errSecItemNotFound { return nil }  // -25300
+        if status != errSecSuccess {
+            var devInfo:String
+            if #available(iOS 11.3, *) {
+                devInfo = "(\(status)) \(SecCopyErrorMessageString(status, nil) as String? ?? "")"
+            } else {
+                devInfo = "\(status)"
+            }
+            throw APP_ERROR(funcName: "\(AppDelegate.mCTAG).retrieveSecureItem", during: "SecItemCopyMatching", domain: AppDelegate.mKeychainThrownDomain, errorCode: .SECURE_STORAGE_ERROR, userErrorDetails: NSLocalizedString("Retrieve Credentials", comment:""), developerInfo: devInfo)
+        }
+        
+        // return the read query result
+        if let existingItem = queryResult as? [String : AnyObject] {
+            return existingItem[kSecValueData as String] as? Data
+        } else {
+            throw APP_ERROR(funcName: "\(AppDelegate.mCTAG).retrieveSecureItem", during: "queryResult as? [String : AnyObject]", domain: AppDelegate.mKeychainThrownDomain, errorCode: .SECURE_STORAGE_ERROR, userErrorDetails: NSLocalizedString("Retrieve Credentials", comment:""))
+        }
+    }
+    
+    // retrieve just the keys for all secured items; if an item has a label the return element is key\tlabel
+    public static func retrieveAllSecureItemKeys(key:String?) throws -> [String] {
+        // build the read query
+        var query:[String:Any] = [kSecClass as String: kSecClassInternetPassword,
+                                  kSecMatchLimit as String: kSecMatchLimitAll,
+                                  kSecReturnAttributes as String: kCFBooleanTrue]
+        if !(key ?? "").isEmpty { query[kSecAttrAccount as String] = key! }
+        
+        // perform the read query
+        var queryResult: AnyObject?
+        let status = withUnsafeMutablePointer(to: &queryResult) {
+            SecItemCopyMatching(query as CFDictionary, UnsafeMutablePointer($0))
+        }
+        if status == errSecItemNotFound { return [] }   // -25300
+        if status != errSecSuccess {
+            var devInfo:String
+            if #available(iOS 11.3, *) {
+                devInfo = "(\(status)) \(SecCopyErrorMessageString(status, nil) as String? ?? "")"
+            } else {
+                devInfo = "\(status)"
+            }
+            throw APP_ERROR(funcName: "\(AppDelegate.mCTAG).retrieveAllSecureItemKeys", during: "SecItemCopyMatching", domain: AppDelegate.mKeychainThrownDomain, errorCode: .SECURE_STORAGE_ERROR, userErrorDetails: NSLocalizedString("Retrieve Credentials", comment:""), developerInfo: devInfo)
+        }
+        
+        // step through the results
+        if let existingItems = queryResult as? [[String : AnyObject]] {
+            var results:[String] = []
+            for existingItem in existingItems {
+                var account:String = existingItem[kSecAttrAccount as String] as! String
+                let label:String? = existingItem[kSecAttrSecurityDomain as String] as? String
+                if !(label ?? "").isEmpty { account = account + "\t" + label! }
+                results.append(account)
+            }
+            return results
+        } else {
+            throw APP_ERROR(funcName: "\(AppDelegate.mCTAG).retrieveAllSecureItemKeys", during: "queryResult as? [[String : AnyObject]]", domain: AppDelegate.mKeychainThrownDomain, errorCode: .SECURE_STORAGE_ERROR, userErrorDetails: NSLocalizedString("Retrieve Credentials", comment:""))
+        }
+    }
+    
+    // delete a secured item; key is key or key+label
+    public static func deleteSecureItem(key:String, label:String) throws -> Bool {
+        // build the delete query
+        let query:[String:Any] = [kSecClass as String: kSecClassInternetPassword,
+                                  kSecAttrAccount as String: key,
+                                  kSecAttrSecurityDomain as String: label]
+        
+        // perform the delete query
+        let status = SecItemDelete(query as CFDictionary)
+
+        if status == errSecItemNotFound { return false }    // -25300
+        if status != errSecSuccess {
+            var devInfo:String
+            if #available(iOS 11.3, *) {
+                devInfo = "(\(status)) \(SecCopyErrorMessageString(status, nil) as String? ?? "")"
+            } else {
+                devInfo = "\(status)"
+            }
+            throw APP_ERROR(funcName: "\(AppDelegate.mCTAG).deleteSecureItem", during: "SecItemDelete", domain: AppDelegate.mKeychainThrownDomain, errorCode: .SECURE_STORAGE_ERROR, userErrorDetails: NSLocalizedString("Delete Credentials", comment:""), developerInfo: devInfo)
+        }
+        return true
     }
     
     ///////////////////////////////////////////////////////////////////

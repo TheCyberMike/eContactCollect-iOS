@@ -35,19 +35,31 @@ extension UIFont {
     }
 }
 
-class eContact_CollectTests_001_Error: XCTestCase {
+class eContact_CollectTests_001_APPDelegate: XCTestCase {
     public static var baseOrgRec1:RecOrganizationDefs? = nil
     
     // This is the setUp() class method.
     // It is called before the first test method begins.
     // Set up any overall initial state here.
     override class func setUp() {
+        debugPrint("eContact_CollectTests_001_APPDelegate.setUp")
         super.setUp()   // should be first
         
         self.baseOrgRec1 = RecOrganizationDefs(org_code_sv_file: "Test Org1", org_title_mode: RecOrganizationDefs.ORG_TITLE_MODE.ONLY_TITLE, org_logo_image_png_blob: nil, org_email_to: "email1@email.com", org_email_cc: "emailcc1@smail.net", org_email_subject: "Subject1")
         do {
             let _ = try self.baseOrgRec1!.saveNewToDB()
         } catch {}
+        
+        do {
+            let retrievedData:[String] = try AppDelegate.retrieveAllSecureItemKeys(key: nil)
+            for key in retrievedData {
+                debugPrint("eContact_CollectTests_001_APPDelegate.setUp: SecureStorage: Found: \(key)")
+            }
+        } catch let appError as APP_ERROR {
+            debugPrint("eContact_CollectTests_001_APPDelegate.setUp: SecureStorage: APP_ERROR thrown: \(appError.description)")
+        } catch {
+            debugPrint("eContact_CollectTests_001_APPDelegate.setUp: SecureStorage: Error thrown: \(error.localizedDescription)")
+        }
     }
     
     // This is the setUp() instance method.
@@ -68,11 +80,30 @@ class eContact_CollectTests_001_Error: XCTestCase {
     // It is called after all test methods complete.
     // Perform any overall cleanup here.
     override class func tearDown() {
+        debugPrint("eContact_CollectTests_001_APPDelegate.teardown")
         do {
             let _ = try self.baseOrgRec1!.deleteFromDB()
-        } catch {}
+        } catch let appError as APP_ERROR {
+            debugPrint("eContact_CollectTests_001_APPDelegate.teardown: OrgRec: APP_ERROR thrown: \(appError.description)")
+        } catch {
+            debugPrint("eContact_CollectTests_001_APPDelegate.teardown: OrgRec: Error thrown: \(error.localizedDescription)")
+        }
         
-        // teardown code here
+        do {
+            let retrievedData:[String] = try AppDelegate.retrieveAllSecureItemKeys(key: nil)
+            for key in retrievedData {
+                debugPrint("eContact_CollectTests_001_APPDelegate.teardown: SecureStorage: Found: \(key)")
+                let keyComps = key.components(separatedBy: "\t")
+                if keyComps.count == 2 { let _ = try AppDelegate.deleteSecureItem(key: keyComps[0], label: keyComps[1]) }
+                else { let _ = try AppDelegate.deleteSecureItem(key: key, label: "") }
+            }
+        } catch let appError as APP_ERROR {
+            debugPrint("eContact_CollectTests_001_APPDelegate.teardown: SecureStorage: APP_ERROR thrown: \(appError.description)")
+        } catch {
+            debugPrint("eContact_CollectTests_001_APPDelegate.teardown: SecureStorage: Error thrown: \(error.localizedDescription)")
+        }
+
+        // teardown code above here
         super.tearDown()    // should be last
     }
     
@@ -165,6 +196,397 @@ class eContact_CollectTests_001_Error: XCTestCase {
         }
 #endif
     }
+    
+    func test_003_SecureStorage_NoLabel() {
+        continueAfterFailure = false
+        
+        let baseCredential1:String = "user1\tpassword2"
+        let baseCredential1Data:Data = baseCredential1.data(using: String.Encoding.utf16)!
+        let baseCredential2:String = "user44\twordpass!"
+        let baseCredential2Data:Data = baseCredential2.data(using: String.Encoding.utf16)!
+        
+        // stage 1
+        var stage:Int = 1
+        do {
+            let found:Bool = try AppDelegate.secureItemExists(key: "test1", label: "")
+            XCTAssertFalse(found, "APP_ERROR.secureItemExists.\(stage): found a non-existant key")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.secureItemExists.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.secureItemExists.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            try AppDelegate.storeSecureItem(key: "test1", label: "", data: baseCredential1Data)
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.storeSecureItem.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.storeSecureItem.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        
+        // stage 2
+        stage = 2
+        do {
+            let found:Bool = try AppDelegate.secureItemExists(key: "test1", label: "")
+            XCTAssertTrue(found, "SecureStorage.secureItemExists.\(stage): did not find an existing key")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.secureItemExists.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.secureItemExists.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:Data? = try AppDelegate.retrieveSecureItem(key: "test1", label: "")
+            XCTAssertNotNil(retrievedData, "SecureStorage.retrieveSecureItem.\(stage): did not retrieve an existing key")
+            let retrievedCredential:String = String(data: retrievedData!, encoding: String.Encoding.utf16)!
+            XCTAssertEqual(retrievedCredential, baseCredential1, "SecureStorage.retrieveSecureItem.\(stage): retrieved key does not match")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveSecureItem.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveSecureItem.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        
+        // stage 3
+        stage = 3
+        do {
+            try AppDelegate.storeSecureItem(key: "person2", label: "", data: baseCredential2Data)
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.storeSecureItem.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.storeSecureItem.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:Data? = try AppDelegate.retrieveSecureItem(key: "person2", label: "")
+            XCTAssertNotNil(retrievedData, "SecureStorage.retrieveSecureItem.\(stage): did not retrieve an existing key")
+            let retrievedCredential:String = String(data: retrievedData!, encoding: String.Encoding.utf16)!
+            XCTAssertEqual(retrievedCredential, baseCredential2, "SecureStorage.retrieveSecureItem.\(stage): retrieved key does not match")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveSecureItem.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveSecureItem.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:[String] = try AppDelegate.retrieveAllSecureItemKeys(key: nil)
+            XCTAssertNotEqual(retrievedData.count, 0, "SecureStorage.retrieveAllSecureItemKeys.\(stage): did not retrieve any existing keys")
+            var found1:Bool = false
+            var found2:Bool = false
+            for key in retrievedData {
+                if key == "test1" {
+                    found1 = true
+                } else if key == "person2" {
+                    found2 = true
+                } else {
+                    XCTFail("SecureStorage.retrieveAllSecureItemKeys.\(stage): found improper key: \(key)")
+                }
+            }
+            if !found1 { XCTFail("SecureStorage.retrieveAllSecureItemKeys.\(stage): did not find existing key: test1") }
+            if !found2 { XCTFail("SecureStorage.retrieveAllSecureItemKeys.\(stage): did not find existing key: person2") }
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveAllSecureItemKeys.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveAllSecureItemKeys.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        
+        // stage 4
+        stage = 4
+        do {
+            let success:Bool = try AppDelegate.deleteSecureItem(key: "invalid", label: "")
+            XCTAssertFalse(success, "SecureStorage.deleteSecureItem1.\(stage): delete returned success for non-existant key")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.deleteSecureItem1.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.deleteSecureItem1.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let success:Bool = try AppDelegate.deleteSecureItem(key: "test1", label: "")
+            XCTAssertTrue(success, "SecureStorage.deleteSecureItem2.\(stage): delete returned failure for existing key")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.deleteSecureItem2.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.deleteSecureItem2.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:[String] = try AppDelegate.retrieveAllSecureItemKeys(key: nil)
+            XCTAssertNotEqual(retrievedData.count, 0, "SecureStorage.retrieveAllSecureItemKeys.\(stage): did not retrieve any existing keys")
+            var found1:Bool = false
+            var found2:Bool = false
+            for key in retrievedData {
+                if key == "test1" {
+                    found1 = true
+                } else if key == "person2" {
+                    found2 = true
+                } else {
+                    XCTFail("SecureStorage.retrieveAllSecureItemKeys.\(stage): found improper key: \(key)")
+                }
+            }
+            if found1 { XCTFail("SecureStorage.retrieveAllSecureItemKeys.\(stage): found supposedly deleted key: test1") }
+            if !found2 { XCTFail("SecureStorage.retrieveAllSecureItemKeys.\(stage): did not find existing key: person2") }
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveAllSecureItemKeys.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveAllSecureItemKeys.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let success:Bool = try AppDelegate.deleteSecureItem(key: "person2", label: "")
+            XCTAssertTrue(success, "SecureStorage.deleteSecureItem3.\(stage): delete returned failure for existing key")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.deleteSecureItem3.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.deleteSecureItem3.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+    }
+    
+    func test_004_SecureStorage_Label() {
+        continueAfterFailure = false
+        
+        let baseCredential1:String = "user5\tpassworde121"
+        let baseCredential1Data:Data = baseCredential1.data(using: String.Encoding.utf16)!
+        let baseCredential1a:String = "user5\toverWatch4"
+        let baseCredential1aData:Data = baseCredential1a.data(using: String.Encoding.utf16)!
+        let baseCredential1b:String = "user5\twhatever"
+        let baseCredential1bData:Data = baseCredential1b.data(using: String.Encoding.utf16)!
+        
+        let baseCredential2:String = "user88\tword4pass$"
+        let baseCredential2Data:Data = baseCredential2.data(using: String.Encoding.utf16)!
+        let baseCredential2a:String = "user88\tfarty7"
+        let baseCredential2aData:Data = baseCredential2a.data(using: String.Encoding.utf16)!
+        
+        let baseCredential3:String = "a5UserMe\twellWhatDoIKnow"
+        let baseCredential3Data:Data = baseCredential3.data(using: String.Encoding.utf16)!
+        
+        // stage 1
+        var stage:Int = 1
+        do {
+            let found:Bool = try AppDelegate.secureItemExists(key: "test1", label: "label1")
+            XCTAssertFalse(found, "APP_ERROR.secureItemExists.\(stage): found a non-existant key")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.secureItemExists.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.secureItemExists.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            try AppDelegate.storeSecureItem(key: "test1", label: "label1", data: baseCredential1Data)
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.storeSecureItem.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.storeSecureItem.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        
+        // stage 2
+        stage = 2
+        do {
+            let found:Bool = try AppDelegate.secureItemExists(key: "test1", label: "label1")
+            XCTAssertTrue(found, "SecureStorage.secureItemExists.\(stage): did not find an existing key")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.secureItemExists.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.secureItemExists.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:Data? = try AppDelegate.retrieveSecureItem(key: "test1", label: "label1")
+            XCTAssertNotNil(retrievedData, "SecureStorage.retrieveSecureItem1.\(stage): did not retrieve an existing key")
+            let retrievedCredential:String = String(data: retrievedData!, encoding: String.Encoding.utf16)!
+            XCTAssertEqual(retrievedCredential, baseCredential1, "SecureStorage.retrieveSecureItem1.\(stage): retrieved key does not match")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveSecureItem1.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveSecureItem1.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:Data? = try AppDelegate.retrieveSecureItem(key: "test1", label: "labelbad")
+            XCTAssertNil(retrievedData, "SecureStorage.retrieveSecureItem2.\(stage): retrieved a key with bad label")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveSecureItem2.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveSecureItem2.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:Data? = try AppDelegate.retrieveSecureItem(key: "test1", label: "")
+            XCTAssertNil(retrievedData, "SecureStorage.retrieveSecureItem3.\(stage): retrieved a key with no label")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveSecureItem3.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveSecureItem3.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        
+        // stage 3
+        stage = 3
+        do {
+            try AppDelegate.storeSecureItem(key: "test1", label: "label2", data: baseCredential1bData)
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.storeSecureItem1.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.storeSecureItem1.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            try AppDelegate.storeSecureItem(key: "test1", label: "", data: baseCredential1aData)
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.storeSecureItem2.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.storeSecureItem2.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            try AppDelegate.storeSecureItem(key: "person2", label: "newLabel", data: baseCredential2Data)
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.storeSecureItem3.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.storeSecureItem3.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            try AppDelegate.storeSecureItem(key: "person2", label: "", data: baseCredential2aData)
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.storeSecureItem4.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.storeSecureItem4.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            try AppDelegate.storeSecureItem(key: "person3", label: "", data: baseCredential3Data)
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.storeSecureItem5.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.storeSecureItem5.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:[String] = try AppDelegate.retrieveAllSecureItemKeys(key: nil)
+            XCTAssertNotEqual(retrievedData.count, 0, "SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not retrieve any existing keys")
+            var found1:Bool = false
+            var found2:Bool = false
+            var found3:Bool = false
+            var found4:Bool = false
+            var found5:Bool = false
+            var found6:Bool = false
+            for key in retrievedData {
+                if key == "test1\tlabel1" {
+                    found1 = true
+                } else if key == "test1\tlabel2" {
+                    found2 = true
+                } else if key == "test1" {
+                    found3 = true
+                } else if key == "person2\tnewLabel" {
+                    found4 = true
+                } else if key == "person2" {
+                    found5 = true
+                } else if key == "person3" {
+                    found6 = true
+                } else {
+                    XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): found improper key: \(key)")
+                }
+            }
+            if !found1 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not find existing key: test1 label1") }
+            if !found2 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not find existing key: test1 label2") }
+            if !found3 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not find existing key: test1") }
+            if !found4 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not find existing key: person2 newLabel") }
+            if !found5 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not find existing key: person2") }
+            if !found6 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not find existing key: person3") }
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:Data? = try AppDelegate.retrieveSecureItem(key: "person2", label: "newLabel")
+            XCTAssertNotNil(retrievedData, "SecureStorage.retrieveSecureItem.\(stage): did not retrieve an existing key")
+            let retrievedCredential:String = String(data: retrievedData!, encoding: String.Encoding.utf16)!
+            XCTAssertEqual(retrievedCredential, baseCredential2, "SecureStorage.retrieveSecureItem.\(stage): retrieved key does not match")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveSecureItem1.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveSecureItem1.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:Data? = try AppDelegate.retrieveSecureItem(key: "person2", label: "")
+            XCTAssertNotNil(retrievedData, "SecureStorage.retrieveSecureItem.\(stage): did not retrieve an existing key")
+            let retrievedCredential:String = String(data: retrievedData!, encoding: String.Encoding.utf16)!
+            XCTAssertEqual(retrievedCredential, baseCredential2a, "SecureStorage.retrieveSecureItem.\(stage): retrieved key does not match")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveSecureItem2.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveSecureItem2.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:[String] = try AppDelegate.retrieveAllSecureItemKeys(key: "person2")
+            XCTAssertNotEqual(retrievedData.count, 0, "SecureStorage.retrieveAllSecureItemKeys2.\(stage): did not retrieve any existing keys")
+            var found1:Bool = false
+            var found2:Bool = false
+            for key in retrievedData {
+                if key == "person2\tnewLabel" {
+                    found1 = true
+                } else if key == "person2" {
+                    found2 = true
+                } else {
+                    XCTFail("SecureStorage.retrieveAllSecureItemKeys2.\(stage): found improper key: \(key)")
+                }
+            }
+            if !found1 { XCTFail("SecureStorage.retrieveAllSecureItemKeys2.\(stage): did not find existing key: person2 newLabel") }
+            if !found2 { XCTFail("SecureStorage.retrieveAllSecureItemKeys2.\(stage): did not find existing key: person2") }
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveAllSecureItemKeys2.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveAllSecureItemKeys2.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        
+        // stage 4
+        stage = 4
+        do {
+            let success:Bool = try AppDelegate.deleteSecureItem(key: "invalid", label: "fart")
+            XCTAssertFalse(success, "SecureStorage.deleteSecureItem1.\(stage): delete returned success for non-existant key")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.deleteSecureItem1.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.deleteSecureItem1.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let success:Bool = try AppDelegate.deleteSecureItem(key: "test1", label: "label2")
+            XCTAssertTrue(success, "SecureStorage.deleteSecureItem2.\(stage): delete returned failure for existing key")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.deleteSecureItem2.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.deleteSecureItem2.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let success:Bool = try AppDelegate.deleteSecureItem(key: "person2", label: "")
+            XCTAssertTrue(success, "SecureStorage.deleteSecureItem2.\(stage): delete returned failure for existing key")
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.deleteSecureItem2.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.deleteSecureItem2.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+        do {
+            let retrievedData:[String] = try AppDelegate.retrieveAllSecureItemKeys(key: nil)
+            XCTAssertNotEqual(retrievedData.count, 0, "SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not retrieve any existing keys")
+            var found1:Bool = false
+            var found2:Bool = false
+            var found3:Bool = false
+            var found4:Bool = false
+            var found5:Bool = false
+            var found6:Bool = false
+            for key in retrievedData {
+                if key == "test1\tlabel1" {
+                    found1 = true
+                } else if key == "test1\tlabel2" {
+                    found2 = true
+                } else if key == "test1" {
+                    found3 = true
+                } else if key == "person2\tnewLabel" {
+                    found4 = true
+                } else if key == "person2" {
+                    found5 = true
+                } else if key == "person3" {
+                    found6 = true
+                } else {
+                    XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): found improper key: \(key)")
+                }
+            }
+            if !found1 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not find existing key: test1 label1") }
+            if found2 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): found deleted key: test1 label2") }
+            if !found3 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not find existing key: test1") }
+            if !found4 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not find existing key: person2 newLabel") }
+            if found5 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): found deleted key: person2") }
+            if !found6 { XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): did not find existing key: person3") }
+        } catch let appError as APP_ERROR {
+            XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): APP_ERROR thrown: \(appError.description)")
+        } catch {
+            XCTFail("SecureStorage.retrieveAllSecureItemKeys1.\(stage): Error thrown: \(error.localizedDescription)")
+        }
+    }
 }
 
 class eContact_CollectTests_002_Database: XCTestCase {
@@ -173,6 +595,7 @@ class eContact_CollectTests_002_Database: XCTestCase {
     // It is called before the first test method begins.
     // Set up any overall initial state here.
     override class func setUp() {
+        debugPrint("eContact_CollectTests_002_Database.setUp")
         super.setUp()   // should be first
     }
     
@@ -194,6 +617,7 @@ class eContact_CollectTests_002_Database: XCTestCase {
     // It is called after all test methods complete.
     // Perform any overall cleanup here.
     override class func tearDown() {
+        debugPrint("eContact_CollectTests_002_Database.tearDown")
         // teardown code here            
         super.tearDown()    // should be last
     }
@@ -431,13 +855,14 @@ class eContact_CollectTests_002_Database: XCTestCase {
             
             // stage 7
             stage = 7
+            let resultContext:DatabaseHandler.ValidateJSONdbFile_Result = DatabaseHandler.ValidateJSONdbFile_Result()
             var jsonObj:NSDictionary? = try baseOrgRec2.buildJSONObject()
             XCTAssertNotNil(jsonObj, "RecOrganizationDefs.buildJSONObject.\(stage): Rec2 could not be converted to JSON Objects")
             var jsonData:Data = try JSONSerialization.data(withJSONObject: jsonObj!, options: JSONSerialization.WritingOptions())
             XCTAssertNotNil(jsonData, "RecOrganizationDefs.JSONSerialization.data.\(stage): Rec2 could not be converted to JSON Data")
             var jsonObj2:NSDictionary = try JSONSerialization.jsonObject(with: jsonData, options: JSONSerialization.ReadingOptions()) as! NSDictionary
             XCTAssertNotNil(jsonObj2, "RecOrganizationDefs.JSONSerialization.jsonObject.\(stage): Rec2 could not be re-converted back to JSON Objects")
-            var orgRec4opt:RecOrganizationDefs_Optionals = RecOrganizationDefs_Optionals(jsonObj: jsonObj2)
+            var orgRec4opt:RecOrganizationDefs_Optionals = RecOrganizationDefs_Optionals(jsonObj: jsonObj2, context: resultContext)
             XCTAssertTrue(orgRec4opt.validate(), "RecOrganizationDefs.RecOrganizationDefs_Optionals(jsonObj:).\(stage): Rec2 did not re-convert back to Org Rec")
             var orgRec4:RecOrganizationDefs = try RecOrganizationDefs(existingRec: orgRec4opt)
 #if TESTING
@@ -452,7 +877,7 @@ class eContact_CollectTests_002_Database: XCTestCase {
             XCTAssertNotNil(jsonData, "RecOrganizationDefs.JSONSerialization.data.\(stage): Rec1 could not be converted to JSON Data")
             jsonObj2 = try JSONSerialization.jsonObject(with: jsonData, options: JSONSerialization.ReadingOptions()) as! NSDictionary
             XCTAssertNotNil(jsonObj2, "RecOrganizationDefs.JSONSerialization.jsonObject.\(stage): Rec1 could not be re-converted back to JSON Objects")
-            orgRec4opt = RecOrganizationDefs_Optionals(jsonObj: jsonObj2)
+            orgRec4opt = RecOrganizationDefs_Optionals(jsonObj: jsonObj2, context: resultContext)
             XCTAssertTrue(orgRec4opt.validate(), "RecOrganizationDefs.RecOrganizationDefs_Optionals(jsonObj:).\(stage): Rec1 did notre-convert back to Org Rec")
             orgRec4 = try RecOrganizationDefs(existingRec: orgRec4opt)
 #if TESTING
@@ -467,7 +892,7 @@ class eContact_CollectTests_002_Database: XCTestCase {
             XCTAssertNotNil(jsonData, "RecOrganizationDefs.JSONSerialization.data.\(stage): Rec3 could not be converted to JSON Data")
             jsonObj2 = try JSONSerialization.jsonObject(with: jsonData, options: JSONSerialization.ReadingOptions()) as! NSDictionary
             XCTAssertNotNil(jsonObj2, "RecOrganizationDefs.JSONSerialization.jsonObject.\(stage): Rec3 could not be re-converted back to JSON Objects")
-            orgRec4opt = RecOrganizationDefs_Optionals(jsonObj: jsonObj2)
+            orgRec4opt = RecOrganizationDefs_Optionals(jsonObj: jsonObj2, context: resultContext)
             XCTAssertTrue(orgRec4opt.validate(), "RecOrganizationDefs.RecOrganizationDefs_Optionals(jsonObj:).\(stage): Rec3 did not re-convert back to Org Rec")
             orgRec4 = try RecOrganizationDefs(existingRec: orgRec4opt)
 #if TESTING

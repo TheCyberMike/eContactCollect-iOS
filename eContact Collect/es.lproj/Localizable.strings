@@ -25,8 +25,19 @@
 "Field's metadata is missing or mismatched" = "Field's metadata is missing or mismatched";
 "Field's options are missing or mismatched" = "Field's options are missing or mismatched";
 "Field's optionSet is missing or mismatched" = "Field's optionSet is missing or mismatched";
+"iOS Email Subsystem is disabled" = "iOS Email Subsystem is disabled";
+"iOS Email Subsystem returned error" = "iOS Email Subsystem returned error";
+"Email has no To and no CC" = "Email has no To and no CC";
+"Secure Storage Error" = "Secure Storage Error";
+"Missing saved Email Account" = "Missing saved Email Account";
+"Missing known Email Provider" = "Missing known Email Provider";
+"Missing Email Account Credentials" = "Missing Email Account Credentials";
 
 // AppDelegate.swift
+"Secure Storage" = "Secure Storage";
+"Retrieve Credentials" = "Retrieve Credentials";
+"Store Credentials" = "Store Credentials";
+"Delete Credentials" = "Delete Credentials"
 "Common Languages" = "Common Languages";
 "Base Languages" = "Base Languages";
 "Extended Languages" = "Extended Languages";
@@ -62,6 +73,7 @@
 "Create the Database" = "Create the Database";
 "Verify the Database" = "Verify the Database";
 "Delete the Database" = "Delete the Database";
+"Database successfully upgraded to version " = "Database successfully upgraded to version ";
 "Export Preparation" = "Export Preparation";
 "Export Generation" = "Export Generation";
 "Export File" = "Export File";
@@ -74,8 +86,24 @@
 "Organization for the Form must pre-exist: " = "Organization for the Form must pre-exist: ";
 
 // EmailHandler.swift
+"iOS Mail App" = "iOS Mail App";
 "Email-Handler" = "Email-Handler";
-"Email eContact Collect" = "Email eContact Collect";
+"Gmail legacy" = "Gmail legacy";
+"Yahoo legacy" = "Yahoo legacy";
+"Clear" = "Clear";
+"Start-TLS" = "Start-TLS";
+"TLS" = "TLS";
+"SASL CRAM MD5" = "SASL CRAM MD5";
+"SASL Plain" = "SASL Plain";
+"SASL GSSAPI" = "SASL GSSAPI";
+"SASL Digest MD5" = "SASL Digest MD5";
+"SASL Login" = "SASL Login";
+"SASL SRP" = "SASL SRP";
+"SASL NTLM" = "SASL NTLM";
+"SASL Kerberos-V4" = "SASL Kerberos-V4";
+"OAuth2" = "OAuth2";
+"OAuth2 Outlook.com" = "OAuth2 Outlook.com";
+"Other SMTP Email Provider" = "Other SMTP Email Provider";
 
 // PopupFirstTimeViewController.swift
 "Entry Error" = "Entry Error";
@@ -148,6 +176,20 @@
 "No" = "No";
 "TZO" = "TZO";
 
+// ContactsMgmtViewController.swift
+"Delete Contact?" = "Delete Contact?";
+
+// SendContactsViewController.swift
+"App Error" = "App Error";
+"File Error" = "File Error";
+"Generate Attachments" = "Generate Attachments";
+"Contacts not-yet-sent" = "Contacts not-yet-sent";
+"Generate new attachments" = "Generate new attachments";
+"Pending Attachments; press to email or share" = "Pending Attachments; press to email or share";
+"Retained Sent Attachments (held for 7 days); press to re-email or re-share" = "Retained Sent Attachments (held for 7 days); press to re-email or re-share";
+"Filename mis-composed" = "Filename mis-composed";
+"Email SV-File" = "Email SV-File";
+
 // AdminPrefsViewController.swift & WizMenuViewController.swift & EntryViewController.swift & WizDefinePINViewController & WizDefineNicknameViewController
 "Personal Settings" = "Personal Settings";
 "Your PIN" = "Your PIN";
@@ -157,6 +199,9 @@
 "Your Short Nickname" = "Your Short Nickname";
 "Nickname cannot be blank" = "Nickname cannot be blank";
 "Nickname can only contain letters, digits, space, or _ . + -" = "Nickname can only contain letters, digits, space, or _ . + -";
+"Default Sending Email Acct" = "Default Sending Email Acct";
+"Sending Email Accounts" = "Sending Email Accounts";
+"Select new provider to add" = "Select new provider to add";
 "Actions" = "Actions";
 "Export/Backup all Settings for an Organization" = "Export/Backup all Settings for an Organization";
 "Export/Backup all Settings for one Form" = "Export/Backup all Settings for one Form";
@@ -170,6 +215,21 @@
 "The Exported configuration file named" = "The Exported configuration file named";
 "is now available in the iOS Files app for sharing" = "is now available in the iOS Files app for sharing";
 "Export Error" = "Export Error";
+"Change Account" = "Change Account";
+"Add Account" = "Add Account";
+"Account Nickname already exists" = "Account Nickname already exists";
+"Account Nickname" = "Account Nickname";
+"Account Nickname can only contain letters, digits, space, or _ . + -" = "Account Nickname can only contain letters, digits, space, or _ . + -";
+"From: Email Name" = "From: Email Name";
+"From: Email Address" = "From: Email Address";
+"Email Acct: UserID" = "Email Acct: UserID";
+"Email Acct: Password" = "Email Acct: Password";
+"SMTP Email Provider Settings" = "SMTP Email Provider Settings";
+"Override standard settings?" = "Override standard settings?";
+"HostName" = "HostName";
+"Port" = "Port";
+"Connection Type" = "Connection Type";
+"Authentication Type" = "Authentication Type";
 
 // WizDefinePINViewController
 "App PIN" = "App PIN";
@@ -204,6 +264,7 @@
 "Support multiple languages?" = "Support multiple languages?";
 "Multi-Language Options" = "Multi-Language Options";
 "SV-File Language" = "SV-File Language";
+"Select new language to add" = "Select new language to add";
 "Choose one" = "Choose one";
 "Shown languages in order to-be-shown" = "Shown languages in order to-be-shown";
 "Organization Identity" = "Organization Identity";
@@ -237,20 +298,6 @@
 
 // FormsMgmtViewController.swift
 "Delete Form?" = "Delete Form?";
-
-// ContactsMgmtViewController.swift
-"Delete Contact?" = "Delete Contact?";
-
-// SendContactsViewController.swift
-"App Error" = "App Error";
-"File Error" = "File Error";
-"Email SV-File" = "Email SV-File";
-"Generate Attachments" = "Generate Attachments";
-"Contacts not-yet-sent" = "Contacts not-yet-sent";
-"Generate new attachments" = "Generate new attachments";
-"Pending Attachments; press to email or share" = "Pending Attachments; press to email or share";
-"Retained Sent Attachments (held for 7 days); press to re-email or re-share" = "Retained Sent Attachments (held for 7 days); press to re-email or re-share";
-"Filename mis-composed" = "Filename mis-composed";
 
 // WizLangNoteViewController.swift
 "Unfortunately, eContact Collect has not yet been \(string1) into your preferred language of \(langName) in \(countryName).\n" = "Unfortunately, eContact Collect has not yet been \(string1) into your preferred language of \(langName) in \(countryName).\n";
@@ -298,12 +345,14 @@
 "Short Form Code" = "Short Form Code";
 "Override Org's email settings?" = "Override Org's email settings?";
 "Form's Fields and Sections in order to-be-shown" = "Form's Fields and Sections in order to-be-shown";
+"Select new field to add" = "Select new field to add";
 "Submit Button" = "Submit Button";
 "Advanced Settings" = "Advanced Settings";
 "Pick an option" = "Pick an option";
 "Collection of records Tag" = "Collection of records Tag";
 "Per-record Tag" = "Per-record Tag";
 "Order of Fields and Metadata in SV-File " = "Order of Fields and Metadata in SV-File ";
+"Order of Fields" = "Order of Fields";
 "Form's Coloration (FUTURE)" = "Form's Coloration (FUTURE)";
 "Org Email Settings:\n  To: " = "Org Email Settings:\n  To: ";
 "\n  CC: " = "\n  CC: ";
@@ -313,6 +362,7 @@
 "Submit Button Text for " = "Submit Button Text for ";
 "Done" = "Done";
 "Cancel" = "Cancel";
+"Save" = "Save";
 "Index#" = "Index#";
 "Field IDCode Name" = "Field IDCode Name";
 "Field Row-Type" = "Field Row-Type";
@@ -328,6 +378,8 @@
 "Field's Inline Metadata" = "Field's Inline Metadata";
 "Field's Subfields" = "Field's Subfields";
 "Field's Identity" = "Field's Identity";
+"Edit Field" = "Edit Field";
+"Edit Attribute" = "Edit Attribute";
 "MetaData's Identity and Names" = "MetaData's Identity and Names";
 "Option's Identity and Names" = "Option's Identity and Names";
 "Short Sync Tag must not be blank" = "Short Sync Tag must not be blank";

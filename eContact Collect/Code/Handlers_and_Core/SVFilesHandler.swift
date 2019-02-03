@@ -119,12 +119,15 @@ public class SVFilesHandler {
         return true
     }
     
-    // first-time setup is needed;
+    // perform any handler first time setups that have not already been performed; the sequence# allows later versions to retro-add a first-time setup;
     // this handler must be mindful that if it or the database handler may not have properly initialized that this should be bypassed;
     // errors are stored via the class members and will already be posted to the error.log
     public func firstTimeSetup(method:String) {
 //debugPrint("\(mCTAG).firstTimeSetup STARTED")
-        // none at this time
+        if AppDelegate.getPreferenceInt(prefKey: PreferencesKeys.Ints.APP_Handler_SVFiles_FirstTime_Done) != 1 {
+            // none at this time
+            AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_Handler_SVFiles_FirstTime_Done, value: 1)
+        }
     }
 
     // return whether the handler is fully operational

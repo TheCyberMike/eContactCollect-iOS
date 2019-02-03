@@ -92,8 +92,9 @@ public class RecOptionSetLocales_Optionals {
     }
     
     // constructor creates the record from a JSON object; is tolerant of missing columns;
-    // must be tolerant that Int64's may be encoded as Strings, especially OIDs
-    init(jsonObj:NSDictionary) {
+    // must be tolerant that Int64's may be encoded as Strings, especially OIDs;
+    // context is provided in case database version or language of the JSON file is important
+    init(jsonObj:NSDictionary, context:DatabaseHandler.ValidateJSONdbFile_Result) {
         self.rOptionSetLoc_Code = jsonObj[RecOptionSetLocales.COLUMN_OPTIONSETLOC_CODE] as? String
         self.rOptionSetLoc_Code_Extension = jsonObj[RecOptionSetLocales.COLUMN_OPTIONSETLOC_CODE_EXTENSION] as? String
         self.rOptionSetLoc_LangRegionCode = jsonObj[RecOptionSetLocales.COLUMN_OPTIONSETLOC_LANGREGIONCODE] as? String

@@ -242,8 +242,9 @@ public class RecOrgFormFieldLocales_Optionals {
     }
     
     // constructor creates the record from a JSON object; is tolerant of missing columns;
-    // must be tolerant that Int64's may be encoded as Strings, especially OIDs
-    init(jsonObj:NSDictionary) {
+    // must be tolerant that Int64's may be encoded as Strings, especially OIDs;
+    // context is provided in case database version or language of the JSON file is important
+    init(jsonObj:NSDictionary, context:DatabaseHandler.ValidateJSONdbFile_Result) {
         if let oidObj1 = jsonObj[RecOrgFormFieldLocales.COLUMN_FORMFIELDLOC_INDEX] {
             if oidObj1 is String {
                 self.rFormFieldLoc_Index = Int64(jsonObj[RecOrgFormFieldLocales.COLUMN_FORMFIELDLOC_INDEX] as! String)

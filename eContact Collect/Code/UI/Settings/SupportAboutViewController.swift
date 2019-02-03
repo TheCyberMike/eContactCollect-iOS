@@ -209,6 +209,10 @@ class SupportAboutViewController: FormViewController {
     }
 }
 
+///////////////////////////////////////////////////
+// class definition for SupportOptionsViewController
+///////////////////////////////////////////////////
+
 class SupportOptionsViewController: FormViewController, UIActivityItemSource {
     // member variables
     private var mSharedFileURL:URL? = nil
@@ -235,6 +239,7 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
         self.buildForm()
         
         // set overall form options
+        navigationItem.title = NSLocalizedString("Support Options", comment:"")
         navigationOptions = RowNavigationOptions.Enabled.union(.SkipCanNotBecomeFirstResponderRow)
         rowKeyboardSpacing = 5
     }
@@ -298,7 +303,7 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
         }
         section1 <<< ButtonRow() {
             $0.tag = "shareLog"
-            $0.title = NSLocalizedString("Share error.log to Developer", comment:"") + ":\n theCyberMike@yahoo.com"
+            $0.title = NSLocalizedString("Share error.log to Developer", comment:"") + ":\n \(AppDelegate.mDeveloperEmailAddress)"
             }.cellUpdate { cell, row in
                 cell.textLabel?.textAlignment = .left
                 cell.textLabel?.font = .systemFont(ofSize: 15.0)
@@ -330,7 +335,7 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
         section2 <<< attachRow
         section2 <<< ButtonRow() {
             $0.tag = "sendEmailLog"
-            $0.title = NSLocalizedString("Send email to Developer", comment:"") + ":\n theCyberMike@yahoo.com"
+            $0.title = NSLocalizedString("Send email to Developer", comment:"") + ":\n \(AppDelegate.mDeveloperEmailAddress)"
             }.cellUpdate { cell, row in
                 cell.textLabel?.textAlignment = .left
                 cell.textLabel?.font = .systemFont(ofSize: 15.0)
