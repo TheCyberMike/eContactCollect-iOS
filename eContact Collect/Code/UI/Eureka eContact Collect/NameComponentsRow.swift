@@ -854,7 +854,11 @@ public class NameComponentsCell: Cell<[String:String?]>, CellType, UITextFieldDe
         
         if formatter != nil, formatter_field != nil, formatter_field!.text != nil {
             let sourceText = formatter_field!.text!
-            let formattedText:AutoreleasingUnsafeMutablePointer<AnyObject?> = AutoreleasingUnsafeMutablePointer<AnyObject?>.init(UnsafeMutablePointer<AnyObject?>.allocate(capacity: 1))
+            let unsafePointer = UnsafeMutablePointer<AnyObject?>.allocate(capacity: 1)
+            defer {
+                unsafePointer.deallocate()
+            }
+            let formattedText:AutoreleasingUnsafeMutablePointer<AnyObject?> = AutoreleasingUnsafeMutablePointer<AnyObject?>.init(unsafePointer)         
             let errorDesc:AutoreleasingUnsafeMutablePointer<NSString?>? = nil
             let didFormat:Bool = formatter!.getObjectValue(formattedText, for: sourceText, errorDescription: errorDesc)
             switch formatter_field {

@@ -197,7 +197,11 @@ open class _TextAreaCellExt<T> : Cell<T>, UITextViewDelegate, AreaCell where T: 
             return
         }
         if fieldRow.useFormatterDuringInput {
-            let value: AutoreleasingUnsafeMutablePointer<AnyObject?> = AutoreleasingUnsafeMutablePointer<AnyObject?>.init(UnsafeMutablePointer<T>.allocate(capacity: 1))
+            let unsafePointer = UnsafeMutablePointer<T>.allocate(capacity: 1)
+            defer {
+                unsafePointer.deallocate()
+            }
+            let value: AutoreleasingUnsafeMutablePointer<AnyObject?> = AutoreleasingUnsafeMutablePointer<AnyObject?>.init(unsafePointer)
             let errorDesc: AutoreleasingUnsafeMutablePointer<NSString?>? = nil
             if formatter.getObjectValue(value, for: textValue, errorDescription: errorDesc) {
                 row.value = value.pointee as? T
@@ -209,7 +213,11 @@ open class _TextAreaCellExt<T> : Cell<T>, UITextViewDelegate, AreaCell where T: 
                 return
             }
         } else {
-            let value: AutoreleasingUnsafeMutablePointer<AnyObject?> = AutoreleasingUnsafeMutablePointer<AnyObject?>.init(UnsafeMutablePointer<T>.allocate(capacity: 1))
+            let unsafePointer = UnsafeMutablePointer<T>.allocate(capacity: 1)
+            defer {
+                unsafePointer.deallocate()
+            }
+            let value: AutoreleasingUnsafeMutablePointer<AnyObject?> = AutoreleasingUnsafeMutablePointer<AnyObject?>.init(unsafePointer)
             let errorDesc: AutoreleasingUnsafeMutablePointer<NSString?>? = nil
             if formatter.getObjectValue(value, for: textValue, errorDescription: errorDesc) {
                 row.value = value.pointee as? T
