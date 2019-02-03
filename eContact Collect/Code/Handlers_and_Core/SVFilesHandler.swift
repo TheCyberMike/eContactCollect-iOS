@@ -357,9 +357,11 @@ public class SVFilesHandler {
             throw appError
         } catch { throw error }
         if orgRec == nil {
+            // should not happen
             throw APP_ERROR(funcName: "\(self.mCTAG).generateNewSVFile", during: "orgGetSpecifiedRecOfShortName", domain: self.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: NSLocalizedString("Export Preparation for ", comment:"")+NSLocalizedString("Organization record", comment:""), developerInfo: forOrgShortName)
         }
         if formRec == nil {
+            // should not happen
             throw APP_ERROR(funcName: "\(self.mCTAG).generateNewSVFile", during: "orgFormGetSpecifiedRecOfShortName", domain: self.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: NSLocalizedString("Export Preparation for ", comment:"")+NSLocalizedString("Form record", comment:""), developerInfo: forFormShortName)
         }
         

@@ -1611,6 +1611,59 @@ Or if the file is stored in your Files App, press the button below to import it.
                                     <outlet property="label_message" destination="LrS-pz-k3Y" id="wkM-iI-Uts"/>
                                 </connections>
                             </tableViewCell>
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" reuseIdentifier="TblViewCell Alerts Mgmt Extended" rowHeight="65" id="qNu-oN-ZjN" userLabel="TblViewCell Alerts Mgmt Expanded" customClass="AlertsMgmtExtendedTableViewCell" customModule="eContact_Collect" customModuleProvider="target">
+                                <rect key="frame" x="0.0" y="73" width="414" height="65"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="qNu-oN-ZjN" id="uYc-pR-q3b">
+                                    <rect key="frame" x="0.0" y="0.0" width="414" height="64.666666666666671"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Alert message" textAlignment="natural" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Df9-Ug-Udz" userLabel="label_alert_message">
+                                            <rect key="frame" x="0.0" y="0.0" width="370" height="20.333333333333332"/>
+                                            <accessibility key="accessibilityConfiguration" hint="Shows the alert information." label="Alert Message"/>
+                                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                            <nil key="textColor"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="8vY-LU-euU" userLabel="button_delete_alert">
+                                            <rect key="frame" x="370" y="0.0" width="44" height="44"/>
+                                            <accessibility key="accessibilityConfiguration" label="Delete">
+                                                <accessibilityTraits key="traits" button="YES" image="YES" staticText="YES"/>
+                                            </accessibility>
+                                            <constraints>
+                                                <constraint firstAttribute="height" constant="44" id="0ST-34-bX8"/>
+                                                <constraint firstAttribute="width" constant="44" id="YcU-p1-w4D"/>
+                                            </constraints>
+                                            <state key="normal" image="Trashcan Delete"/>
+                                            <connections>
+                                                <action selector="button_delete:" destination="qNu-oN-ZjN" eventType="touchUpInside" id="GiO-Cg-Ttl"/>
+                                            </connections>
+                                        </button>
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Extended Details" textAlignment="natural" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="nLe-nq-ivd" userLabel="label_extended_details">
+                                            <rect key="frame" x="0.0" y="50.333333333333336" width="414" height="14.333333333333336"/>
+                                            <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                            <nil key="textColor"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                    </subviews>
+                                    <constraints>
+                                        <constraint firstItem="8vY-LU-euU" firstAttribute="leading" secondItem="Df9-Ug-Udz" secondAttribute="trailing" id="0oy-XW-QSL"/>
+                                        <constraint firstItem="Df9-Ug-Udz" firstAttribute="top" secondItem="uYc-pR-q3b" secondAttribute="top" id="345-k2-d0p"/>
+                                        <constraint firstItem="nLe-nq-ivd" firstAttribute="leading" secondItem="uYc-pR-q3b" secondAttribute="leading" id="7v6-u9-wJy"/>
+                                        <constraint firstItem="8vY-LU-euU" firstAttribute="top" secondItem="uYc-pR-q3b" secondAttribute="top" id="8ls-bF-zIq"/>
+                                        <constraint firstAttribute="trailing" secondItem="8vY-LU-euU" secondAttribute="trailing" id="POV-JR-hvs"/>
+                                        <constraint firstItem="Df9-Ug-Udz" firstAttribute="leading" secondItem="uYc-pR-q3b" secondAttribute="leading" id="Y1b-g0-Ijn"/>
+                                        <constraint firstItem="nLe-nq-ivd" firstAttribute="top" relation="greaterThanOrEqual" secondItem="8vY-LU-euU" secondAttribute="bottom" id="aAG-ye-UU0"/>
+                                        <constraint firstAttribute="bottom" secondItem="nLe-nq-ivd" secondAttribute="bottom" id="g1j-Kz-LEg"/>
+                                        <constraint firstAttribute="trailing" secondItem="nLe-nq-ivd" secondAttribute="trailing" id="nXH-Vy-6Bn"/>
+                                        <constraint firstItem="nLe-nq-ivd" firstAttribute="top" relation="greaterThanOrEqual" secondItem="Df9-Ug-Udz" secondAttribute="bottom" id="zHm-8F-QaL"/>
+                                    </constraints>
+                                </tableViewCellContentView>
+                                <connections>
+                                    <outlet property="label_extended_details" destination="nLe-nq-ivd" id="Q8L-Oe-sHj"/>
+                                    <outlet property="label_message" destination="Df9-Ug-Udz" id="xuE-PS-SVm"/>
+                                </connections>
+                            </tableViewCell>
                         </prototypes>
                         <connections>
                             <outlet property="dataSource" destination="63U-rf-4d2" id="kU3-He-kYM"/>
@@ -1632,7 +1685,7 @@ Or if the file is stored in your Files App, press the button below to import it.
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="JGv-4b-J6v" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="2071" y="2549"/>
+            <point key="canvasLocation" x="2069.5652173913045" y="2548.3695652173915"/>
         </scene>
         <!--VC PrefsMgmt-->
         <scene sceneID="4Vl-Ld-ech">

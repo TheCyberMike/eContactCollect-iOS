@@ -1349,8 +1349,12 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             // SQLite.swift query error
             let errorResult:QueryError = errorStruct as! QueryError
             return "\(NSLocalizedString("Database-Handler:", comment:"")) \(errorResult._code) \"\(errorResult.localizedDescription)\""
+        } else if type(of:errorStruct) == USER_ERROR.self {
+            // our App's user errors
+            let errorResult:USER_ERROR = errorStruct as! USER_ERROR
+            return errorResult.localizedDescription
         } else if type(of:errorStruct) == APP_ERROR.self {
-            // our App's errors
+            // our App's programming errors
             let errorResult:APP_ERROR = errorStruct as! APP_ERROR
             return errorResult.localizedDescription
         } else {
@@ -1371,6 +1375,16 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             // SQLite.swift query error
             let errorResult:QueryError = errorStruct as! QueryError
             return "SQLite Query Error: \(errorResult._code) \"\(errorResult.description)\""
+        } else if type(of:errorStruct) == USER_ERROR.self {
+            // our App's user errors
+            let errorResult:USER_ERROR = errorStruct as! USER_ERROR
+            var errorMessage:String = "User_Error: "
+            if forErrorLog {
+                errorMessage = "  " + errorMessage + errorResult.description
+            } else {
+                errorMessage = errorMessage + errorResult.description
+            }
+            return errorMessage
         } else if type(of:errorStruct) == APP_ERROR.self {
             // our App's errors
             let errorResult:APP_ERROR = errorStruct as! APP_ERROR
@@ -1455,8 +1469,9 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             print(exception!.callStackSymbols)
         }
         if errorStruct != nil {
-            if let appError = errorStruct as? APP_ERROR {
-                if appError.noPost { return }
+            if type(of:errorStruct) == USER_ERROR.self { return }   // do not post user errors into the error.log nor make an alert
+            if let appError = errorStruct as? APP_ERROR {           // is APP_ERROR marked as "noPost"?
+                if appError.noPost { return }                           // yes, do not post it
             }
         }
         
@@ -1634,13 +1649,14 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
     
     // Thread Context: may be called from utility threads, so cannot perform UI actions
     // write an alert message into the database; do not throw any errors!
-    public static func postAlert(message:String) {
+    public static func postAlert(message:String, extendedDetails:String?=nil) {
         if AppDelegate.mDatabaseHandler == nil || !(AppDelegate.mDatabaseHandler?.isReady() ?? false) {
             print("\(AppDelegate.mCTAG).postAlert Attempt to post an alert before the DatabaseHandler has been instantiated");
             return
         }
         
         let aRec = RecAlert(timestamp_ms_utc: AppDelegate.utcCurrentTimeMillis(), timezone_ms_utc_offset: AppDelegate.mDeviceTimezoneOffsetMS, message: message)
+        aRec.rAlert_ExtendedDetails = extendedDetails
         do {
             let _ = try aRec.saveNewToDB()
         } catch {

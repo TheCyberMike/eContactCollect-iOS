@@ -88,7 +88,7 @@ public class FieldHandler {
         }
         var validationResult:DatabaseHandler.ValidateJSONdbFile_Result
         do {
-            validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents!)
+            validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents!, isFactory: true)
         } catch {
             self.mFHstatus_state = .Errors
             self.mAppError = (error as! APP_ERROR)
@@ -597,7 +597,7 @@ public class FieldHandler {
         }
         var validationResult:DatabaseHandler.ValidateJSONdbFile_Result
         do {
-            validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents1!)
+            validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents1!, isFactory: true)
         } catch {
             self.mFHstatus_state = .Errors
             self.mAppError = (error as! APP_ERROR)
@@ -676,7 +676,7 @@ public class FieldHandler {
             }
             var validationResult:DatabaseHandler.ValidateJSONdbFile_Result
             do {
-                validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents2!)
+                validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents2!, isFactory: true)
             } catch {
                 self.mFHstatus_state = .Errors
                 self.mAppError = (error as! APP_ERROR)
@@ -780,7 +780,7 @@ public class FieldHandler {
         }
         var validationResult:DatabaseHandler.ValidateJSONdbFile_Result
         do {
-            validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents3!)
+            validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents3!, isFactory: true)
         } catch {
             self.mFHstatus_state = .Errors
             self.mAppError = (error as! APP_ERROR)

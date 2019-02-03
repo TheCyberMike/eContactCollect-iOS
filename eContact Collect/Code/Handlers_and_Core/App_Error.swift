@@ -126,19 +126,17 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
     case COULD_NOT_ACCESS = -48
     case DID_NOT_VALIDATE = -49
     case DID_NOT_OPEN = -50
-    case ORG_DOES_NOT_EXIST = -51
-    case RECORD_MARKED_DELETED = -52
-    case RECORD_MARKED_PARTIAL = -53
-    case MISSING_OR_MISMATCHED_FIELD_METADATA = -54
-    case MISSING_OR_MISMATCHED_FIELD_OPTIONS = -55
-    case MISSING_OR_MISMATCHED_FIELD_OPTIONSET = -56
-    case IOS_EMAIL_SUBSYSTEM_DISABLED = -57
-    case IOS_EMAIL_SUBSYSTEM_ERROR = -58
-    case EMAIL_NO_TO_AND_CC = -59
-    case SECURE_STORAGE_ERROR = -60
-    case MISSING_SAVED_EMAIL_ACCOUNT = -61
-    case MISSING_KNOWN_EMAIL_PROVIDER = -62
-    case MISSING_EMAIL_ACCOUNT_CREDENTIALS = -63
+    case RECORD_MARKED_DELETED = -51
+    case RECORD_MARKED_PARTIAL = -52
+    case MISSING_OR_MISMATCHED_FIELD_METADATA = -53
+    case MISSING_OR_MISMATCHED_FIELD_OPTIONS = -54
+    case MISSING_OR_MISMATCHED_FIELD_OPTIONSET = -55
+    case IOS_EMAIL_SUBSYSTEM_ERROR = -56
+    case SMTP_EMAIL_SUBSYSTEM_ERROR = -57
+    case SECURE_STORAGE_ERROR = -58
+    case MISSING_SAVED_EMAIL_ACCOUNT = -59
+    case MISSING_KNOWN_EMAIL_PROVIDER = -60
+    case MISSING_EMAIL_ACCOUNT_CREDENTIALS = -61
     
     // provide a description for the end-user in proper language
     public var localizedDescription:String {
@@ -169,8 +167,6 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
             return NSLocalizedString("Did not validate", comment:"")
         case .DID_NOT_OPEN:
             return NSLocalizedString("Did not open", comment:"")
-        case .ORG_DOES_NOT_EXIST:
-            return NSLocalizedString("Oganization does not exist", comment:"")
         case .RECORD_MARKED_DELETED:
             return NSLocalizedString("Record is marked deleted and cannot be saved", comment:"")
         case .RECORD_MARKED_PARTIAL:
@@ -181,12 +177,9 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
             return NSLocalizedString("Field's options are missing or mismatched", comment:"")
         case .MISSING_OR_MISMATCHED_FIELD_OPTIONSET:
             return NSLocalizedString("Field's optionSet is missing or mismatched", comment:"")
-        case .IOS_EMAIL_SUBSYSTEM_DISABLED:
-            return NSLocalizedString("iOS Email Subsystem is disabled", comment:"")
+        
         case .IOS_EMAIL_SUBSYSTEM_ERROR:
             return NSLocalizedString("iOS Email Subsystem returned error", comment:"")
-        case .EMAIL_NO_TO_AND_CC:
-            return NSLocalizedString("Email has no To and no CC", comment:"")
         case .SECURE_STORAGE_ERROR:
             return NSLocalizedString("Secure Storage Error", comment:"")
         case .MISSING_SAVED_EMAIL_ACCOUNT:
@@ -195,6 +188,8 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
             return NSLocalizedString("Missing known Email Provider", comment:"")
         case .MISSING_EMAIL_ACCOUNT_CREDENTIALS:
             return NSLocalizedString("Missing Email Account Credentials", comment:"")
+        case .SMTP_EMAIL_SUBSYSTEM_ERROR:
+            return NSLocalizedString("SMTP Email Subsystem returned error", comment:"")
         }
     }
     
@@ -227,8 +222,6 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
             return "Did not validate"
         case .DID_NOT_OPEN:
             return "Did not open"
-        case .ORG_DOES_NOT_EXIST:
-            return "Oganization does not exist"
         case .RECORD_MARKED_DELETED:
             return "Record is marked deleted and cannot be saved"
         case .RECORD_MARKED_PARTIAL:
@@ -239,12 +232,9 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
             return "Field's options are missing or mismatched"
         case .MISSING_OR_MISMATCHED_FIELD_OPTIONSET:
             return "Field's optionSet is missing or mismatched"
-        case .IOS_EMAIL_SUBSYSTEM_DISABLED:
-            return "iOS Email Subsystem is disabled"
+        
         case .IOS_EMAIL_SUBSYSTEM_ERROR:
             return "iOS Email Subsystem returned error"
-        case .EMAIL_NO_TO_AND_CC:
-            return "Email has no To and no CC"
         case .SECURE_STORAGE_ERROR:
             return "Secure Storage Error"
         case .MISSING_SAVED_EMAIL_ACCOUNT:
@@ -253,6 +243,99 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
             return "Missing known Email Provider"
         case .MISSING_EMAIL_ACCOUNT_CREDENTIALS:
             return "Missing Email Account Credentials"
+        case .SMTP_EMAIL_SUBSYSTEM_ERROR:
+            return "SMTP Email Subsystem returned error"
         }
     }
 }
+    
+// App error handling struct that conforms to iOS Error system
+public struct USER_ERROR:Error, CustomStringConvertible {
+    // member variables
+    var domain:String
+    var userErrorDetails:String? = nil
+    var errorCode:USER_ERROR_CODE
+    
+    // init for an App Error
+    public init(domain:String, errorCode:USER_ERROR_CODE, userErrorDetails:String?) {
+        self.domain = domain
+        self.errorCode = errorCode
+        self.userErrorDetails = userErrorDetails
+    }
+    
+#if TESTING
+    // compare two APP_ERRORs to an extent possible; only needed during testing
+    public func sameAs(baseError:Error) -> Bool {
+        if let userError = baseError as? USER_ERROR {
+            if self.domain != userError.domain { return false }
+            if self.errorCode != userError.errorCode { return false }
+            if self.userErrorDetails != userError.userErrorDetails { return false }
+        } else { return false }
+        return true
+    }
+#endif
+    
+    // get a localized description suitable for an end-user
+    public var localizedDescription:String {
+        var messageStr:String = "\(self.domain): "
+        if !(self.userErrorDetails ?? "").isEmpty { messageStr = messageStr + self.userErrorDetails! + ": " }
+        messageStr = messageStr + "(\(self.errorCode.rawValue)) \"\(self.errorCode.localizedDescription)\""
+        return messageStr
+    }
+    
+    // get a description in english suitable for the developer
+    public var description:String {
+        var messageStr:String = "\(self.domain): "
+        if !(self.userErrorDetails ?? "").isEmpty { messageStr = messageStr + self.userErrorDetails! + ": " }
+        messageStr = messageStr + "(\(self.errorCode.rawValue)) \"\(self.errorCode.description)\""
+        return messageStr
+    }
+}
+
+// App error codes and their meanings
+public enum USER_ERROR_CODE:Int, CustomStringConvertible {
+    // APP error codes
+    case NO_ERROR  = 0
+    case ORG_DOES_NOT_EXIST = -30
+    case FORM_DOES_NOT_EXIST = -31
+    case NOT_AN_EXPORTED_FILE = -32
+    case EMAIL_NO_TO_AND_CC = -33
+    case IOS_EMAIL_SUBSYSTEM_DISABLED = -34
+    
+    // provide a description for the end-user in proper language
+    public var localizedDescription:String {
+        switch self {
+        case .NO_ERROR:
+            return NSLocalizedString("No error", comment:"")
+        case .ORG_DOES_NOT_EXIST:
+            return NSLocalizedString("Organization does not exist", comment:"")
+        case .FORM_DOES_NOT_EXIST:
+            return NSLocalizedString("Form does not exist", comment:"")
+        case .NOT_AN_EXPORTED_FILE:
+            return NSLocalizedString("Attempt to import a file not supported by this App", comment:"")
+        case .IOS_EMAIL_SUBSYSTEM_DISABLED:
+            return NSLocalizedString("iOS is not allowing the App to send email", comment:"")
+        case .EMAIL_NO_TO_AND_CC:
+            return NSLocalizedString("Email has no To and no CC", comment:"")
+        }
+    }
+    
+    // provide description for the developer in english
+    public var description:String {
+        switch self {
+        case .NO_ERROR:
+            return "No error"
+        case .ORG_DOES_NOT_EXIST:
+            return "Organization does not exist"
+        case .FORM_DOES_NOT_EXIST:
+            return "Form does not exist"
+        case .NOT_AN_EXPORTED_FILE:
+            return "Not an Exported File"
+        case .IOS_EMAIL_SUBSYSTEM_DISABLED:
+            return "iOS Email Subsystem is disabled"
+        case .EMAIL_NO_TO_AND_CC:
+            return "Email has no To and no CC"
+        }
+    }
+}
+

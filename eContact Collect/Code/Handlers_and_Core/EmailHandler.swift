@@ -270,8 +270,7 @@ public class EmailVia {
 
 // define the delegate protocol that other portions of the App must use to know the final result of a sent email
 public protocol HEM_Delegate {
-    func completed_HEM(tagI:Int, tagS:String?, result:EmailHandler.EmailHandlerResults, error:APP_ERROR?)
-    func logger_HEM(tagI:Int, tagS:String?, result:EmailHandler.EmailHandlerResults, error:APP_ERROR?)
+    func completed_HEM(tagI:Int, tagS:String?, result:EmailHandler.EmailHandlerResults, error:APP_ERROR?, extendedDetails:String?)
 }
 
 // base handler class for sending emails
@@ -531,19 +530,19 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
             }
             if usingVia.viaType == .SMTPknown {
                 // fill in the standard provider information
-                let provider:EmailProviderSMTP? = EmailProviderSMTP(localizedName: via!.viaNameLocalized, knownProviderInternalName: via!.emailProvider_InternalName)
+                let provider:EmailProviderSMTP? = EmailProviderSMTP(localizedName: usingVia.viaNameLocalized, knownProviderInternalName: usingVia.emailProvider_InternalName)
                 if provider == nil {
-                    throw APP_ERROR(funcName: "\(self.mCTAG).sendEmail", domain: self.mThrowErrorDomain, errorCode: .MISSING_KNOWN_EMAIL_PROVIDER, userErrorDetails: "\(via!.viaNameLocalized) -> \(via!.emailProvider_InternalName)")
+                    throw APP_ERROR(funcName: "\(self.mCTAG).sendEmail", domain: self.mThrowErrorDomain, errorCode: .MISSING_KNOWN_EMAIL_PROVIDER, userErrorDetails: "\(usingVia.viaNameLocalized) -> \(usingVia.emailProvider_InternalName)")
                 }
                 usingVia.emailProvider_SMTP = provider
             }
             if (usingVia.viaType == .SMTPknown || usingVia.viaType == .SMTPsettings) && usingVia.emailProvider_Credentials == nil {
                 // fill in any secured credentials
-                let encodedCred:Data? = try AppDelegate.retrieveSecureItem(key: via!.viaNameLocalized, label: "Email")
+                let encodedCred:Data? = try AppDelegate.retrieveSecureItem(key: usingVia.viaNameLocalized, label: "Email")
                 if encodedCred == nil {
-                    throw APP_ERROR(funcName: "\(self.mCTAG).sendEmail", domain: self.mThrowErrorDomain, errorCode: .MISSING_EMAIL_ACCOUNT_CREDENTIALS, userErrorDetails: via!.viaNameLocalized)
+                    throw APP_ERROR(funcName: "\(self.mCTAG).sendEmail", domain: self.mThrowErrorDomain, errorCode: .MISSING_EMAIL_ACCOUNT_CREDENTIALS, userErrorDetails: usingVia.viaNameLocalized)
                 }
-                usingVia.emailProvider_Credentials = EmailAccountCredentials(localizedName: via!.viaNameLocalized, data: encodedCred!)
+                usingVia.emailProvider_Credentials = EmailAccountCredentials(localizedName: usingVia.viaNameLocalized, data: encodedCred!)
             }
         } catch var appError as APP_ERROR {
             appError.prependCallStack(funcName: "\(self.mCTAG).sendEmail")
@@ -577,6 +576,56 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
             appError.prependCallStack(funcName: "\(self.mCTAG).sendEmail")
             throw appError
         } catch { throw error }
+    }
+    
+    // test the email connection and credentials via SMTP using MailCore
+    public func testEmailViaMailCore(vc:UIViewController, tagI:Int, tagS:String?, delegate:HEM_Delegate?, via:EmailVia) throws {
+        debugPrint("\(self.mCTAG).testEmailViaMailCore STARTED")
+        
+        // build the from address
+        var from:MCOAddress
+        if !via.userDisplayName.isEmpty {
+            from = MCOAddress(displayName: via.userDisplayName, mailbox: via.sendingEmailAddress)
+        } else {
+            from = MCOAddress(mailbox: via.sendingEmailAddress)
+        }
+        
+        // open a connection to the email server
+        var loggerLines:String = ""
+        let smtpSession = MCOSMTPSession()
+        smtpSession.hostname = via.emailProvider_SMTP!.hostname
+        smtpSession.port = UInt32(via.emailProvider_SMTP!.port)
+        smtpSession.authType =  via.emailProvider_SMTP!.authType
+        smtpSession.connectionType = via.emailProvider_SMTP!.connectionType
+        smtpSession.username = via.emailProvider_Credentials?.username
+        smtpSession.password = via.emailProvider_Credentials?.password
+        smtpSession.connectionLogger = {(connectionID, type, data) in
+            if data != nil {
+                if let string = NSString(data: data!, encoding: String.Encoding.utf8.rawValue) {
+debugPrint("\(self.mCTAG).testEmailViaMailCore.Connectionlogger: \(string)")
+                    loggerLines = loggerLines + (string as String)
+                }
+            }
+        }
+        
+        // test the connection
+        let testOperation = smtpSession.checkAccountOperationWith(from: from)
+        testOperation?.start { (error) -> Void in
+            if delegate != nil {
+                var errorHEM:APP_ERROR? = nil
+                var resultHEM:EmailHandler.EmailHandlerResults
+                if error != nil {
+                    resultHEM = .Error
+                    loggerLines = loggerLines + NSLocalizedString("SMTP Connection Test FAILED!", comment:"") + "\n"
+                    errorHEM = APP_ERROR(funcName: "\(self.mCTAG).testEmailViaMailCore", domain: self.mThrowErrorDomain, error: error!, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: NSLocalizedString("See Alerts for error details", comment:""), noAlert: true)
+                    AppDelegate.postAlert(message: AppDelegate.endUserErrorMessage(errorStruct: errorHEM!), extendedDetails: loggerLines)
+                } else {
+                    resultHEM = .Sent
+                    loggerLines = loggerLines + NSLocalizedString("SMTP Connection Test Passed", comment:"") + "\n"
+                }
+                delegate!.completed_HEM(tagI: tagI, tagS: tagS, result: resultHEM, error: errorHEM, extendedDetails: loggerLines)
+            }
+        }
     }
     
     /////////////////////////////////////////////////////////////////////////////////////////
@@ -645,7 +694,8 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
 
         // validate the iOS Mail subsystem
         if !MFMailComposeViewController.canSendMail() {
-            throw APP_ERROR(funcName: "\(self.mCTAG).sendEmailViaAppleMailApp", during: "MFMailComposeViewController.canSendMail()", domain: self.mThrowErrorDomain, errorCode: .IOS_EMAIL_SUBSYSTEM_DISABLED, userErrorDetails: nil)
+            // this is a user problem to fix by installing the iOS Mail App or defining a different SMTP Email Account
+            throw USER_ERROR(domain: self.mThrowErrorDomain, errorCode: .IOS_EMAIL_SUBSYSTEM_DISABLED, userErrorDetails: nil)
         }
         
         // invoke the iOS Mail compose subsystem
@@ -693,7 +743,7 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
                         break
                     }
                 }
-                controllerHEM.delegateHEM!.completed_HEM(tagI: controllerHEM.tagI, tagS: controllerHEM.tagS, result: resultHEM, error: errorHEM)
+                controllerHEM.delegateHEM!.completed_HEM(tagI: controllerHEM.tagI, tagS: controllerHEM.tagS, result: resultHEM, error: errorHEM, extendedDetails: nil)
                 controller.dismiss(animated: true, completion: nil)
                 return
             }
@@ -708,7 +758,8 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     private func sendEmailViaMailCore(vc:UIViewController, tagI:Int, tagS:String?, delegate:HEM_Delegate?, localizedTitle:String, via:EmailVia, to:String?, cc:String?, subject:String?, body:String?, includingAttachment:URL?, mimeType:String) throws {
 debugPrint("\(self.mCTAG).sendEmailViaMailCore STARTED")
         if !(to ?? "").isEmpty && !(cc ?? "").isEmpty {
-            throw APP_ERROR(funcName: "\(self.mCTAG).sendEmailViaMailCore", domain: self.mThrowErrorDomain, errorCode: .EMAIL_NO_TO_AND_CC, userErrorDetails: nil)
+            // this is a user error to fix in the Org or Form email settings
+            throw USER_ERROR(domain: self.mThrowErrorDomain, errorCode: .EMAIL_NO_TO_AND_CC, userErrorDetails: nil)
         }
         
         // build up the needed to/cc arrays
@@ -752,6 +803,7 @@ debugPrint("\(self.mCTAG).sendEmailViaMailCore STARTED")
         }
 
         // open a connection to the email server
+        var loggerLines:String = ""
         let smtpSession = MCOSMTPSession()
         smtpSession.hostname = via.emailProvider_SMTP!.hostname
         smtpSession.port = UInt32(via.emailProvider_SMTP!.port)
@@ -763,6 +815,7 @@ debugPrint("\(self.mCTAG).sendEmailViaMailCore STARTED")
             if data != nil {
                 if let string = NSString(data: data!, encoding: String.Encoding.utf8.rawValue) {
 debugPrint("\(self.mCTAG).sendEmailViaMailCore.Connectionlogger: \(string)")
+                    loggerLines = loggerLines + (string as String)
                 }
             }
         }
@@ -771,51 +824,18 @@ debugPrint("\(self.mCTAG).sendEmailViaMailCore.Connectionlogger: \(string)")
         let rfc822Data = builder.data()
         let sendOperation = smtpSession.sendOperation(with: rfc822Data!)
         sendOperation?.start { (error) -> Void in
-            // ???
-            if (error != nil) {
-debugPrint("\(self.mCTAG).sendEmailViaMailCore Error sending email: \(error!)")
+            var errorHEM:APP_ERROR? = nil
+            var resultHEM:EmailHandler.EmailHandlerResults
+            if error != nil {
+                errorHEM = APP_ERROR(funcName: "\(self.mCTAG).sendEmailViaMailCore", domain: self.mThrowErrorDomain, error: error!, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: nil, noAlert: true)
+                resultHEM = .Error
+                AppDelegate.postAlert(message: AppDelegate.endUserErrorMessage(errorStruct: errorHEM!), extendedDetails: loggerLines)
+                errorHEM?.userErrorDetails = NSLocalizedString("See Alerts for error details", comment:"")
             } else {
-debugPrint("\(self.mCTAG).sendEmailViaMailCore Successfully sent email!")
+                resultHEM = .Sent
             }
-        }
-    }
-    
-    // test the email connection and credentials via SMTP using MailCore
-    public func testEmailViaMailCore(vc:UIViewController, tagI:Int, tagS:String?, delegate:HEM_Delegate?, via:EmailVia) throws {
-debugPrint("\(self.mCTAG).testEmailViaMailCore STARTED")
-        
-        // build the from address
-        var from:MCOAddress
-        if !via.userDisplayName.isEmpty {
-            from = MCOAddress(displayName: via.userDisplayName, mailbox: via.sendingEmailAddress)
-        } else {
-            from = MCOAddress(mailbox: via.sendingEmailAddress)
-        }
-        
-        // open a connection to the email server
-        let smtpSession = MCOSMTPSession()
-        smtpSession.hostname = via.emailProvider_SMTP!.hostname
-        smtpSession.port = UInt32(via.emailProvider_SMTP!.port)
-        smtpSession.authType =  via.emailProvider_SMTP!.authType
-        smtpSession.connectionType = via.emailProvider_SMTP!.connectionType
-        smtpSession.username = via.emailProvider_Credentials?.username
-        smtpSession.password = via.emailProvider_Credentials?.password
-        smtpSession.connectionLogger = {(connectionID, type, data) in
-            if data != nil {
-                if let string = NSString(data: data!, encoding: String.Encoding.utf8.rawValue) {
-                    debugPrint("\(self.mCTAG).testEmailViaMailCore.Connectionlogger: \(string)")
-                }
-            }
-        }
-        
-        // test the connection
-        let testOperation = smtpSession.checkAccountOperationWith(from: from)
-        testOperation?.start { (error) -> Void in
-            // ???
-            if (error != nil) {
-                debugPrint("\(self.mCTAG).testEmailViaMailCore Error sending email: \(error!)")
-            } else {
-                debugPrint("\(self.mCTAG).testEmailViaMailCore Successfully sent email!")
+            if delegate != nil {
+                delegate!.completed_HEM(tagI: tagI, tagS: tagS, result: resultHEM, error: errorHEM, extendedDetails: loggerLines)
             }
         }
     }

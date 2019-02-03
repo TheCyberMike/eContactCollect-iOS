@@ -341,23 +341,21 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
         let formSplits:[String] = splits[3].components(separatedBy: ".")
         var orgRec:RecOrganizationDefs? = nil
         var formRec:RecOrgFormDefs? = nil
-        let commonAppError = APP_ERROR(funcName: "\(self.mCTAG).emailSVfile", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil)
         do {
             orgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName:splits[2])
             formRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName:formSplits[0], forOrgShortName:splits[2])
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", errorStruct: error, extra: "org: \(splits[2]), form: \(formSplits[0])")
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: commonAppError, buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
+        let during:String = NSLocalizedString("Send Contacts for Org ", comment:"") + splits[2] + NSLocalizedString("and Form ", comment:"") + formSplits[0]
         if orgRec == nil {
-            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"orgGetSpecifiedRecOfShortName", errorStruct: commonAppError, extra:splits[2])
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: commonAppError, buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), endUserDuring: during, errorStruct: USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Must have been deleted before sending collected contacts", comment:"")), buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         if formRec == nil {
-            AppDelegate.postToErrorLogAndAlert(method:"\(self.mCTAG).emailSVfile", during:"orgFormGetSpecifiedRecOfShortName", errorStruct: commonAppError, extra:formSplits[0])
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: commonAppError, buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), endUserDuring: during, errorStruct: USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .FORM_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Must have been deleted before sending collected contacts", comment:"")), buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         
@@ -394,14 +392,12 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
         // send the email; this may or may not invoke an email compose view controller
         do {
             try AppDelegate.mEmailHandler!.sendEmail(vc: self, tagI: 1, tagS: fileName, delegate: self, localizedTitle: NSLocalizedString("Email SV-File", comment:""), via: email_via, to: email_to, cc: email_cc, subject: email_subject, body: nil, includingAttachment: URL(fileURLWithPath: filePath))
+        } catch let userError as USER_ERROR {
+            // user errors are never posted to the error.log
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: userError, buttonText: NSLocalizedString("Okay", comment:""))
         } catch let appError as APP_ERROR {
-            if appError.errorCode == .IOS_EMAIL_SUBSYSTEM_DISABLED {
-                // do not error log or alert for this particular error
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), message: NSLocalizedString("iOS is not allowing App to send email", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
-            } else {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", during:"sendEmail", errorStruct: appError, extra: nil)
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: appError, buttonText: NSLocalizedString("Okay", comment:""))
-            }
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", during:"sendEmail", errorStruct: appError, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: appError, buttonText: NSLocalizedString("Okay", comment:""))
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", during:"sendEmail", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
@@ -409,11 +405,17 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
     }
     
     // callback from the EmailHandler regarding eventual success or failure of the sent email
-    public func completed_HEM(tagI:Int, tagS:String?, result:EmailHandler.EmailHandlerResults, error:APP_ERROR?) {
-//debugPrint("\(self.mCTAG).mailComposeController.didFinishWith for \(tagS)")
+    public func completed_HEM(tagI:Int, tagS:String?, result:EmailHandler.EmailHandlerResults, error:APP_ERROR?, extendedDetails:String?) {
+//debugPrint("\(self.mCTAG).completed_HEM for \(tagS)")
         if error != nil {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_HEM", errorStruct: error!, extra: nil)
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error!, buttonText: NSLocalizedString("Okay", comment:""))
+            if extendedDetails != nil {
+                // do not post to error.log these connection error details
+                // an alert with the extended details will have been already posted via the EmailHandler
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error!, buttonText: NSLocalizedString("Okay", comment:""))
+            } else {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_HEM", errorStruct: error!, extra: nil)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error!, buttonText: NSLocalizedString("Okay", comment:""))
+            }
         } else {
             if tagS != nil && (result == .Sent || result == .Saved) {
                 do {

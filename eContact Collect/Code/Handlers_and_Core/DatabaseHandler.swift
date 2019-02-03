@@ -900,11 +900,11 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         // get the file and its contents and do an initial validation
         let jsonContents = FileManager.default.contents(atPath: fromFileAtPath)   // obtain the data in JSON format
         if jsonContents == nil {
-            throw APP_ERROR(funcName: funcString, during: "FileManager.default.contents", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_OPEN, userErrorDetails: NSLocalizedString("Import File", comment:""), developerInfo: fromFileAtPath)
+            throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .NOT_AN_EXPORTED_FILE, userErrorDetails: NSLocalizedString("Import File", comment:""))
         }
         var validationResult:DatabaseHandler.ValidateJSONdbFile_Result
         do {
-            validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents!)
+            validationResult = try DatabaseHandler.validateJSONdbFile(contents: jsonContents!, isFactory: false)
         } catch var appError as APP_ERROR {
             appError.prependCallStack(funcName: funcString)
             throw appError
@@ -935,7 +935,8 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 throw appError
             } catch { throw error }
             if existingOrgRec == nil {
-                throw APP_ERROR(funcName: funcString, during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Organization for the Form must pre-exist: ", comment:"") + nameComponents[0], noPost: true)
+                // this is a user problem to resolve and should not be posted into the error.log
+                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Organization for the Form must pre-exist: ", comment:"") + nameComponents[0])
             }
         } else {
             throw APP_ERROR(funcName: funcString, during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Import File", comment:""), developerInfo: "Form-only import; 'method' != acceptable values (\"\(methodStr)\"); " + fromFileAtPath)
@@ -1174,28 +1175,56 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
     
     // validate the header of a JSON database export file;
     // this method only throws errors; it does NOT post them to error.log
-    public static func validateJSONdbFile(contents:Data) throws -> ValidateJSONdbFile_Result {
+    public static func validateJSONdbFile(contents:Data, isFactory:Bool) throws -> ValidateJSONdbFile_Result {
         var result:ValidateJSONdbFile_Result = ValidateJSONdbFile_Result()
         var userErrorMsg:String = NSLocalizedString("Content Error: ", comment:"") + NSLocalizedString("File improperly formatted", comment:"")
         var jsonData:Any? = nil
         do {
             jsonData = try JSONSerialization.jsonObject(with: contents, options: .allowFragments)
         } catch {
-            throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "JSON Parse", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: nil)
+            if isFactory {
+                throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "JSON Parse", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: nil)
+            } else {
+                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .NOT_AN_EXPORTED_FILE, userErrorDetails: userErrorMsg)
+            }
         }
         
+        // first check whether this is an eContactCollect file in the first place
         result.jsonTopLevel = jsonData as? [String:Any?]
         userErrorMsg = NSLocalizedString("Content Error: ", comment:"") + "1st " + NSLocalizedString("level improperly formatted", comment:"")
         if result.jsonTopLevel == nil {
-            throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level is not NSDictionary")
-        } else if (result.jsonTopLevel!["apiVersion"] as? String) == nil || (result.jsonTopLevel!["method"] as? String) == nil || (result.jsonTopLevel!["context"] as? String) == nil {
-            throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level is missing 'apiVersion', 'method', or 'context'")
-        } else if (result.jsonTopLevel!["method"] as! String).isEmpty || (result.jsonTopLevel!["context"] as! String).isEmpty {
-            throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level 'method' or 'context' isEmpty")
+            if isFactory {
+                throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level is not NSDictionary")
+            } else {
+                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .NOT_AN_EXPORTED_FILE, userErrorDetails: userErrorMsg)
+            }
+        } else if (result.jsonTopLevel!["method"] as? String) == nil {
+            if isFactory {
+                throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level is missing 'method'")
+            } else {
+                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .NOT_AN_EXPORTED_FILE, userErrorDetails: userErrorMsg)
+            }
+        } else if (result.jsonTopLevel!["method"] as! String).isEmpty {
+            if isFactory {
+                throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level 'method' isEmpty")
+            } else {
+                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .NOT_AN_EXPORTED_FILE, userErrorDetails: userErrorMsg)
+            }
+        } else if !((result.jsonTopLevel!["method"] as! String).starts(with: "eContactCollect.db.")) {
+            if isFactory {
+                throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "'method' prefix is incorrect: \((result.jsonTopLevel!["method"] as! String))")
+            } else {
+                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .NOT_AN_EXPORTED_FILE, userErrorDetails: userErrorMsg)
+            }
+        }
+        
+        // it is, so any remaining errors are APP_ERRORS
+        if (result.jsonTopLevel!["apiVersion"] as? String) == nil || (result.jsonTopLevel!["context"] as? String) == nil {
+            throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level is missing 'apiVersion' or 'context'")
+        } else if (result.jsonTopLevel!["context"] as! String).isEmpty {
+            throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level 'context' isEmpty")
         } else if (result.jsonTopLevel!["apiVersion"] as! String) != "1.0" {
             throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "'apiVersion' is incorrect: \(result.jsonTopLevel!["apiVersion"] as! String)")
-        } else if !((result.jsonTopLevel!["method"] as! String).starts(with: "eContactCollect.db.")) {
-            throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "'method' prefix is incorrect: \((result.jsonTopLevel!["method"] as! String))")
         }
 
         userErrorMsg = NSLocalizedString("Content Error: ", comment:"") + "2nd " + NSLocalizedString("level improperly formatted", comment:"")

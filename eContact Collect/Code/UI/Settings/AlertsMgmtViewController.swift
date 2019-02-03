@@ -104,7 +104,19 @@ class AlertsMgmtViewController: UITableViewController {
     // called by AlertsMgmtTableViewCell
     func doDelete(cell:AlertsMgmtTableViewCell) {
         do {
-            _ = try RecAlert.alertDeleteRec(id:Int64(cell.tag))
+            _ = try RecAlert.alertDeleteRec(id: Int64(cell.tag))
+            self.refreshList()
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).doDelete", errorStruct: error, extra: String(cell.tag))
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+        }
+    }
+    
+    // delete an alert of the indicated table view cell;
+    // called by AlertsMgmtTableViewCell
+    func doDelete(cell:AlertsMgmtExtendedTableViewCell) {
+        do {
+            _ = try RecAlert.alertDeleteRec(id: Int64(cell.tag))
             self.refreshList()
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).doDelete", errorStruct: error, extra: String(cell.tag))
@@ -123,16 +135,29 @@ class AlertsMgmtViewController: UITableViewController {
     
     // compose each cell's controls
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell:AlertsMgmtTableViewCell = tableView.dequeueReusableCell(withIdentifier:"TblViewCell Alerts Mgmt", for:indexPath) as! AlertsMgmtTableViewCell
-        cell.mTableViewDelegate = self
+        // get the alert rec and prepare
         let alertRec:RecAlert = self.mTableView_Array[indexPath.row] as! RecAlert
-        cell.tag = Int(alertRec.rAlert_DBID)
         let thenLocal:Date = AppDelegate.convertUTCtoThenLocal(timestampUTC:alertRec.rAlert_Timestamp_MS_UTC)
         var text = "#\(alertRec.rAlert_DBID) \(self.mAlertDateFormatter.string(from: thenLocal))"
         text = "\(text) \(NSLocalizedString("TZO", comment:"TZO is an abbreviation for TimeZone Offset"))=\(alertRec.rAlert_Timezone_MS_UTC_Offset/3600000)"
         text = "\(text): \(alertRec.rAlert_Message)"
-        cell.label_message?.text =  text
-        return cell
+
+        // chose, setup, and return the proper cell type
+        if !(alertRec.rAlert_ExtendedDetails ?? "").isEmpty {
+            // has extended details
+            let cell1:AlertsMgmtExtendedTableViewCell = tableView.dequeueReusableCell(withIdentifier:"TblViewCell Alerts Mgmt Extended", for:indexPath) as! AlertsMgmtExtendedTableViewCell
+            cell1.mTableViewDelegate = self
+            cell1.tag = Int(alertRec.rAlert_DBID)
+            cell1.label_message?.text =  text
+            cell1.label_extended_details?.text =  alertRec.rAlert_ExtendedDetails
+            return cell1
+        } else {
+            let cell2:AlertsMgmtTableViewCell = tableView.dequeueReusableCell(withIdentifier:"TblViewCell Alerts Mgmt", for:indexPath) as! AlertsMgmtTableViewCell
+            cell2.mTableViewDelegate = self
+            cell2.tag = Int(alertRec.rAlert_DBID)
+            cell2.label_message?.text =  text
+            return cell2
+        }
     }
 
     // when using auto-layout and sizing-classes for a custom UITableViewCell that needs to auto-resize, both the following are needed
@@ -147,7 +172,7 @@ class AlertsMgmtViewController: UITableViewController {
 }
 
 ///////////////////////////////////////////////////
-// class definition for AlertsMgmtTableViewCell
+// class definition for AlertsMgmtTableViewCell and AlertsMgmtExtendedTableViewCell
 ///////////////////////////////////////////////////
 
 class AlertsMgmtTableViewCell: UITableViewCell {
@@ -166,3 +191,22 @@ class AlertsMgmtTableViewCell: UITableViewCell {
         // do any custom changes to the cell's view
     }
 }
+
+class AlertsMgmtExtendedTableViewCell: UITableViewCell {
+    // member variables
+    public weak var mTableViewDelegate:AlertsMgmtViewController? = nil
+    
+    // outlets to screen controls
+    @IBOutlet weak var label_message: UILabel!
+    @IBOutlet weak var label_extended_details: UILabel!
+    @IBAction func button_delete(_ sender: UIButton) {
+        self.mTableViewDelegate?.doDelete(cell: self)
+    }
+    
+    // TableViewCell has been prepared and ready to be shown
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        // do any custom changes to the cell's view
+    }
+}
+

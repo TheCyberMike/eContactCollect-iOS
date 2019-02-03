@@ -365,14 +365,12 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
         // in this case, do not need the delegate callback (the EmailHandler will post any error to error.log in this situation)
         do {
             try AppDelegate.mEmailHandler!.sendEmailToDeveloper(vc: self, tagI: 1, tagS: nil, delegate: nil, localizedTitle: NSLocalizedString("Email the Developer", comment:""), subject: subject, body: body, includingAttachment: attachmentURL)
+        } catch let userError as USER_ERROR {
+            // user errors are never posted to the error.log
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: userError, buttonText: NSLocalizedString("Okay", comment:""))
         } catch let appError as APP_ERROR {
-            if appError.errorCode == .IOS_EMAIL_SUBSYSTEM_DISABLED {
-                // do not error log or alert for this particular error
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), message: NSLocalizedString("iOS is not allowing App to send email", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
-            } else {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailDeveloper", during:"sendEmailToDeveloper", errorStruct: appError, extra: nil)
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: appError, buttonText: NSLocalizedString("Okay", comment:""))
-            }
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailDeveloper", during:"sendEmailToDeveloper", errorStruct: appError, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: appError, buttonText: NSLocalizedString("Okay", comment:""))
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailDeveloper", during:"sendEmailToDeveloper", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))

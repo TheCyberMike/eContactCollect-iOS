@@ -53,6 +53,11 @@ public class UIHelpers {
                                 (UIApplication.shared.delegate as! AppDelegate).setCurrentOrg(toOrgShortName: result.wasOrgShortName)
                             }
                         }
+                    } catch let userError as USER_ERROR {
+                        // user errors are never posted to the error.log
+                        AppDelegate.showAlertDialog(vc: usingVC, title: NSLocalizedString("Import Error", comment:""), errorStruct: userError, buttonText: NSLocalizedString("Okay", comment:""), completion: { ()-> Void in
+                            if finalDialogCompletion != nil { finalDialogCompletion!(usingVC, fromURL, true, false ) }
+                        })
                     } catch {
                         AppDelegate.postToErrorLogAndAlert(method: "UIHelpers.importConfigFile", errorStruct: error, extra: callbackString1!)
                         AppDelegate.showAlertDialog(vc: usingVC, title: NSLocalizedString("Import Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""), completion: { ()-> Void in
@@ -60,6 +65,7 @@ public class UIHelpers {
                         })
                     }
                 } else {
+                    // end-user chose NOT to import
                     if finalDialogCompletion != nil { finalDialogCompletion!(usingVC, fromURL, false, false ) }
                 }
                 //return  // from the showYesNoDialog callback

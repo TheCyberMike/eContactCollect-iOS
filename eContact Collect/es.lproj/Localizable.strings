@@ -20,18 +20,22 @@
 "Could not access" = "Could not access";
 "Did not validate" = "Did not validate";
 "Did not open" = "Did not open";
-"Oganization does not exist" = "Oganization does not exist";
 "Record is marked deleted and cannot be saved" = "Record is marked deleted and cannot be saved";
 "Field's metadata is missing or mismatched" = "Field's metadata is missing or mismatched";
 "Field's options are missing or mismatched" = "Field's options are missing or mismatched";
 "Field's optionSet is missing or mismatched" = "Field's optionSet is missing or mismatched";
-"iOS Email Subsystem is disabled" = "iOS Email Subsystem is disabled";
 "iOS Email Subsystem returned error" = "iOS Email Subsystem returned error";
-"Email has no To and no CC" = "Email has no To and no CC";
 "Secure Storage Error" = "Secure Storage Error";
 "Missing saved Email Account" = "Missing saved Email Account";
 "Missing known Email Provider" = "Missing known Email Provider";
 "Missing Email Account Credentials" = "Missing Email Account Credentials";
+"SMTP Email Subsystem returned error" = "SMTP Email Subsystem returned error";
+
+"Organization does not exist" = "Organization does not exist";
+"Form does not exist" = "Form does not exist";
+"iOS is not allowing the App to send email" = "iOS is not allowing the App to send email";
+"iOS Email Subsystem is disabled" = "iOS Email Subsystem is disabled";
+"Email has no To and no CC" = "Email has no To and no CC";
 
 // AppDelegate.swift
 "Secure Storage" = "Secure Storage";
@@ -104,6 +108,9 @@
 "OAuth2" = "OAuth2";
 "OAuth2 Outlook.com" = "OAuth2 Outlook.com";
 "Other SMTP Email Provider" = "Other SMTP Email Provider";
+"SMTP Connection Test FAILED!" = "SMTP Connection Test FAILED!";
+"SMTP Connection Test Passed" = "SMTP Connection Test Passed";
+"See Alerts for error details" = "See Alerts for error details";
 
 // PopupFirstTimeViewController.swift
 "Entry Error" = "Entry Error";
@@ -167,7 +174,6 @@
 "Include error.log?" = "Include error.log?";
 "Send email to Developer" = "Send email to Developer";
 "Email Error" = "Email Error";
-"iOS is not allowing App to send email" = "iOS is not allowing App to send email";
 
 // AlertsMgmtViewController.swift
 "Delete Confirmation" = "Delete Confirmation";
@@ -189,6 +195,9 @@
 "Retained Sent Attachments (held for 7 days); press to re-email or re-share" = "Retained Sent Attachments (held for 7 days); press to re-email or re-share";
 "Filename mis-composed" = "Filename mis-composed";
 "Email SV-File" = "Email SV-File";
+"Send Contacts for Org " = "Send Contacts for Org ";
+"and Form " = "and Form ";
+"Must have been deleted before sending collected contacts" = "Must have been deleted before sending collected contacts";
 
 // AdminPrefsViewController.swift & WizMenuViewController.swift & EntryViewController.swift & WizDefinePINViewController & WizDefineNicknameViewController
 "Personal Settings" = "Personal Settings";

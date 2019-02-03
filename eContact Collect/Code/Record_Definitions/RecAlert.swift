@@ -16,6 +16,7 @@ public class RecAlert_Optionals {
     public var rAlert_Timezone_MS_UTC_Offset:Int64? = 0
     public var rAlert_SameDay_Dup_Count:Int? = 0
     public var rAlert_Message:String?
+    public var rAlert_ExtendedDetails:String? = nil
     
     // default constructor
     init() {}
@@ -28,6 +29,7 @@ public class RecAlert_Optionals {
         self.rAlert_Timezone_MS_UTC_Offset = row[Expression<Int64?>(RecAlert.COLUMN_ALERT_TIMEZONE_MS_UTC_OFFSET)]
         self.rAlert_SameDay_Dup_Count = row[Expression<Int?>(RecAlert.COLUMN_ALERT_SAMEDAY_DUP_COUNT)]
         self.rAlert_Message = row[Expression<String?>(RecAlert.COLUMN_ALERT_MESSAGE)]
+        self.rAlert_ExtendedDetails = row[Expression<String?>(RecAlert.COLUMN_ALERT_EXTENDED_DETAILS)]
     }
     
     // is the optionals record valid in terms of required content?
@@ -51,6 +53,7 @@ public class RecAlert {
     public var rAlert_Timezone_MS_UTC_Offset:Int64 = 0     // current timezone of the device at the alert
     public var rAlert_SameDay_Dup_Count:Int = 0            // FUTURE??:  duplication count to reduce duplicated entries
     public var rAlert_Message:String                       // alert text; blank text line is allowed
+    public var rAlert_ExtendedDetails:String? = nil        // optional multi-line extended details about the alert
     
     // member constants and other static content
     private static let mCTAG:String = "RA"
@@ -60,6 +63,7 @@ public class RecAlert {
     public static let COLUMN_ALERT_TIMEZONE_MS_UTC_OFFSET = "timezone_ms_utc_offset"
     public static let COLUMN_ALERT_SAMEDAY_DUP_COUNT = "sameday_dup_count"
     public static let COLUMN_ALERT_MESSAGE = "alert_message"
+    public static let COLUMN_ALERT_EXTENDED_DETAILS = "alert_extended_details"
     
     // these are the as-stored in the database expression definitions
     public static let COL_EXPRESSION_ALERT_ID = Expression<Int64>(RecAlert.COLUMN_ALERT_ID)
@@ -67,6 +71,7 @@ public class RecAlert {
     public static let COL_EXPRESSION_ALERT_TIMEZONE_MS_UTC_OFFSET = Expression<Int64>(RecAlert.COLUMN_ALERT_TIMEZONE_MS_UTC_OFFSET)
     public static let COL_EXPRESSION_ALERT_SAMEDAY_DUP_COUNT = Expression<Int>(RecAlert.COLUMN_ALERT_SAMEDAY_DUP_COUNT)
     public static let COL_EXPRESSION_ALERT_MESSAGE = Expression<String>(RecAlert.COLUMN_ALERT_MESSAGE)
+    public static let COL_EXPRESSION_ALERT_EXTENDED_DETAILS = Expression<String?>(RecAlert.COLUMN_ALERT_EXTENDED_DETAILS)
     
     // generate the string that will create the table
     public static func generateCreateTableString() -> String {
@@ -76,6 +81,7 @@ public class RecAlert {
             t.column(COL_EXPRESSION_ALERT_TIMEZONE_MS_UTC_OFFSET)
             t.column(COL_EXPRESSION_ALERT_SAMEDAY_DUP_COUNT)
             t.column(COL_EXPRESSION_ALERT_MESSAGE)
+            t.column(COL_EXPRESSION_ALERT_EXTENDED_DETAILS)
         }
     }
 
@@ -97,6 +103,7 @@ public class RecAlert {
             self.rAlert_Timezone_MS_UTC_Offset = try row.get(RecAlert.COL_EXPRESSION_ALERT_TIMEZONE_MS_UTC_OFFSET)
             self.rAlert_SameDay_Dup_Count = try row.get(RecAlert.COL_EXPRESSION_ALERT_SAMEDAY_DUP_COUNT)
             self.rAlert_Message = try row.get(RecAlert.COL_EXPRESSION_ALERT_MESSAGE)
+            self.rAlert_ExtendedDetails = row[Expression<String?>(RecAlert.COLUMN_ALERT_EXTENDED_DETAILS)]
         } catch {
             let appError = APP_ERROR(funcName: "\(RecAlert.mCTAG).init(Row)", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: nil, developerInfo: RecAlert.TABLE_NAME)
             throw appError
@@ -115,6 +122,7 @@ public class RecAlert {
         retArray.append(RecAlert.COL_EXPRESSION_ALERT_TIMEZONE_MS_UTC_OFFSET <- self.rAlert_Timezone_MS_UTC_Offset)
         retArray.append(RecAlert.COL_EXPRESSION_ALERT_SAMEDAY_DUP_COUNT <- self.rAlert_SameDay_Dup_Count)
         retArray.append(RecAlert.COL_EXPRESSION_ALERT_MESSAGE <- self.rAlert_Message)
+        retArray.append(RecAlert.COL_EXPRESSION_ALERT_EXTENDED_DETAILS <- self.rAlert_ExtendedDetails)
         
         return retArray
     }
@@ -127,6 +135,7 @@ public class RecAlert {
         if self.rAlert_Timezone_MS_UTC_Offset != baseRec.rAlert_Timezone_MS_UTC_Offset { return false }
         if self.rAlert_SameDay_Dup_Count != baseRec.rAlert_SameDay_Dup_Count { return false }
         if self.rAlert_Message != baseRec.rAlert_Message { return false }
+        if self.rAlert_ExtendedDetails != baseRec.rAlert_ExtendedDetails { return false }
         return true
     }
 #endif

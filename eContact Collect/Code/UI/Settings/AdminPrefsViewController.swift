@@ -590,7 +590,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
 // class definition for AdminPrefsEditEmailAccountViewController
 ///////////////////////////////////////////////////
 
-class AdminPrefsEditEmailAccountViewController: FormViewController {
+class AdminPrefsEditEmailAccountViewController: FormViewController, HEM_Delegate {
     // caller pre-set member variables
     public weak var mEditVia:EmailVia? = nil        // EmailVia to add or change
     public var mAction:APEEAVC_Actions = .Add       // .Add or .Change
@@ -699,15 +699,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
     // Done button was tapped
     @objc func tappedDone(_ barButtonItem: UIBarButtonItem) {
         // validate the entries
-        let validationError = self.form.validate()
-        if validationError.count > 0 {
-            var message:String = NSLocalizedString("There are errors in certain fields of the form; they are shown with red text. \n\nErrors:\n", comment:"")
-            for errorStr in validationError {
-                message = message + errorStr.msg + "\n"
-            }
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: message, buttonText: NSLocalizedString("Okay", comment:""))
-            return
-        }
+        if !self.validateForm() { return }
         
         // ensure the localizedName is unique upon an add
         if self.mAction == .Add {
@@ -741,6 +733,20 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
             return
         }
         self.navigationController?.popViewController(animated:true)
+    }
+    
+    // validate the form and show error
+    public func validateForm() -> Bool {
+        let validationError = self.form.validate()
+        if validationError.count > 0 {
+            var message:String = NSLocalizedString("There are errors in certain fields of the form; they are shown with red text. \n\nErrors:\n", comment:"")
+            for errorStr in validationError {
+                message = message + errorStr.msg + "\n"
+            }
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: message, buttonText: NSLocalizedString("Okay", comment:""))
+            return false
+        }
+        return true
     }
     
     // build the form
@@ -1015,27 +1021,42 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     //cell.textLabel?.font = .systemFont(ofSize: 15.0)
                     cell.textLabel?.textColor = UIColor.black
                     //cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-                }.onCellSelection { cell, row in
-                    do {
-                        try AppDelegate.mEmailHandler!.testEmailViaMailCore(vc: self, tagI: 1, tagS: "$test", delegate: nil, via: self.mWorkingVia!)
-                    } catch {
-                        // ???
+                }.onCellSelection { [weak self] cell, row in
+                    if self!.validateForm() {
+                        do {
+                            try AppDelegate.mEmailHandler!.testEmailViaMailCore(vc: self!, tagI: 1, tagS: "$test", delegate: self!, via: self!.mWorkingVia!)
+                        } catch {
+                            // do not post these test errors to error.log
+                            AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Email Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                        }
                     }
             }
             
             let testResultsRow = TextAreaRowExt() {
                 $0.tag = "test_smtp_connection_results"
                 $0.title = NSLocalizedString("Test Results", comment:"")
-                $0.textAreaHeight = .dynamic(initialTextViewHeight: 60)
-                $0.disabled = true
+                $0.textAreaHeight = .dynamic(initialTextViewHeight: 120)
                 }.cellUpdate { cell, row in
-                    cell.textView.font = .systemFont(ofSize: 15.0)
+                    cell.textView.font = .systemFont(ofSize: 12.0)
                     cell.textView.layer.cornerRadius = 0
                     cell.textView.layer.borderColor = UIColor.gray.cgColor
                     cell.textView.layer.borderWidth = 1
             }
             section3 <<< testResultsRow
             self.mTestResultsRow = testResultsRow
+        }
+    }
+    
+    // callback from the EmailHandler regarding eventual success or failure of the test
+    public func completed_HEM(tagI:Int, tagS:String?, result:EmailHandler.EmailHandlerResults, error:APP_ERROR?, extendedDetails:String?) {
+//debugPrint("\(self.mCTAG).completed_HEM for \(tagS)")
+        self.mTestResultsRow!.value = extendedDetails
+        self.mTestResultsRow!.updateCell()
+        tableView.reloadData()  // allow the TextAreaRowExt to re-size its height
+        
+        if error != nil {
+            // do not post these test errors to the error.log
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error!, buttonText: NSLocalizedString("Okay", comment:""))
         }
     }
 }
