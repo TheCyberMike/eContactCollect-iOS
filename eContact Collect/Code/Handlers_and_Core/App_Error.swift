@@ -232,7 +232,6 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
             return "Field's options are missing or mismatched"
         case .MISSING_OR_MISMATCHED_FIELD_OPTIONSET:
             return "Field's optionSet is missing or mismatched"
-        
         case .IOS_EMAIL_SUBSYSTEM_ERROR:
             return "iOS Email Subsystem returned error"
         case .SECURE_STORAGE_ERROR:

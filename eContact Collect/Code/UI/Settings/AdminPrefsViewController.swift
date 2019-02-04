@@ -94,22 +94,26 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
         self.mEmailViaOptions = AppDelegate.mEmailHandler!.getListEmailOptions()
         self.mDefaultAcct!.options = self.mEmailViaOptions!.map { $0.viaNameLocalized }
         
-        for inx:Int in stride(from: self.mMVSaccts!.allRows.count - 1, through: 0, by: -1) {
-            if self.mMVSaccts!.allRows[inx].tag != nil {
-                if self.mMVSaccts!.allRows[inx].tag!.starts(with: "AC,") { self.mMVSaccts!.remove(at: inx) }
-            }
-        }
+        // check the recorded EmailVias against what is in the MVS
         for emailVia in self.mEmailViaOptions! {
-            let br = self.makeAccountsButtonRow(forVia: emailVia)
-            let ar = form.rowBy(tag: "add_new_account")
-            do {
-                try self.mMVSaccts!.insert(row: br, before: ar!)
-            } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refreshEmailAccts", errorStruct: error, extra: nil)
-                // do not show an error to the end-user
+            if let br = form.rowBy(tag: "AC," + emailVia.viaNameLocalized) {
+                // EmailVia already exists as a buttonRow; change it
+                br.title = emailVia.viaNameLocalized
+                br.retainedObject = emailVia
+                br.updateCell()
+            } else {
+                // EmailVia is not in the MVS; add it
+                let br1 = self.makeAccountsButtonRow(forVia: emailVia)
+                let ar = form.rowBy(tag: "add_new_account")
+                do {
+                    try self.mMVSaccts!.insert(row: br1, before: ar!)
+                } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refreshEmailAccts", errorStruct: error, extra: nil)
+                    // do not show an error to the end-user
+                }
             }
         }
-        tableView.reloadData()
+        // not going to check for deletions
     }
     private func refreshDefaultEmailAcct() {
         self.mEmailDefault = AppDelegate.mEmailHandler!.getLocalizedDefaultEmail()
@@ -374,24 +378,29 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
     
     // this function will get invoked when any rows are deleted or hidden anywhere in the Form, include the MultivaluedSections
     // WARNING: this function also gets called when MOVING a row since effectively its a delete then add
-    /*???override func rowsHaveBeenRemoved(_ rows: [BaseRow], at indexes: [IndexPath]) {
+    override func rowsHaveBeenRemoved(_ rows: [BaseRow], at indexes: [IndexPath]) {
         super.rowsHaveBeenRemoved(rows, at: indexes)
         
         var inx:Int = 0
         for indexPath in indexes {
             if indexPath.section == 1 {
-                // this removal or move or hide occured in the mvs_fields MultivaluedSection
+                // this removal or move or hide occured in the email_mvs_accounts MultivaluedSection
                 let br:ButtonRow = rows[inx] as! ButtonRow
-                let ffIndex:Int64 = Int64(br.tag!.components(separatedBy: ",")[1])!
-                let ffeIndex:Int = self.mFormEditVC!.mWorking_formFieldEntries!.findIndex(ofFormFieldIndex: ffIndex)
-                if ffeIndex >= 0 {
-                    //debugPrint("\(self.mCTAG).rowsHaveBeenRemoved.mvs_fields Delete \(indexPath.item) is \(br.title!) @ \(ffIndex)")
-                    self.mFormEditVC!.mWorking_formFieldEntries!.delete(forFFEindex: ffeIndex)
+                if br.tag != nil, br.tag!.starts(with: "AC,") {
+debugPrint("\(self.mCTAG).rowsHaveBeenRemoved.email_mvs_accounts Delete #\(inx): \(indexPath.item) is \(br.title!)")
+                    do {
+                        try AppDelegate.mEmailHandler!.deleteEmailVia(localizedName: br.title!)
+                    } catch {
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).rowsHaveBeenRemoved", errorStruct: error, extra: br.title!)
+                        AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                        return
+                    }
                 }
             }
             inx = inx + 1
         }
-    }*/
+        self.refreshEmailAccts()
+    }
     
     // return from the Org Chooser view;
     // note: the chooser view is still showing and the chooser view controller is still the mainline;
@@ -636,7 +645,8 @@ debugPrint("\(self.mCTAG).viewDidLoad STARTED")
                             self.mWorkingVia!.emailProvider_Credentials = EmailAccountCredentials(localizedName: self.mWorkingVia!.viaNameLocalized, data: encodedCred!)
                         }
                     } catch {
-                        // ???
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", errorStruct: error, extra: self.mWorkingVia!.viaNameLocalized)
+                        AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                     }
                 }
             }
@@ -753,6 +763,20 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
     private func buildForm() {
         let section1 = Section()
         form +++ section1
+        
+        if !(self.mWorkingVia!.emailProvider_SMTP?.localizedNotes ?? "").isEmpty {
+            section1 <<< TextAreaRowExt() {
+                //$0.title = ""
+                $0.tag = "acct_notes"
+                $0.textAreaHeight = .dynamic(initialTextViewHeight: 60)
+                $0.value = self.mWorkingVia!.emailProvider_SMTP!.localizedNotes!
+                }.cellUpdate { cell, row in
+                    cell.textView.font = .systemFont(ofSize: 14.0)
+                    cell.textView.layer.cornerRadius = 0
+                    cell.textView.layer.borderColor = UIColor.gray.cgColor
+                    cell.textView.layer.borderWidth = 1
+            }
+        }
         
         section1 <<< TextRow() {
             $0.title = NSLocalizedString("Account Nickname", comment:"")

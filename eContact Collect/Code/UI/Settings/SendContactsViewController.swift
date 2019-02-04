@@ -345,16 +345,18 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
             orgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName:splits[2])
             formRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName:formSplits[0], forOrgShortName:splits[2])
         } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", errorStruct: error, extra: "org: \(splits[2]), form: \(formSplits[0])")
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", during: "...GetSpecifiedRecOfShortName()", errorStruct: error, extra: "org: \(splits[2]), form: \(formSplits[0])")
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         let during:String = NSLocalizedString("Send Contacts for Org ", comment:"") + splits[2] + NSLocalizedString("and Form ", comment:"") + formSplits[0]
         if orgRec == nil {
+            // user errors are not posted to the error.log
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), endUserDuring: during, errorStruct: USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Must have been deleted before sending collected contacts", comment:"")), buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         if formRec == nil {
+            // user errors are not posted to the error.log
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), endUserDuring: during, errorStruct: USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .FORM_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Must have been deleted before sending collected contacts", comment:"")), buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
@@ -364,10 +366,16 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
         var email_cc:String? = nil
         var email_subject:String? = nil
         var email_via:EmailVia? = nil
-        if !(formRec!.rForm_Override_Email_Via ?? "").isEmpty {
-            email_via = EmailVia(fromEncode: formRec!.rForm_Override_Email_Via!, fromCredentials: nil)
-        } else if !(orgRec!.rOrg_Email_Via ?? "").isEmpty {
-            email_via = EmailVia(fromEncode: orgRec!.rOrg_Email_Via!, fromCredentials: nil)
+        do {
+            if !(formRec!.rForm_Override_Email_Via ?? "").isEmpty {
+                email_via = try EmailVia(fromEncode: formRec!.rForm_Override_Email_Via!, fromCredentials: nil)
+            } else if !(orgRec!.rOrg_Email_Via ?? "").isEmpty {
+                email_via = try EmailVia(fromEncode: orgRec!.rOrg_Email_Via!, fromCredentials: nil)
+            }
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", during: "EmailVia()", errorStruct: error, extra: "org: \(splits[2]), form: \(formSplits[0])")
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Internal Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            return
         }
         if !(formRec!.rForm_Override_Email_To ?? "").isEmpty {
             if formRec!.rForm_Override_Email_To! != "-" {

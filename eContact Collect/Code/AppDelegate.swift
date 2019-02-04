@@ -702,6 +702,9 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
     public static func setPreferenceString(prefKeyString:String, value:String?) {
         AppDelegate.mPrefsApp.set(value, forKey: prefKeyString)
     }
+    public static func deletePreferenceString(prefKeyString:String) {
+        AppDelegate.mPrefsApp.removeObject(forKey: prefKeyString)
+    }
     public static func doesPreferenceIntExist(prefKey:PreferencesKeys.Ints) -> Bool {
         if AppDelegate.mPrefsApp.object(forKey: prefKey.rawValue) != nil { return true }
         return false

@@ -58,16 +58,18 @@ public struct EmailProviderSMTP:Equatable {
     public var port:Int = 0
     public var connectionType:MCOConnectionType = .clear
     public var authType:MCOAuthType = .saslPlain
+    public var localizedNotes:String?  = nil
     
     init() {}
     
-    init(viaNameLocalized:String, providerInternalName:String, hostname:String, port:Int, connectionType:MCOConnectionType, authType:MCOAuthType) {
+    init(viaNameLocalized:String, providerInternalName:String, hostname:String, port:Int, connectionType:MCOConnectionType, authType:MCOAuthType, localizedNotes:String?=nil) {
         self.viaNameLocalized = viaNameLocalized
         self.providerInternalName = providerInternalName
         self.hostname = hostname
         self.port = port
         self.connectionType = connectionType
         self.authType = authType
+        self.localizedNotes = localizedNotes
     }
     
     init?(localizedName:String, knownProviderInternalName:String) {
@@ -110,8 +112,8 @@ public class EmailVia {
     }
     
     // create an instance from an encoded string
-    init(fromEncode:String?, fromCredentials: Data?) {
-        self.decode(fromEncode: fromEncode, fromCredentials: fromCredentials)
+    init?(fromEncode:String?, fromCredentials: Data?) throws {
+        try self.decode(fromEncode: fromEncode, fromCredentials: fromCredentials)
     }
     
     // create an instance from a known SMTP Email Provider
@@ -179,7 +181,7 @@ public class EmailVia {
     }
     
     // update this instance with the decoded information
-    public func decode(fromEncode:String?, fromCredentials: Data?) {
+    public func decode(fromEncode:String?, fromCredentials: Data?) throws {
         if fromEncode == nil { return }
         
         // decode the bulk of the via
@@ -203,8 +205,7 @@ public class EmailVia {
                     self.viaType = .SMTPsettings
                     break
                 default:
-                    // ???
-                    break
+                    throw APP_ERROR(funcName: "EmailVia.decode", domain: EmailHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: nil, developerInfo: "Via Type invalid: \(comp)")
                 }
             } else {
                 let elements:[String] = comp.components(separatedBy: ":")
@@ -250,8 +251,7 @@ public class EmailVia {
                     self.emailProvider_Credentials!.password = elements[2]
                     break
                 default:
-                    // ???
-                    break
+                    throw APP_ERROR(funcName: "EmailVia.decode", domain: EmailHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: nil, developerInfo: "Via Element invalid: \(elements[0])")
                 }
             }
             inx = inx + 1
@@ -282,6 +282,7 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     // member constants and other static content
     internal var mCTAG:String = "HEM"
     internal var mThrowErrorDomain:String = NSLocalizedString("Email-Handler", comment:"")
+    public static var ThrowErrorDomain:String = NSLocalizedString("Email-Handler", comment:"")
     
     public enum EmailHandlerResults: Int {
         case Cancelled = 0, Error = 1, Saved = 2, Sent = 3
@@ -289,14 +290,14 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     
     public static var knownSMTPEmailProviders:[EmailProviderSMTP] = [
         // Google GMail - "less secure" access; username is full gmail email address
-        // https://support.google.com/mail/answer/7126229?hl=en
+        // https://support.google.com/mail/answer/7126229
         // https://support.google.com/accounts/answer/6010255
-        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Gmail legacy", comment:""), providerInternalName: "Gmail legacy", hostname: "smtp.gmail.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain),
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Gmail legacy", comment:""), providerInternalName: "Gmail legacy", hostname: "smtp.gmail.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain, localizedNotes: NSLocalizedString("GMail Legacy Notes", comment:"")),
         
         // Yahoo Mail - "less secure" access; username is full yahoo email address
         // https://help.yahoo.com/kb/pop-settings-sln4724.html
         // https://help.yahoo.com/kb/SLN3792.html
-        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Yahoo legacy", comment:""), providerInternalName: "Yahoo legacy", hostname: "smtp.mail.yahoo.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain)
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Yahoo legacy", comment:""), providerInternalName: "Yahoo legacy", hostname: "smtp.mail.yahoo.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain, localizedNotes: NSLocalizedString("Yahoo Legacy Notes", comment:""))
     ]
     
     public static var connectionTypeDefs:[ConnectionTypeDef] = [
@@ -322,7 +323,7 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     // this handler must be mindful that the database initialization may have failed
     public func initialize(method:String) -> Bool {
 //debugPrint("\(mCTAG).initialize STARTED")
-        // ???
+        // nothing needed for now
         self.mEMHstatus_state = .Valid
         return true
     }
@@ -356,7 +357,7 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////
-    // public methods
+    // public methods for Email Accounts
     /////////////////////////////////////////////////////////////////////////////////////////
     
     // set the end-users preferred default EmailVia
@@ -452,7 +453,13 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
         let key:String = PreferencesKeys.Strings.EmailVia_Stored_Named.rawValue + localizedName
         let encodedVia:String? = AppDelegate.getPreferenceString(prefKeyString: key)
         if encodedVia == nil { return nil }
-        return EmailVia(fromEncode: encodedVia, fromCredentials: nil)
+        do {
+            return try EmailVia(fromEncode: encodedVia, fromCredentials: nil)
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).getStoredEmailViaNoCredentials", during: "EmailVia()", errorStruct: error, extra: encodedVia)
+            // do not pass up the error
+            return nil
+        }
     }
     
     // retrieve an EmailVia from the proper storage respositories
@@ -470,9 +477,32 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
             appError.prependCallStack(funcName: "\(self.mCTAG).getStoredEmailVia")
             throw appError
         } catch { throw error }
-        
-        return EmailVia(fromEncode: encodedVia, fromCredentials: encodedCred)
+        do {
+            return try EmailVia(fromEncode: encodedVia, fromCredentials: encodedCred)
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).getStoredEmailViaWithCredentials")
+            throw appError
+        } catch { throw error }
     }
+    
+    // delete a stored EmailVia including its securely stored credentials
+    public func deleteEmailVia(localizedName:String) throws {
+        // delete the bulk of the EmailVia
+        let key:String = PreferencesKeys.Strings.EmailVia_Stored_Named.rawValue + localizedName
+        AppDelegate.deletePreferenceString(prefKeyString: key)
+        
+        // delete any secure credentials
+        do {
+            let _ = try AppDelegate.deleteSecureItem(key: localizedName, label: "Email")
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).deleteEmailVia")
+            throw appError
+        } catch { throw error }
+    }
+    
+    /////////////////////////////////////////////////////////////////////////////////////////
+    // public methods to send emails and test SMTP Accounts
+    /////////////////////////////////////////////////////////////////////////////////////////
     
     // send an email to the developer, optionally including an attachment;
     // initial errors are thrown; email subsystem result success/error is returned via callback
@@ -554,11 +584,9 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
         do {
             switch usingVia.viaType {
             case .None:
-                // ??? this should not occur since it was resolved above
-                break
+                throw APP_ERROR(funcName: "\(self.mCTAG).sendEmail", domain: self.mThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: usingVia.viaNameLocalized, developerInfo: "usingVia.viaType == .None")
             case .Stored:
-                // ??? this should not occur since it was resolved above
-                break
+                throw APP_ERROR(funcName: "\(self.mCTAG).sendEmail", domain: self.mThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: usingVia.viaNameLocalized, developerInfo: "usingVia.viaType == .Stored")
             case .API:
                 // presently the only allowed API is the iOS provided API for the Apple Mail App
                 try sendEmailViaAppleMailApp(vc: vc, tagI: tagI, tagS: tagS, delegate: delegate, localizedTitle: localizedTitle, to: to, cc: cc, subject: subject, body: body, includingAttachment: includingAttachment, mimeType: mimeType)
