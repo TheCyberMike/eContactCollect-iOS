@@ -76,7 +76,7 @@ class SendContactsViewController: UIViewController {
 // Child FormViewController
 /////////////////////////////////////////////////////////////////////////
 
-class SendContactsFormViewController: FormViewController, UIActivityItemSource, HEM_Delegate {
+class SendContactsFormViewController: FormViewController, UIActivityItemSource {
     // member variables
     private var mNoDelete:Bool = false
     private var mMVSfilesPending:MultivaluedSection? = nil
@@ -93,6 +93,7 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
     // called when the object instance is being destroyed
     deinit {
 //debugPrint("\(mCTAG).deinit STARTED")
+        NotificationCenter.default.removeObserver(self, name: .APP_EmailCompleted, object: nil)
     }
     
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
@@ -100,6 +101,9 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
     override func viewDidLoad() {
 //debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
+        
+        // add an observer for Notifications about complete SMTP tests
+        NotificationCenter.default.addObserver(self, selector: #selector(noticeEmailCompleted(_:)), name: .APP_EmailCompleted, object: nil)
         
         // build the form entirely
         self.buildForm()
@@ -399,7 +403,7 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
         
         // send the email; this may or may not invoke an email compose view controller
         do {
-            try AppDelegate.mEmailHandler!.sendEmail(vc: self, tagI: 1, tagS: fileName, delegate: self, localizedTitle: NSLocalizedString("Email SV-File", comment:""), via: email_via, to: email_to, cc: email_cc, subject: email_subject, body: nil, includingAttachment: URL(fileURLWithPath: filePath))
+            try EmailHandler.shared.sendEmail(vc: self, invoker: "SendContactsViewController", tagI: 1, tagS: fileName, localizedTitle: NSLocalizedString("Email SV-File", comment:""), via: email_via, to: email_to, cc: email_cc, subject: email_subject, body: nil, includingAttachment: URL(fileURLWithPath: filePath))
         } catch let userError as USER_ERROR {
             // user errors are never posted to the error.log
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: userError, buttonText: NSLocalizedString("Okay", comment:""))
@@ -412,31 +416,34 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
         }
     }
     
-    // callback from the EmailHandler regarding eventual success or failure of the sent email
-    public func completed_HEM(tagI:Int, tagS:String?, result:EmailHandler.EmailHandlerResults, error:APP_ERROR?, extendedDetails:String?) {
-//debugPrint("\(self.mCTAG).completed_HEM for \(tagS)")
-        if error != nil {
-            if extendedDetails != nil {
-                // do not post to error.log these connection error details
-                // an alert with the extended details will have been already posted via the EmailHandler
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error!, buttonText: NSLocalizedString("Okay", comment:""))
-            } else {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_HEM", errorStruct: error!, extra: nil)
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error!, buttonText: NSLocalizedString("Okay", comment:""))
-            }
-        } else {
-            if tagS != nil && (result == .Sent || result == .Saved) {
-                do {
-                    try AppDelegate.mSVFilesHandler!.movePendingToSent(fileName: tagS!)
-                    self.displayListOfFiles()
-                } catch {
-                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_HEM", errorStruct: error, extra: nil)
-                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("File Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+    // notification of the EMailHandler that a pending email or test was completed
+    @objc func noticeEmailCompleted(_ notification:Notification) {
+        if let emailResult:EmailResult = notification.object as? EmailResult {
+            if emailResult.invoker == "SendContactsViewController" {
+debugPrint("\(self.mCTAG).noticeEmailCompleted STARTED for \(emailResult.invoker_tagS!)")
+                if emailResult.error != nil {
+                    // returned errors will properly have the 'noPost' setting for those email or oauth errors that should not get posted to error.log
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).noticeEmailCompleted", errorStruct: emailResult.error!, extra: emailResult.invoker_tagS!)
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: emailResult.error!, buttonText: NSLocalizedString("Okay", comment:""))
+                } else {
+                    if emailResult.invoker_tagS != nil && (emailResult.result == .Sent || emailResult.result == .Saved) {
+                        do {
+                            try AppDelegate.mSVFilesHandler!.movePendingToSent(fileName: emailResult.invoker_tagS!) // ??? move this to EmailHandler?
+                            self.displayListOfFiles()
+                        } catch {
+                            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).noticeEmailCompleted", errorStruct: error, extra: emailResult.invoker_tagS!)
+                            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("File Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                        }
+                    }
                 }
             }
         }
     }
-
+    
+    ///////////////////////////////////////////////////////////////////
+    // Methods related UIActivityViewController and UIActivityItemSource
+    ///////////////////////////////////////////////////////////////////
+    
     // share the SV-File
     private func shareSVfile(filePath:String, fileName:String, selfViewAnchorRect:CGRect) {
 //debugPrint("\(self.mCTAG).shareSVfile STARTED PATH=\(filePath)")
@@ -471,10 +478,6 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource, 
     
     // FUTURE: !! ?? vCard     String(kUTTypeVCard)  text/vcard
     // FUTURE: !! ?? Contact   String(kUTTypeContact)
-    
-    ///////////////////////////////////////////////////////////////////
-    // Methods related UIActivityViewController and UIActivityItemSource
-    ///////////////////////////////////////////////////////////////////
     
     // placeholder so UIActivityViewController knows in general what is going to be shared
     func activityViewControllerPlaceholderItem(_ activityViewController:UIActivityViewController) -> Any {

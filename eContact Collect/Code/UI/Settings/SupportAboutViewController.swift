@@ -227,6 +227,7 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
     // called when the object instance is being destroyed
     deinit {
 //debugPrint("\(mCTAG).deinit STARTED")
+        NotificationCenter.default.removeObserver(self, name: .APP_EmailCompleted, object: nil)
     }
     
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
@@ -234,6 +235,9 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
     override func viewDidLoad() {
 //debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
+        
+        // add an observer for Notifications about complete SMTP tests
+        NotificationCenter.default.addObserver(self, selector: #selector(noticeEmailCompleted(_:)), name: .APP_EmailCompleted, object: nil)
         
         // build the form entirely
         self.buildForm()
@@ -291,7 +295,7 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
         }
         section1 <<< ButtonRow() {
             $0.tag = "submitQuestions"
-            $0.title = NSLocalizedString("Submit Questions at", comment:"") + " StackOverflow; " + NSLocalizedString("\nPlease include tag:", comment:"") + " eContactCollect"
+            $0.title = NSLocalizedString("Submit Questions at Google Groups", comment:"")
             }.cellUpdate { cell, row in
                 cell.textLabel?.textAlignment = .left
                 cell.textLabel?.font = .systemFont(ofSize: 15.0)
@@ -299,7 +303,7 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
                 cell.textLabel?.numberOfLines = 2
                 cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
             }.onCellSelection { cell, row in
-                UIApplication.shared.open(NSURL(string:"https://stackoverflow.com/questions/tagged/econtactcollect")! as URL)
+                UIApplication.shared.open(NSURL(string:"https://groups.google.com/forum/#!forum/econtact-collect")! as URL)
         }
         section1 <<< ButtonRow() {
             $0.tag = "shareLog"
@@ -364,7 +368,7 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
         // send the email; this may or may not invoke an email compose view controller;
         // in this case, do not need the delegate callback (the EmailHandler will post any error to error.log in this situation)
         do {
-            try AppDelegate.mEmailHandler!.sendEmailToDeveloper(vc: self, tagI: 1, tagS: nil, delegate: nil, localizedTitle: NSLocalizedString("Email the Developer", comment:""), subject: subject, body: body, includingAttachment: attachmentURL)
+            try EmailHandler.shared.sendEmailToDeveloper(vc: self, invoker: "SupportOptionsViewController", tagI: 1, tagS: nil, localizedTitle: NSLocalizedString("Email the Developer", comment:""), subject: subject, body: body, includingAttachment: attachmentURL)
         } catch let userError as USER_ERROR {
             // user errors are never posted to the error.log
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: userError, buttonText: NSLocalizedString("Okay", comment:""))
@@ -376,6 +380,24 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
         }
     }
+    
+    // notification of the EMailHandler that a pending email or test was completed
+    @objc func noticeEmailCompleted(_ notification:Notification) {
+        if let emailResult:EmailResult = notification.object as? EmailResult {
+            if emailResult.invoker == "SupportOptionsViewController" {
+debugPrint("\(self.mCTAG).noticeEmailCompleted STARTED")
+                if emailResult.error != nil {
+                    // returned errors will properly have the 'noPost' setting for those email or oauth errors that should not get posted to error.log
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).noticeEmailCompleted", errorStruct: emailResult.error!, extra: nil)
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: emailResult.error!, buttonText: NSLocalizedString("Okay", comment:""))
+                }
+            }
+        }
+    }
+    
+    ///////////////////////////////////////////////////////////////////
+    // Methods related UIActivityViewController and UIActivityItemSource
+    ///////////////////////////////////////////////////////////////////
     
     // share the SV-File
     private func shareDeveloper(selfViewAnchorRect:CGRect) {
@@ -392,10 +414,6 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
         }
         self.present(avc, animated: true, completion: nil)
     }
-    
-    ///////////////////////////////////////////////////////////////////
-    // Methods related UIActivityViewController and UIActivityItemSource
-    ///////////////////////////////////////////////////////////////////
     
     // placeholder so UIActivityViewController knows in general what is going to be shared
     func activityViewControllerPlaceholderItem(_ activityViewController:UIActivityViewController) -> Any {

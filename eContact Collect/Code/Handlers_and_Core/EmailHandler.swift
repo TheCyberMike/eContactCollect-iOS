@@ -8,25 +8,32 @@
 import Foundation
 import MessageUI
 import MobileCoreServices
+import OAuthSwift
 
 /////////////////////////////////////////////////////////////////////////
 // EmailVia class and its supporting structures
 /////////////////////////////////////////////////////////////////////////
 
+// struct for an array to store AuthType definitions
 public struct AuthTypeDef {
     public var type:MCOAuthType
     public var typeStr:String
     public var typeStrLocalized:String
 }
+// struct for an array to store ConnectionType definitions
 public struct ConnectionTypeDef {
     public var type:MCOConnectionType
     public var typeStr:String
     public var typeStrLocalized:String
 }
+// struct to store Email Account Credentials to and from secure storage
 public struct EmailAccountCredentials:Equatable {
     public var viaNameLocalized:String = ""
     public var username:String = ""
     public var password:String = ""
+    public var oAuthAccessToken:String = ""
+    public var oAuthRefreshToken:String = ""
+    public var oAuthAccessTokenExpiresDatetime:Date? = nil
 
     init() {}
     
@@ -35,22 +42,23 @@ public struct EmailAccountCredentials:Equatable {
         if data.count > 0 {
             let str = String(data: data, encoding: String.Encoding.utf16)!
             let strComps = str.components(separatedBy: "\t")
+            if strComps.count == 1 { self.username = str }
             if strComps.count >= 2 { self.username = strComps[0]; self.password = strComps[1] }
-            else { self.username = str }
+            if strComps.count >= 4 { self.oAuthAccessToken = strComps[2]; self.oAuthRefreshToken = strComps[3] }
+            if strComps.count == 5 { self.oAuthAccessTokenExpiresDatetime = Date(timeIntervalSince1970: Double(strComps[4])!) }
         }
     }
     
     // encoded as <username> \t <password>
-    public func data() -> Data? {
-        if !self.valid() { return nil }
-        return "\(self.username)\t\(self.password)".data(using: String.Encoding.utf16)
-    }
-    
-    public func valid() -> Bool {
-        if viaNameLocalized.isEmpty || username.isEmpty { return false }
-        return true
+    public func data() -> Data {
+        var sourceString:String = "\(self.username)\t\(self.password)\t\(self.oAuthAccessToken)\t\(self.oAuthRefreshToken)"
+        if self.oAuthAccessTokenExpiresDatetime != nil {
+            sourceString = sourceString + "\t\(self.oAuthAccessTokenExpiresDatetime!.timeIntervalSince1970)"
+        }
+        return sourceString.data(using: String.Encoding.utf16)!
     }
 }
+// struct to define a smtp email provider
 public struct EmailProviderSMTP:Equatable {
     public var viaNameLocalized:String = ""
     public var providerInternalName:String = ""
@@ -58,6 +66,14 @@ public struct EmailProviderSMTP:Equatable {
     public var port:Int = 0
     public var connectionType:MCOConnectionType = .clear
     public var authType:MCOAuthType = .saslPlain
+    public var oAuthConsumerKey:String = ""
+    public var oAuthConsumerSecret:String = ""
+    public var oAuthAuthorizeURL:String = ""
+    public var oAuthAccessTokenURL:String = ""
+    public var oAuthResponseType:String = ""
+    public var oAuthScope:String = ""
+    public var oAuthState:String = ""
+    public var oAuthCallbackURL:String = ""
     public var localizedNotes:String?  = nil
     
     init() {}
@@ -72,6 +88,24 @@ public struct EmailProviderSMTP:Equatable {
         self.localizedNotes = localizedNotes
     }
     
+    init(viaNameLocalized:String, providerInternalName:String, hostname:String, port:Int, connectionType:MCOConnectionType, authType:MCOAuthType, oAuthConsumerKey:String, oAuthConsumerSecret:String, oAuthAuthorizeURL:String, oAuthAccessTokenURL:String, oAuthResponseType:String, oAuthScope:String, oAuthState:String, oAuthCallbackURL:String, localizedNotes:String?=nil) {
+        self.viaNameLocalized = viaNameLocalized
+        self.providerInternalName = providerInternalName
+        self.hostname = hostname
+        self.port = port
+        self.connectionType = connectionType
+        self.authType = authType
+        self.oAuthConsumerKey = oAuthConsumerKey
+        self.oAuthConsumerSecret = oAuthConsumerSecret
+        self.oAuthAuthorizeURL = oAuthAuthorizeURL
+        self.oAuthAccessTokenURL = oAuthAccessTokenURL
+        self.oAuthResponseType = oAuthResponseType
+        self.oAuthScope = oAuthScope
+        self.oAuthState = oAuthState
+        self.oAuthCallbackURL = oAuthCallbackURL
+        self.localizedNotes = localizedNotes
+    }
+    
     init?(localizedName:String, knownProviderInternalName:String) {
         for provider in EmailHandler.knownSMTPEmailProviders {
             if provider.providerInternalName == knownProviderInternalName {
@@ -81,12 +115,22 @@ public struct EmailProviderSMTP:Equatable {
                 self.port = provider.port
                 self.connectionType = provider.connectionType
                 self.authType = provider.authType
+                self.oAuthConsumerKey = provider.oAuthConsumerKey
+                self.oAuthConsumerSecret = provider.oAuthConsumerSecret
+                self.oAuthAuthorizeURL = provider.oAuthAuthorizeURL
+                self.oAuthAccessTokenURL = provider.oAuthAccessTokenURL
+                self.oAuthResponseType = provider.oAuthResponseType
+                self.oAuthState = provider.oAuthState
+                self.oAuthScope = provider.oAuthScope
+                self.oAuthCallbackURL = provider.oAuthCallbackURL
                 return
             }
         }
         return nil
     }
 }
+// class object to hold information regarding an email account, including provider, credentials, etc.
+// since its a class, it will be referenced by object rather than copied
 public class EmailVia {
     public var viaNameLocalized:String = NSLocalizedString("iOS Mail App", comment:"")
     public var viaType:ViaType = .API
@@ -172,9 +216,7 @@ public class EmailVia {
                 }
             }
             if self.unsecuredCredentials && self.emailProvider_Credentials != nil {
-                if self.emailProvider_Credentials!.valid() {
-                    result = result + "\tcredentials:\(self.emailProvider_Credentials!.username):\(self.emailProvider_Credentials!.password)"
-                }
+                result = result + "\tcredentials:\(self.emailProvider_Credentials!.username):\(self.emailProvider_Credentials!.password)"
             }
             return result
         }
@@ -263,32 +305,79 @@ public class EmailVia {
         }
     }
 }
+// class to hold information for sending one email or perform one SMTP test through the Email Dispatch Queue into the background thread
+public class EmailPending {
+    public var emailTag:Int = 0
+    public var testTheVia:Bool = false
+    public var invoker:String
+    public var invoker_tagI:Int = 0
+    public var invoker_tagS:String? = nil
+    public var via:EmailVia
+    public var oAuth2Swift:OAuth2Swift? = nil
+    
+    // email parameters
+    public var to:String? = nil
+    public var cc:String? = nil
+    public var subject:String? = nil
+    public var body:String? = nil
+    public var includeAttachment:URL? = nil
+    public var attachmentMimeType:String? = nil
+    
+    init(via:EmailVia, invoker:String, tagI:Int, tagS:String?, test:Bool=false) {
+        self.emailTag = EmailHandler.shared.nextEmailPendingTag()
+        self.via = via
+        self.invoker = invoker
+        self.invoker_tagI = tagI
+        self.invoker_tagS = tagS
+        self.testTheVia = test
+    }
+}
+// struct to hold the results of a queued sent email
+public struct EmailResult {
+    public var invoker:String
+    public var invoker_tagI:Int = 0
+    public var invoker_tagS:String? = nil
+    public var result:EmailHandler.EmailHandlerResults
+    public var error:Error?
+    public var extendedDetails:String?
+    
+    init(invoker:String, tagI:Int, tagS:String?, result:EmailHandler.EmailHandlerResults, error:Error?, extendedDetails:String?) {
+        self.invoker = invoker
+        self.invoker_tagI = tagI
+        self.invoker_tagS = tagS
+        self.result = result
+        self.error = error
+        self.extendedDetails = extendedDetails
+    }
+}
 
 /////////////////////////////////////////////////////////////////////////
 // Main class that handles sending Emails
 /////////////////////////////////////////////////////////////////////////
-
-// define the delegate protocol that other portions of the App must use to know the final result of a sent email
-public protocol HEM_Delegate {
-    func completed_HEM(tagI:Int, tagS:String?, result:EmailHandler.EmailHandlerResults, error:APP_ERROR?, extendedDetails:String?)
-}
 
 // base handler class for sending emails
 public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     // member variables
     public var mEMHstatus_state:HandlerStatusStates = .Unknown
     public var mAppError:APP_ERROR? = nil
+    public var mEmailPendingTagCntr:Int = 0
+    private let mEmailPendingQueue = DispatchQueue(label: "opensource.thecybermike.econtactcollect.EmailPendingQueu")
+    private let mEmailRunningQueue = DispatchQueue(label: "opensource.thecybermike.econtactcollect.EmailRunningQueue")
     
     // member constants and other static content
     internal var mCTAG:String = "HEM"
     internal var mThrowErrorDomain:String = NSLocalizedString("Email-Handler", comment:"")
     public static var ThrowErrorDomain:String = NSLocalizedString("Email-Handler", comment:"")
+    public static let shared:EmailHandler = EmailHandler()
     
     public enum EmailHandlerResults: Int {
         case Cancelled = 0, Error = 1, Saved = 2, Sent = 3
     }
     
     public static var knownSMTPEmailProviders:[EmailProviderSMTP] = [
+        // Google GMail - OAuth access
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Gmail OAuth2", comment:""), providerInternalName: "Gmail OAuth2", hostname: "smtp.gmail.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.xoAuth2, oAuthConsumerKey: "43164448264-nj75ble1msena7g1jur2eqfq41d2ni9m.apps.googleusercontent.com", oAuthConsumerSecret: "", oAuthAuthorizeURL: "https://accounts.google.com/o/oauth2/auth", oAuthAccessTokenURL: "https://accounts.google.com/o/oauth2/token", oAuthResponseType: "code", oAuthScope: "https://mail.google.com/", oAuthState: "OAuth-GMail", oAuthCallbackURL: "com.googleusercontent.apps.43164448264-nj75ble1msena7g1jur2eqfq41d2ni9m:/oauth2-callback"),
+        
         // Google GMail - "less secure" access; username is full gmail email address
         // https://support.google.com/mail/answer/7126229
         // https://support.google.com/accounts/answer/6010255
@@ -297,7 +386,19 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
         // Yahoo Mail - "less secure" access; username is full yahoo email address
         // https://help.yahoo.com/kb/pop-settings-sln4724.html
         // https://help.yahoo.com/kb/SLN3792.html
-        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Yahoo legacy", comment:""), providerInternalName: "Yahoo legacy", hostname: "smtp.mail.yahoo.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain, localizedNotes: NSLocalizedString("Yahoo Legacy Notes", comment:""))
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Yahoo legacy", comment:""), providerInternalName: "Yahoo legacy", hostname: "smtp.mail.yahoo.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain, localizedNotes: NSLocalizedString("Yahoo Legacy Notes", comment:"")),
+        
+        // Outlook.com Mail - "less secure" access; username is full outlook email address
+        // https://support.office.com/en-us/article/pop-imap-and-smtp-settings-for-outlook-com-d088b986-291d-42b8-9564-9c414e2aa040
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Outlook.com legacy", comment:""), providerInternalName: "Outlook.com legacy", hostname: "smtp-mail.outlook.com", port: 587, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain),
+        
+        // iCloud Mail - "less secure" access; username is full icloud email address
+        // https://support.office.com/en-us/article/pop-imap-and-smtp-settings-for-outlook-com-d088b986-291d-42b8-9564-9c414e2aa040
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("iCloud legacy", comment:""), providerInternalName: "iCloud legacy", hostname: "smtp.mail.me.com", port: 587, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain),
+        
+        // AOL Mail; username is full AOL email address
+        // http://http://mailaolcom.net/how-to/manually-configure-aol-mail-imap-smtp-settings/
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("AOL", comment:""), providerInternalName: "AOL", hostname: "smtp.aol.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain)
     ]
     
     public static var connectionTypeDefs:[ConnectionTypeDef] = [
@@ -354,6 +455,12 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     // perform any shutdown that may be needed
     internal func shutdown() {
         self.mEMHstatus_state = .Unknown
+    }
+    
+    // issue the next EmailPending Tag
+    public func nextEmailPendingTag() -> Int {
+        self.mEmailPendingTagCntr = self.mEmailPendingTagCntr + 1
+        return self.mEmailPendingTagCntr
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////
@@ -429,9 +536,9 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
         AppDelegate.setPreferenceString(prefKeyString: key, value: via.encode())
         
         // store the userid and password in the secure store
-        if via.emailProvider_Credentials != nil, via.emailProvider_Credentials!.valid() {
+        if via.emailProvider_Credentials != nil {
             do {
-                try AppDelegate.storeSecureItem(key: via.viaNameLocalized, label: "Email", data: via.emailProvider_Credentials!.data()!)
+                try AppDelegate.storeSecureItem(key: via.viaNameLocalized, label: "Email", data: via.emailProvider_Credentials!.data())
             } catch var appError as APP_ERROR {
                 appError.prependCallStack(funcName: "\(self.mCTAG).storeEmailVia")
                 throw appError
@@ -473,11 +580,6 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
         var encodedCred:Data? = nil
         do {
             encodedCred = try AppDelegate.retrieveSecureItem(key: localizedName, label: "Email")
-        } catch var appError as APP_ERROR {
-            appError.prependCallStack(funcName: "\(self.mCTAG).getStoredEmailVia")
-            throw appError
-        } catch { throw error }
-        do {
             return try EmailVia(fromEncode: encodedVia, fromCredentials: encodedCred)
         } catch var appError as APP_ERROR {
             appError.prependCallStack(funcName: "\(self.mCTAG).getStoredEmailViaWithCredentials")
@@ -506,9 +608,9 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     
     // send an email to the developer, optionally including an attachment;
     // initial errors are thrown; email subsystem result success/error is returned via callback
-    public func sendEmailToDeveloper(vc:UIViewController, tagI:Int, tagS:String?, delegate:HEM_Delegate?, localizedTitle:String, subject:String?, body:String?, includingAttachment:URL?) throws {
+    public func sendEmailToDeveloper(vc:UIViewController, invoker:String, tagI:Int, tagS:String?, localizedTitle:String, subject:String?, body:String?, includingAttachment:URL?) throws {
         do {
-            try sendEmail(vc: vc, tagI: tagI, tagS: tagS, delegate: delegate, localizedTitle: localizedTitle, via: nil, to: AppDelegate.mDeveloperEmailAddress, cc: nil, subject: subject, body: body, includingAttachment: includingAttachment)
+            try sendEmail(vc: vc, invoker: invoker, tagI: tagI, tagS: tagS, localizedTitle: localizedTitle, via: nil, to: AppDelegate.mDeveloperEmailAddress, cc: nil, subject: subject, body: body, includingAttachment: includingAttachment)
         } catch var appError as APP_ERROR {
             appError.prependCallStack(funcName: "\(self.mCTAG).sendEmailToDeveloper")
             throw appError
@@ -517,7 +619,7 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
 
     // send an email, optionally including an attachment;
     // initial errors are thrown; email subsystem result success/error is returned via callback
-    public func sendEmail(vc:UIViewController, tagI:Int, tagS:String?, delegate:HEM_Delegate?, localizedTitle:String, via:EmailVia?, to:String?, cc:String?, subject:String?, body:String?, includingAttachment:URL?) throws {
+    public func sendEmail(vc:UIViewController, invoker:String, tagI:Int, tagS:String?, localizedTitle:String, via:EmailVia?, to:String?, cc:String?, subject:String?, body:String?, includingAttachment:URL?) throws {
         
         // determine the attachment mime type
         var mimeType = "text/plain"
@@ -589,15 +691,15 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
                 throw APP_ERROR(funcName: "\(self.mCTAG).sendEmail", domain: self.mThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: usingVia.viaNameLocalized, developerInfo: "usingVia.viaType == .Stored")
             case .API:
                 // presently the only allowed API is the iOS provided API for the Apple Mail App
-                try sendEmailViaAppleMailApp(vc: vc, tagI: tagI, tagS: tagS, delegate: delegate, localizedTitle: localizedTitle, to: to, cc: cc, subject: subject, body: body, includingAttachment: includingAttachment, mimeType: mimeType)
+                try sendEmailViaAppleMailApp(vc: vc, invoker: invoker, tagI: tagI, tagS: tagS, localizedTitle: localizedTitle, to: to, cc: cc, subject: subject, body: body, includingAttachment: includingAttachment, mimeType: mimeType)
                 break
             case .SMTPknown:
                 // send using SMTP via a known provider; provider settings and secure credentials have already been obtained
-                try sendEmailViaMailCore(vc: vc, tagI: tagI, tagS: tagS, delegate: delegate, localizedTitle: localizedTitle, via: usingVia, to: to, cc: cc, subject: subject, body: body, includingAttachment: includingAttachment, mimeType: mimeType)
+                try sendEmailViaMailCore(vc: vc, invoker: invoker, tagI: tagI, tagS: tagS, localizedTitle: localizedTitle, via: usingVia, to: to, cc: cc, subject: subject, body: body, includingAttachment: includingAttachment, mimeType: mimeType)
                 break
             case .SMTPsettings:
                 // send using SMTP with providied settings; secure credentials have already been obtained
-                try sendEmailViaMailCore(vc: vc, tagI: tagI, tagS: tagS, delegate: delegate, localizedTitle: localizedTitle, via: usingVia, to: to, cc: cc, subject: subject, body: body, includingAttachment: includingAttachment, mimeType: mimeType)
+                try sendEmailViaMailCore(vc: vc, invoker: invoker, tagI: tagI, tagS: tagS, localizedTitle: localizedTitle, via: usingVia, to: to, cc: cc, subject: subject, body: body, includingAttachment: includingAttachment, mimeType: mimeType)
                 break
             }
         } catch var appError as APP_ERROR {
@@ -606,53 +708,45 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
         } catch { throw error }
     }
     
-    // test the email connection and credentials via SMTP using MailCore
-    public func testEmailViaMailCore(vc:UIViewController, tagI:Int, tagS:String?, delegate:HEM_Delegate?, via:EmailVia) throws {
-        debugPrint("\(self.mCTAG).testEmailViaMailCore STARTED")
+    // test the email connection and credentials via SMTP using MailCore; do the OAuth precheck if necessary
+    public func testEmailViaMailCore(vc:UIViewController, invoker:String, tagI:Int, tagS:String?, via:EmailVia) throws {
+debugPrint("\(self.mCTAG).testEmailViaMailCore STARTED")
+        if via.emailProvider_SMTP == nil {
+            throw APP_ERROR(funcName: "\(self.mCTAG).testEmailViaMailCore", domain: self.mThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: nil, developerInfo: "via.emailProvider_SMTP == nil ")
+        }
+        if via.emailProvider_Credentials == nil {
+            throw APP_ERROR(funcName: "\(self.mCTAG).testEmailViaMailCore", domain: self.mThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: nil, developerInfo: "via.emailProvider_Credentials == nil")
+        }
         
-        // build the from address
-        var from:MCOAddress
-        if !via.userDisplayName.isEmpty {
-            from = MCOAddress(displayName: via.userDisplayName, mailbox: via.sendingEmailAddress)
+        // compose the pending obejct
+        let pending = EmailPending(via: via, invoker: invoker, tagI: tagI, tagS: tagS, test: true)
+        
+        if via.emailProvider_SMTP!.authType == .xoAuth2 || via.emailProvider_SMTP!.authType == .xoAuth2Outlook {
+            do {
+                try self.validateOAuth(vc: vc, pending: pending, callback: { error in
+                    pending.oAuth2Swift = nil
+                    if error == nil {
+debugPrint("\(self.mCTAG).testEmailViaMailCore.validateOAuth.error==nil ")
+                        self.enqueueEmail(withEmail: pending)
+                    } else {
+debugPrint("\(self.mCTAG).testEmailViaMailCore.validateOAuth.error!=nil ")
+                        // post a result notification of the OAuth error (its already in the main UI thread)
+                        let result:EmailResult
+                        if var appError = error as? APP_ERROR {
+                            appError.prependCallStack(funcName: "\(self.mCTAG).testEmailViaMailCore")
+                            result = EmailResult(invoker: invoker, tagI: tagI, tagS: tagS, result: .Error, error: appError, extendedDetails: nil)
+                        } else {
+                            result = EmailResult(invoker: invoker, tagI: tagI, tagS: tagS, result: .Error, error: error, extendedDetails: nil)
+                        }
+                        NotificationCenter.default.post(name: .APP_EmailCompleted, object: result)
+                    }
+                })
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: "\(self.mCTAG).testEmailViaMailCore")
+                throw appError
+            } catch { throw error }
         } else {
-            from = MCOAddress(mailbox: via.sendingEmailAddress)
-        }
-        
-        // open a connection to the email server
-        var loggerLines:String = ""
-        let smtpSession = MCOSMTPSession()
-        smtpSession.hostname = via.emailProvider_SMTP!.hostname
-        smtpSession.port = UInt32(via.emailProvider_SMTP!.port)
-        smtpSession.authType =  via.emailProvider_SMTP!.authType
-        smtpSession.connectionType = via.emailProvider_SMTP!.connectionType
-        smtpSession.username = via.emailProvider_Credentials?.username
-        smtpSession.password = via.emailProvider_Credentials?.password
-        smtpSession.connectionLogger = {(connectionID, type, data) in
-            if data != nil {
-                if let string = NSString(data: data!, encoding: String.Encoding.utf8.rawValue) {
-debugPrint("\(self.mCTAG).testEmailViaMailCore.Connectionlogger: \(string)")
-                    loggerLines = loggerLines + (string as String)
-                }
-            }
-        }
-        
-        // test the connection
-        let testOperation = smtpSession.checkAccountOperationWith(from: from)
-        testOperation?.start { (error) -> Void in
-            if delegate != nil {
-                var errorHEM:APP_ERROR? = nil
-                var resultHEM:EmailHandler.EmailHandlerResults
-                if error != nil {
-                    resultHEM = .Error
-                    loggerLines = loggerLines + NSLocalizedString("SMTP Connection Test FAILED!", comment:"") + "\n"
-                    errorHEM = APP_ERROR(funcName: "\(self.mCTAG).testEmailViaMailCore", domain: self.mThrowErrorDomain, error: error!, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: NSLocalizedString("See Alerts for error details", comment:""), noAlert: true)
-                    AppDelegate.postAlert(message: AppDelegate.endUserErrorMessage(errorStruct: errorHEM!), extendedDetails: loggerLines)
-                } else {
-                    resultHEM = .Sent
-                    loggerLines = loggerLines + NSLocalizedString("SMTP Connection Test Passed", comment:"") + "\n"
-                }
-                delegate!.completed_HEM(tagI: tagI, tagS: tagS, result: resultHEM, error: errorHEM, extendedDetails: loggerLines)
-            }
+            self.enqueueEmail(withEmail: pending)
         }
     }
     
@@ -707,7 +801,7 @@ debugPrint("\(self.mCTAG).testEmailViaMailCore.Connectionlogger: \(string)")
     }
 
     // send the email using the iOS Mail App
-    private func sendEmailViaAppleMailApp(vc:UIViewController, tagI:Int, tagS:String?, delegate:HEM_Delegate?, localizedTitle:String, to:String?, cc:String?, subject:String?, body:String?, includingAttachment:URL?, mimeType:String) throws {
+    private func sendEmailViaAppleMailApp(vc:UIViewController, invoker:String, tagI:Int, tagS:String?, localizedTitle:String, to:String?, cc:String?, subject:String?, body:String?, includingAttachment:URL?, mimeType:String) throws {
 //debugPrint("\(self.mCTAG).sendEmailViaAppleMailApp STARTED")
         
         // build up the needed to/cc arrays
@@ -729,9 +823,9 @@ debugPrint("\(self.mCTAG).testEmailViaMailCore.Connectionlogger: \(string)")
         // invoke the iOS Mail compose subsystem
         let mailVC = MFMailComposeViewControllerExt()
         mailVC.mailComposeDelegate = self
-        mailVC.tagI = tagI
-        mailVC.tagS = tagS
-        mailVC.delegateHEM = delegate
+        mailVC.invoker = invoker
+        mailVC.invoker_tagI = tagI
+        mailVC.invoker_tagS = tagS
         mailVC.title = localizedTitle
         if !(to ?? "").isEmpty { mailVC.setToRecipients(emailToArray) }
         if !(cc ?? "").isEmpty { mailVC.setCcRecipients(emailCCArray) }
@@ -749,32 +843,34 @@ debugPrint("\(self.mCTAG).testEmailViaMailCore.Connectionlogger: \(string)")
     public func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: Error?) {
 //debugPrint("\(self.mCTAG).mailComposeController.didFinishWith for \(controller.title!)")
         if let controllerHEM:MFMailComposeViewControllerExt = controller as? MFMailComposeViewControllerExt {
-            if controllerHEM.delegateHEM != nil {
-                var errorHEM:APP_ERROR? = nil
-                var resultHEM:EmailHandler.EmailHandlerResults
-                if error != nil {
-                    errorHEM = APP_ERROR(funcName: "\(self.mCTAG).mailComposeController.didFinishWith", domain: self.mThrowErrorDomain, error: error!, errorCode: .IOS_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: nil)
+            var errorHEM:APP_ERROR? = nil
+            var resultHEM:EmailHandler.EmailHandlerResults
+            if error != nil {
+                errorHEM = APP_ERROR(funcName: "\(self.mCTAG).mailComposeController.didFinishWith", domain: self.mThrowErrorDomain, error: error!, errorCode: .IOS_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: nil)
+                resultHEM = .Error
+            } else {
+                switch result {
+                case .cancelled:
+                    resultHEM = .Cancelled
+                    break
+                case .failed:
                     resultHEM = .Error
-                } else {
-                    switch result {
-                    case .cancelled:
-                        resultHEM = .Cancelled
-                        break
-                    case .failed:
-                        resultHEM = .Error
-                        break
-                    case .saved:
-                        resultHEM = .Saved
-                        break
-                    case .sent:
-                        resultHEM = .Sent
-                        break
-                    }
+                    break
+                case .saved:
+                    resultHEM = .Saved
+                    break
+                case .sent:
+                    resultHEM = .Sent
+                    break
                 }
-                controllerHEM.delegateHEM!.completed_HEM(tagI: controllerHEM.tagI, tagS: controllerHEM.tagS, result: resultHEM, error: errorHEM, extendedDetails: nil)
-                controller.dismiss(animated: true, completion: nil)
-                return
             }
+            
+            // post a result notification (its already in the main UI thread)
+            let result:EmailResult = EmailResult(invoker: controllerHEM.invoker, tagI: controllerHEM.invoker_tagI, tagS: controllerHEM.invoker_tagS, result: resultHEM, error: errorHEM, extendedDetails: nil)
+            NotificationCenter.default.post(name: .APP_EmailCompleted, object: result)
+
+            controller.dismiss(animated: true, completion: nil)
+            return
         }
         if error != nil {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).mailComposeController.didFinishWith.noDelegate", errorStruct: error!, extra: nil)
@@ -782,25 +878,286 @@ debugPrint("\(self.mCTAG).testEmailViaMailCore.Connectionlogger: \(string)")
         controller.dismiss(animated: true, completion: nil)
     }
     
-    // send the email via SMTP using MailCore
-    private func sendEmailViaMailCore(vc:UIViewController, tagI:Int, tagS:String?, delegate:HEM_Delegate?, localizedTitle:String, via:EmailVia, to:String?, cc:String?, subject:String?, body:String?, includingAttachment:URL?, mimeType:String) throws {
+    // send the email via SMTP using MailCore; do the OAuth precheck if necessary
+    private func sendEmailViaMailCore(vc:UIViewController, invoker:String, tagI:Int, tagS:String?, localizedTitle:String, via:EmailVia, to:String?, cc:String?, subject:String?, body:String?, includingAttachment:URL?, mimeType:String) throws {
 debugPrint("\(self.mCTAG).sendEmailViaMailCore STARTED")
+        if via.emailProvider_SMTP == nil {
+            throw APP_ERROR(funcName: "\(self.mCTAG).sendEmailViaMailCore", domain: self.mThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: nil, developerInfo: "via.emailProvider_SMTP == nil ")
+        }
+        if via.emailProvider_Credentials == nil {
+            throw APP_ERROR(funcName: "\(self.mCTAG).sendEmailViaMailCore", domain: self.mThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: nil, developerInfo: "via.emailProvider_Credentials == nil")
+        }
         if !(to ?? "").isEmpty && !(cc ?? "").isEmpty {
             // this is a user error to fix in the Org or Form email settings
             throw USER_ERROR(domain: self.mThrowErrorDomain, errorCode: .EMAIL_NO_TO_AND_CC, userErrorDetails: nil)
         }
         
+        // compose the pending object
+        let pending = EmailPending(via: via, invoker: invoker, tagI: tagI, tagS: tagS)
+        pending.to = to
+        pending.cc = cc
+        pending.subject = subject
+        pending.body = body
+        pending.includeAttachment = includingAttachment
+        pending.attachmentMimeType = mimeType
+        
+        if via.emailProvider_SMTP!.authType == .xoAuth2 || via.emailProvider_SMTP!.authType == .xoAuth2Outlook {
+            do {
+                try self.validateOAuth(vc: vc, pending: pending, callback: { error in
+                    pending.oAuth2Swift = nil
+                    if error == nil {
+                        self.enqueueEmail(withEmail: pending)
+                    } else {
+                        // post a result notification of the OAuth error (its already in the main UI thread)
+                        let result:EmailResult
+                        if var appError = error as? APP_ERROR {
+                            appError.prependCallStack(funcName: "\(self.mCTAG).sendEmailViaMailCore")
+                            result = EmailResult(invoker: invoker, tagI: tagI, tagS: tagS, result: .Error, error: appError, extendedDetails: nil)
+                        } else {
+                            result = EmailResult(invoker: invoker, tagI: tagI, tagS: tagS, result: .Error, error: error, extendedDetails: nil)
+                        }
+                        NotificationCenter.default.post(name: .APP_EmailCompleted, object: result)
+                    }
+                })
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: "\(self.mCTAG).sendEmailViaMailCore")
+                throw appError
+            } catch { throw error }
+        } else {
+            self.enqueueEmail(withEmail: pending)
+        }
+    }
+    
+    // handle the OAuth necessities; if an acceptable OAuth Access Token has been obtained and stored into the via then invoke the callback
+    private func validateOAuth(vc:UIViewController, pending:EmailPending, callback:@escaping ((Error?) -> Void)) throws {
+        // what available OAuth credentials are available
+        if !pending.via.emailProvider_Credentials!.oAuthAccessToken.isEmpty {
+            // we have an access token
+            if pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime == nil {
+                // we do not have any expiration data
+                // ???
+                
+            } else if Date() >= pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime!   {
+                // access token is expired
+                if !pending.via.emailProvider_Credentials!.oAuthRefreshToken.isEmpty {
+debugPrint("\(self.mCTAG).validateOAuth EXPIRED & REFRESH; RENEW NEEDED")
+                    // and we have a refresh token
+                    pending.oAuth2Swift = OAuth2Swift(
+                        consumerKey:    pending.via.emailProvider_SMTP!.oAuthConsumerKey,
+                        consumerSecret: pending.via.emailProvider_SMTP!.oAuthConsumerSecret,
+                        authorizeUrl:   pending.via.emailProvider_SMTP!.oAuthAuthorizeURL,
+                        accessTokenUrl: pending.via.emailProvider_SMTP!.oAuthAccessTokenURL,
+                        responseType:   pending.via.emailProvider_SMTP!.oAuthResponseType
+                    )
+                    
+                    pending.oAuth2Swift!.authorizeURLHandler = SafariURLHandler(viewController: vc, oauthSwift: pending.oAuth2Swift!)
+                    let _ = pending.oAuth2Swift!.renewAccessToken(
+                        withRefreshToken: pending.via.emailProvider_Credentials!.oAuthRefreshToken,
+                        success: { credential, response, parameters in
+debugPrint("\(self.mCTAG).validateOAuth.renewAccessToken.success AC=\(credential.oauthToken), RT=\(credential.oauthRefreshToken), ED=\(credential.oauthTokenExpiresAt), parameters=\(parameters)")
+                            pending.via.emailProvider_Credentials!.oAuthAccessToken = credential.oauthToken
+                            pending.via.emailProvider_Credentials!.oAuthRefreshToken = credential.oauthRefreshToken
+                            pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime = credential.oauthTokenExpiresAt
+                            do {
+                                try AppDelegate.storeSecureItem(key: pending.via.viaNameLocalized, label: "Email", data: pending.via.emailProvider_Credentials!.data())
+                            } catch var appError as APP_ERROR {
+                                appError.prependCallStack(funcName: "\(self.mCTAG).validateOAuth")
+                                callback(appError)
+                            } catch { callback(error) }
+                            callback(nil)
+                            return
+                        },
+                        failure: { error in
+                            // refresh failed or was denied; need to re-ask the end-user
+debugPrint("\(self.mCTAG).validateOAuth.renewAccessToken.failure \(error.description); RE-ASK")
+                        }
+                    )
+                } else {
+                    // expired but there is no refresh token; need to re-ask the end-user
+debugPrint("\(self.mCTAG).validateOAuth EXPIRED & NO REFRESH; NEED TO RE-ASk")
+                }
+            } else {
+                // access token is not expired and ready to use
+debugPrint("\(self.mCTAG).validateOAuth AVAILABLE & NOT EXPIRED; REUSE")
+                callback(nil)
+                return
+            }
+        }
+        
+        // need to do a full authorization from-scratch;
+        // setup the oAuth2 parameters
+debugPrint("\(self.mCTAG).validateOAuth ASK FOR AUTHORIZATION")
+        pending.oAuth2Swift = OAuth2Swift(
+            consumerKey:    pending.via.emailProvider_SMTP!.oAuthConsumerKey,
+            consumerSecret: pending.via.emailProvider_SMTP!.oAuthConsumerSecret,
+            authorizeUrl:   pending.via.emailProvider_SMTP!.oAuthAuthorizeURL,
+            accessTokenUrl: pending.via.emailProvider_SMTP!.oAuthAccessTokenURL,
+            responseType:   pending.via.emailProvider_SMTP!.oAuthResponseType
+        )
+        
+        // perform the user-interaction; if responseType == "code" then the second stage request for the access token is automatically performed
+        pending.oAuth2Swift!.authorizeURLHandler = SafariURLHandler(viewController: vc, oauthSwift: pending.oAuth2Swift!)
+        let _ = pending.oAuth2Swift!.authorize(
+            withCallbackURL: URL(string: pending.via.emailProvider_SMTP!.oAuthCallbackURL)!,
+            scope: pending.via.emailProvider_SMTP!.oAuthScope,
+            state: pending.via.emailProvider_SMTP!.oAuthState,
+            success: { credential, response, parameters in
+                // initial authorization interaction with the end-user succceeded;
+                // we should have been given an authorization code and a refresh token but the expiration should be ignored
+debugPrint("\(self.mCTAG).validateOAuth.authorize.success AC=\(credential.oauthToken), RT=\(credential.oauthRefreshToken), ED=\(credential.oauthTokenExpiresAt), parameters=\(parameters)")
+                pending.via.emailProvider_Credentials!.oAuthAccessToken = credential.oauthToken
+                pending.via.emailProvider_Credentials!.oAuthRefreshToken = credential.oauthRefreshToken
+                pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime = credential.oauthTokenExpiresAt
+                do {
+                    try AppDelegate.storeSecureItem(key: pending.via.viaNameLocalized, label: "Email", data: pending.via.emailProvider_Credentials!.data())
+                } catch var appError as APP_ERROR {
+                    appError.prependCallStack(funcName: "\(self.mCTAG).validateOAuth")
+                    callback(appError)
+                } catch { callback(error) }
+                callback(nil)
+            },
+            failure: { error in
+                // initial authorization interaction with the end-user failed or was denied
+debugPrint("\(self.mCTAG).validateOAuth.authorize.failure \(error.description)")
+                callback(APP_ERROR(funcName: "\(self.mCTAG).validateOAuth", during: "oauthswift.authorize", domain: self.mThrowErrorDomain, error: error, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: NSLocalizedString("OAuth failure", comment: ""), noPost: true))
+            }
+        )
+    }
+    
+    /////////////////////////////////////////////////////////////////////////////////////////
+    // Threaded methods
+    /////////////////////////////////////////////////////////////////////////////////////////
+    
+    // enqueue an SMTP email or SMTP test for backgrounds thread to handle;
+    // the DispatchQueue is FIFO serial
+    // OAuth credentials have already been authorized and set
+    // THREADING: this will only be called from the Main UI thread
+    private func enqueueEmail(withEmail:EmailPending) {
+debugPrint("\(self.mCTAG).enqueueEmail MAIN_UI_THREAD STARTED")
+        self.mEmailPendingQueue.async { [weak self] in
+            self!.dequeueEmail(withEmail: withEmail)
+        }
+    }
+    
+    // THREADING: this will be called by the MailQueue thread
+    private func dequeueEmail(withEmail:EmailPending) {
+debugPrint("\(self.mCTAG).dequeueEmail MAILQUEUE_THREAD STARTED")
+        if withEmail.testTheVia { self.testEmailViaMailCore_send(withEmail: withEmail) }
+        else { self.sendEmailViaMailCore_send(withEmail: withEmail) }
+    }
+    
+    // test the email connection and credentials via SMTP using MailCore
+    // THREADING:  this will be called by the MailQueue thread
+    private func testEmailViaMailCore_send(withEmail:EmailPending) {
+debugPrint("\(self.mCTAG).testEmailViaMailCore_send MAILQUEUE_THREAD STARTED")
+        
+        // build the from address
+        var from:MCOAddress
+        if !withEmail.via.userDisplayName.isEmpty {
+            from = MCOAddress(displayName: withEmail.via.userDisplayName, mailbox: withEmail.via.sendingEmailAddress)
+        } else {
+            from = MCOAddress(mailbox: withEmail.via.sendingEmailAddress)
+        }
+        
+        // open a connection to the email server
+        var loggerLines:String = ""
+        let smtpSession = MCOSMTPSession()
+        smtpSession.dispatchQueue = self.mEmailRunningQueue     // this does not appear to work
+        smtpSession.hostname = withEmail.via.emailProvider_SMTP!.hostname
+        smtpSession.port = UInt32(withEmail.via.emailProvider_SMTP!.port)
+        smtpSession.authType =  withEmail.via.emailProvider_SMTP!.authType
+        smtpSession.connectionType = withEmail.via.emailProvider_SMTP!.connectionType
+        smtpSession.username = withEmail.via.emailProvider_Credentials!.username
+        if withEmail.via.emailProvider_SMTP!.authType == .xoAuth2 || withEmail.via.emailProvider_SMTP!.authType == .xoAuth2Outlook {
+            smtpSession.oAuth2Token = withEmail.via.emailProvider_Credentials!.oAuthAccessToken
+        } else {
+            smtpSession.password = withEmail.via.emailProvider_Credentials!.password
+        }
+        smtpSession.connectionLogger = {(connectionID, type, data) in
+            if data != nil {
+                if let string = NSString(data: data!, encoding: String.Encoding.utf8.rawValue) {
+                    var flow:String = ""
+                    switch type {
+                    case .received:
+                        flow = "<= "
+                        break
+                    case .sent:
+                        flow = "=> "
+                        break
+                    case .sentPrivate:
+                        flow = "=> "
+                        break
+                    case .errorParse:
+                        flow = "E "
+                        break
+                    case .errorReceived:
+                        flow = "<E= "
+                        break
+                    case .errorSent:
+                        flow = "=E> "
+                        break
+                    }
+                    let stringSwift = string as String
+debugPrint("\(self.mCTAG).testEmailViaMailCore_send.Connectionlogger: \(flow)\(stringSwift)")
+                    loggerLines = loggerLines + flow + stringSwift
+                    if stringSwift.starts(with: "334 ") {
+                        let string1:String = String(stringSwift.prefix(stringSwift.count - 1))
+                        let string2:String = String(string1.suffix(string1.count - 4))
+                        let data1:Data? = Data(base64Encoded: string2)
+                        if data1 != nil {
+                            let decodedString:String? = String(data: data1!, encoding: .utf8)
+                            if decodedString != nil {
+debugPrint("\(self.mCTAG).testEmailViaMailCore_send.Connectionlogger: \(flow) 334 \(decodedString!)")
+                                loggerLines = loggerLines + flow + decodedString! + "\r\n"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // test the connection; is automatically performed in a different background thread then callback with results
+        let testOperation = smtpSession.checkAccountOperationWith(from: from)
+        testOperation?.start { [weak self] (error) -> Void in
+            var errorHEM:APP_ERROR? = nil
+            var resultHEM:EmailHandler.EmailHandlerResults
+            if error != nil {
+                resultHEM = .Error
+                loggerLines = loggerLines + NSLocalizedString("SMTP Connection Test FAILED!", comment:"") + "\n"
+                errorHEM = APP_ERROR(funcName: "\(self!.mCTAG).testEmailViaMailCore", domain: self!.mThrowErrorDomain, error: error!, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: NSLocalizedString("See Alerts for error details", comment:""), noAlert: true)
+                AppDelegate.postAlert(message: AppDelegate.endUserErrorMessage(errorStruct: errorHEM!), extendedDetails: loggerLines)
+                errorHEM!.noPost = true
+            } else {
+                resultHEM = .Sent
+                loggerLines = loggerLines + NSLocalizedString("SMTP Connection Test Passed", comment:"") + "\n"
+            }
+            
+            // post the result notification into the main UI thread
+            let result:EmailResult = EmailResult(invoker: withEmail.invoker, tagI: withEmail.invoker_tagI, tagS: withEmail.invoker_tagS, result: resultHEM, error: errorHEM, extendedDetails: loggerLines)
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .APP_EmailCompleted, object: result)
+            }
+            return
+        } // end of callback
+debugPrint("\(self.mCTAG).testEmailViaMailCore_send MAILQUEUE_THREAD ENDED")
+    }
+    
+    // send the email via SMTP using MailCore
+    // THREADING:  this will be called by the MailQueue thread
+    private func sendEmailViaMailCore_send(withEmail:EmailPending) {
+debugPrint("\(self.mCTAG).sendEmailViaMailCore_send MAILQUEUE_THREAD STARTED")
+
         // build up the needed to/cc arrays
         var emailToArray:[MCOAddress] = []
         var emailCCArray:[MCOAddress] = []
-        if !(to ?? "").isEmpty {
-            let emails:[String] = to!.components(separatedBy: ",")
+        if !(withEmail.to ?? "").isEmpty {
+            let emails:[String] = withEmail.to!.components(separatedBy: ",")
             for email in emails {
                 emailToArray.append(MCOAddress(displayName: email, mailbox: email))
             }
         }
-        if !(cc ?? "").isEmpty {
-            let emails:[String] = cc!.components(separatedBy: ",")
+        if !(withEmail.cc ?? "").isEmpty {
+            let emails:[String] = withEmail.cc!.components(separatedBy: ",")
             for email in emails {
                 emailCCArray.append(MCOAddress(displayName: email, mailbox: email))
             }
@@ -808,64 +1165,109 @@ debugPrint("\(self.mCTAG).sendEmailViaMailCore STARTED")
         
         // build the email
         let builder = MCOMessageBuilder()
-        if !(to ?? "").isEmpty { builder.header.to = emailToArray }
-        if !(cc ?? "").isEmpty { builder.header.cc = emailCCArray }
-        if !via.userDisplayName.isEmpty {
-            builder.header.from = MCOAddress(displayName: via.userDisplayName, mailbox: via.sendingEmailAddress)
+        if !(withEmail.to ?? "").isEmpty { builder.header.to = emailToArray }
+        if !(withEmail.cc ?? "").isEmpty { builder.header.cc = emailCCArray }
+        if !withEmail.via.userDisplayName.isEmpty {
+            builder.header.from = MCOAddress(displayName: withEmail.via.userDisplayName, mailbox: withEmail.via.sendingEmailAddress)
         } else {
-            builder.header.from = MCOAddress(mailbox: via.sendingEmailAddress)
+            builder.header.from = MCOAddress(mailbox: withEmail.via.sendingEmailAddress)
         }
-        if !(subject ?? "").isEmpty { builder.header.subject = subject! }
-        if !(body ?? "").isEmpty { builder.textBody = body! }
+        if !(withEmail.subject ?? "").isEmpty { builder.header.subject = withEmail.subject! }
+        if !(withEmail.body ?? "").isEmpty { builder.textBody = withEmail.body! }
         
-        if includingAttachment != nil {
-            let fileName:String = includingAttachment!.lastPathComponent
-            let withData:Data? = FileManager.default.contents(atPath: includingAttachment!.path)
+        if withEmail.includeAttachment != nil {
+            let fileName:String = withEmail.includeAttachment!.lastPathComponent
+            let withData:Data? = FileManager.default.contents(atPath: withEmail.includeAttachment!.path)
             if withData != nil {
                 let attachment = MCOAttachment(data: withData!, filename: fileName)
                 if attachment != nil {
-                    attachment!.mimeType =  mimeType
+                    attachment!.mimeType =  withEmail.attachmentMimeType
                     builder.addAttachment(attachment!)
                 }
             }
         }
-
+        
         // open a connection to the email server
         var loggerLines:String = ""
         let smtpSession = MCOSMTPSession()
-        smtpSession.hostname = via.emailProvider_SMTP!.hostname
-        smtpSession.port = UInt32(via.emailProvider_SMTP!.port)
-        smtpSession.authType =  via.emailProvider_SMTP!.authType
-        smtpSession.connectionType = via.emailProvider_SMTP!.connectionType
-        smtpSession.username = via.emailProvider_Credentials?.username
-        smtpSession.password = via.emailProvider_Credentials?.password
+        smtpSession.dispatchQueue = self.mEmailRunningQueue     // this does not appear to work
+        smtpSession.hostname = withEmail.via.emailProvider_SMTP!.hostname
+        smtpSession.port = UInt32(withEmail.via.emailProvider_SMTP!.port)
+        smtpSession.authType =  withEmail.via.emailProvider_SMTP!.authType
+        smtpSession.connectionType = withEmail.via.emailProvider_SMTP!.connectionType
+        smtpSession.username = withEmail.via.emailProvider_Credentials?.username
+        if withEmail.via.emailProvider_SMTP!.authType == .xoAuth2 || withEmail.via.emailProvider_SMTP!.authType == .xoAuth2Outlook {
+            smtpSession.oAuth2Token = withEmail.via.emailProvider_Credentials?.oAuthAccessToken
+        } else {
+            smtpSession.password = withEmail.via.emailProvider_Credentials?.password
+        }
         smtpSession.connectionLogger = {(connectionID, type, data) in
             if data != nil {
                 if let string = NSString(data: data!, encoding: String.Encoding.utf8.rawValue) {
-debugPrint("\(self.mCTAG).sendEmailViaMailCore.Connectionlogger: \(string)")
-                    loggerLines = loggerLines + (string as String)
+                    var flow:String = ""
+                    switch type {
+                    case .received:
+                        flow = "<= "
+                        break
+                    case .sent:
+                        flow = "=> "
+                        break
+                    case .sentPrivate:
+                        flow = "=> "
+                        break
+                    case .errorParse:
+                        flow = "E "
+                        break
+                    case .errorReceived:
+                        flow = "<E= "
+                        break
+                    case .errorSent:
+                        flow = "=E> "
+                        break
+                    }
+                    let stringSwift = string as String
+debugPrint("\(self.mCTAG).sendEmailViaMailCore_send.Connectionlogger: \(flow)\(stringSwift)")
+                    loggerLines = loggerLines + flow + stringSwift
+                    if stringSwift.starts(with: "334 ") {
+                        let string1:String = String(stringSwift.prefix(stringSwift.count - 1))
+                        let string2:String = String(string1.suffix(string1.count - 4))
+                        let data1:Data? = Data(base64Encoded: string2)
+                        if data1 != nil {
+                            let decodedString:String? = String(data: data1!, encoding: .utf8)
+                            if decodedString != nil {
+debugPrint("\(self.mCTAG).sendEmailViaMailCore_send.Connectionlogger: \(flow) 334 \(decodedString!)")
+                                loggerLines = loggerLines + flow + decodedString! + "\r\n"
+                            }
+                        }
+                    }
                 }
             }
         }
         
-        // send the email; is automatically performed in background thread then callback with results
+        // send the email; is automatically performed in a different background thread then callback with results
         let rfc822Data = builder.data()
         let sendOperation = smtpSession.sendOperation(with: rfc822Data!)
         sendOperation?.start { (error) -> Void in
             var errorHEM:APP_ERROR? = nil
             var resultHEM:EmailHandler.EmailHandlerResults
             if error != nil {
-                errorHEM = APP_ERROR(funcName: "\(self.mCTAG).sendEmailViaMailCore", domain: self.mThrowErrorDomain, error: error!, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: nil, noAlert: true)
+                errorHEM = APP_ERROR(funcName: "\(self.mCTAG).sendEmailViaMailCore_send", domain: self.mThrowErrorDomain, error: error!, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: nil, noAlert: true)
                 resultHEM = .Error
                 AppDelegate.postAlert(message: AppDelegate.endUserErrorMessage(errorStruct: errorHEM!), extendedDetails: loggerLines)
-                errorHEM?.userErrorDetails = NSLocalizedString("See Alerts for error details", comment:"")
+                errorHEM!.userErrorDetails = NSLocalizedString("See Alerts for error details", comment:"")
+                errorHEM!.noPost = true
             } else {
                 resultHEM = .Sent
             }
-            if delegate != nil {
-                delegate!.completed_HEM(tagI: tagI, tagS: tagS, result: resultHEM, error: errorHEM, extendedDetails: loggerLines)
+            
+            // post the result notification into the main UI thread
+            let result:EmailResult = EmailResult(invoker: withEmail.invoker, tagI: withEmail.invoker_tagI, tagS: withEmail.invoker_tagS, result: resultHEM, error: errorHEM, extendedDetails: loggerLines)
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .APP_EmailCompleted, object: result)
             }
-        }
+            return
+        } // end of callback
+debugPrint("\(self.mCTAG).sendEmailViaMailCore_send MAILQUEUE_THREAD ENDED")
     }
 }
 
@@ -876,7 +1278,7 @@ debugPrint("\(self.mCTAG).sendEmailViaMailCore.Connectionlogger: \(string)")
 // extend the MFMailComposeViewController class to store some needed callback members
 public class MFMailComposeViewControllerExt:MFMailComposeViewController {
     // preset members by invoker
-    var tagI:Int = 0
-    var tagS:String? = nil
-    var delegateHEM:HEM_Delegate? = nil
+    var invoker:String = ""
+    var invoker_tagI:Int = 0
+    var invoker_tagS:String? = nil
 }

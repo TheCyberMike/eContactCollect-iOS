@@ -31,8 +31,8 @@ debugPrint("\(mCTAG).deinit STARTED")
 debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
         
-        self.mEmailDefault = AppDelegate.mEmailHandler!.getLocalizedDefaultEmail()
-        self.mEmailViaOptions = AppDelegate.mEmailHandler!.getListEmailOptions()
+        self.mEmailDefault = EmailHandler.shared.getLocalizedDefaultEmail()
+        self.mEmailViaOptions = EmailHandler.shared.getListEmailOptions()
         
         // build the form entirely
         self.buildForm()
@@ -91,7 +91,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
     
     // refresh the Email Accts MVS
     private func refreshEmailAccts() {
-        self.mEmailViaOptions = AppDelegate.mEmailHandler!.getListEmailOptions()
+        self.mEmailViaOptions = EmailHandler.shared.getListEmailOptions()
         self.mDefaultAcct!.options = self.mEmailViaOptions!.map { $0.viaNameLocalized }
         
         // check the recorded EmailVias against what is in the MVS
@@ -116,7 +116,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
         // not going to check for deletions
     }
     private func refreshDefaultEmailAcct() {
-        self.mEmailDefault = AppDelegate.mEmailHandler!.getLocalizedDefaultEmail()
+        self.mEmailDefault = EmailHandler.shared.getLocalizedDefaultEmail()
         self.mDefaultAcct!.value = self.mEmailDefault
     }
     
@@ -218,7 +218,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
             }.onChange { [weak self] chgRow in
                 if chgRow.value != nil {
                     self!.mEmailDefault =  chgRow.value!
-                    AppDelegate.mEmailHandler!.setLocalizedDefaultEmail(localizedName: chgRow.value!)
+                    EmailHandler.shared.setLocalizedDefaultEmail(localizedName: chgRow.value!)
                     self!.refreshEmailAccts()
                 }
         }
@@ -389,7 +389,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 if br.tag != nil, br.tag!.starts(with: "AC,") {
 debugPrint("\(self.mCTAG).rowsHaveBeenRemoved.email_mvs_accounts Delete #\(inx): \(indexPath.item) is \(br.title!)")
                     do {
-                        try AppDelegate.mEmailHandler!.deleteEmailVia(localizedName: br.title!)
+                        try EmailHandler.shared.deleteEmailVia(localizedName: br.title!)
                     } catch {
                         AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).rowsHaveBeenRemoved", errorStruct: error, extra: br.title!)
                         AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
@@ -568,7 +568,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
         let section1 = Section(NSLocalizedString("Select new provider to add", comment:""))
         form +++ section1
         
-        let emailViaPotentials:[EmailVia] = AppDelegate.mEmailHandler!.getListPotentialEmailProviders()
+        let emailViaPotentials:[EmailVia] = EmailHandler.shared.getListPotentialEmailProviders()
         for via in emailViaPotentials {
             section1 <<< ButtonRow(){ row in
                 row.tag = "PV,\(via.emailProvider_InternalName)"
@@ -599,7 +599,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
 // class definition for AdminPrefsEditEmailAccountViewController
 ///////////////////////////////////////////////////
 
-class AdminPrefsEditEmailAccountViewController: FormViewController, HEM_Delegate {
+class AdminPrefsEditEmailAccountViewController: FormViewController {
     // caller pre-set member variables
     public weak var mEditVia:EmailVia? = nil        // EmailVia to add or change
     public var mAction:APEEAVC_Actions = .Add       // .Add or .Change
@@ -619,6 +619,7 @@ class AdminPrefsEditEmailAccountViewController: FormViewController, HEM_Delegate
     // called when the object instance is being destroyed
     deinit {
 debugPrint("\(mCTAG).deinit STARTED")
+        NotificationCenter.default.removeObserver(self, name: .APP_EmailCompleted, object: nil)
     }
     
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
@@ -658,6 +659,9 @@ debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         let button2 = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(AdminPrefsEditEmailAccountViewController.tappedCancel(_:)))
         button2.title = NSLocalizedString("Cancel", comment:"")
         navigationItem.leftBarButtonItem = button2
+        
+        // add an observer for Notifications about complete SMTP tests
+        NotificationCenter.default.addObserver(self, selector: #selector(noticeEmailCompleted(_:)), name: .APP_EmailCompleted, object: nil)
     
         // build the form entirely
         self.buildForm()
@@ -713,7 +717,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
         
         // ensure the localizedName is unique upon an add
         if self.mAction == .Add {
-            if AppDelegate.mEmailHandler!.storedEmailViaExists(localizedName: self.mWorkingVia!.viaNameLocalized) {
+            if EmailHandler.shared.storedEmailViaExists(localizedName: self.mWorkingVia!.viaNameLocalized) {
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("Account Nickname already exists", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
                 return
             }
@@ -736,7 +740,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
         // save or update the EmailVia into the proper storage areas
         self.mEditVia = self.mWorkingVia        // return all saved changes so they can re-appear if the end-user tries again
         do {
-            try AppDelegate.mEmailHandler!.storeEmailVia(via: self.mEditVia!)
+            try EmailHandler.shared.storeEmailVia(via: self.mEditVia!)
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).tappedDone", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
@@ -1048,7 +1052,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 }.onCellSelection { [weak self] cell, row in
                     if self!.validateForm() {
                         do {
-                            try AppDelegate.mEmailHandler!.testEmailViaMailCore(vc: self!, tagI: 1, tagS: "$test", delegate: self!, via: self!.mWorkingVia!)
+                            try EmailHandler.shared.testEmailViaMailCore(vc: self!, invoker: "AdminPrefsEditEmailAccountViewController", tagI: 1, tagS: "$test", via: self!.mWorkingVia!)
                         } catch {
                             // do not post these test errors to error.log
                             AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Email Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
@@ -1071,16 +1075,21 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
         }
     }
     
-    // callback from the EmailHandler regarding eventual success or failure of the test
-    public func completed_HEM(tagI:Int, tagS:String?, result:EmailHandler.EmailHandlerResults, error:APP_ERROR?, extendedDetails:String?) {
-//debugPrint("\(self.mCTAG).completed_HEM for \(tagS)")
-        self.mTestResultsRow!.value = extendedDetails
-        self.mTestResultsRow!.updateCell()
-        tableView.reloadData()  // allow the TextAreaRowExt to re-size its height
-        
-        if error != nil {
-            // do not post these test errors to the error.log
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: error!, buttonText: NSLocalizedString("Okay", comment:""))
+    // notification of the EMailHandler that a pending email or test was completed
+    @objc func noticeEmailCompleted(_ notification:Notification) {
+        if let emailResult:EmailResult = notification.object as? EmailResult {
+            if emailResult.invoker == "AdminPrefsEditEmailAccountViewController" {
+debugPrint("\(self.mCTAG).noticeEmailCompleted STARTED")
+                self.mTestResultsRow!.value = emailResult.extendedDetails
+                self.mTestResultsRow!.updateCell()
+                tableView.reloadData()  // allow the TextAreaRowExt to re-size its height
+                
+                if emailResult.error != nil {
+                    // returned errors will properly have the 'noPost' setting for those email or oauth errors that should not get posted to error.log
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).noticeEmailCompleted", errorStruct: emailResult.error!, extra: nil)
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: emailResult.error!, buttonText: NSLocalizedString("Okay", comment:""))
+                }
+            }
         }
     }
 }

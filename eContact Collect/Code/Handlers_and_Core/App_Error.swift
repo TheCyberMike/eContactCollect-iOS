@@ -25,8 +25,9 @@ public struct APP_ERROR:Error, CustomStringConvertible {
     var developerInfo:String? = nil
     
     // init from some other Error
-    public init(funcName:String, during:String?=nil, domain:String, error:Error, errorCode:APP_ERROR_CODE, userErrorDetails:String?, developerInfo:String?=nil, noAlert:Bool=false) {
+    public init(funcName:String, during:String?=nil, domain:String, error:Error, errorCode:APP_ERROR_CODE, userErrorDetails:String?, developerInfo:String?=nil, noAlert:Bool=false, noPost:Bool=false) {
         self.noAlert = noAlert
+        self.noPost = noPost
         self.callStack = funcName
         self.during = during
         self.domain = domain

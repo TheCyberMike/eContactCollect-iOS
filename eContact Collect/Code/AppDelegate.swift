@@ -9,6 +9,7 @@ import UIKit
 import SQLite
 import Eureka
 import StoreKit
+import OAuthSwift
 
 // global exception handler (cannot catch Swift runtime errors)
 func globalExceptionHandler(exception:NSException) {
@@ -135,6 +136,7 @@ extension Notification.Name {
     static let APP_EFP_OrgFormChange = Notification.Name("APP_EFP_OrgFormChange")
     static let APP_EFP_LangRegionChanged = Notification.Name("APP_EFP_LangRegionChanged")
     static let APP_FileRequestedToOpen = Notification.Name("APP_FileRequestedToOpen")
+    static let APP_EmailCompleted = Notification.Name("APP_EmailCompleted")
 }
 
 // Handler status enumerator
@@ -166,7 +168,6 @@ internal class AppDelegate: UIResponder, UIApplicationDelegate {
     public static var mDatabaseHandler:DatabaseHandler? = nil           // common pointer to the DatabaseHandler Object
     public static var mFieldHandler:FieldHandler? = nil                 // common pointer to the FieldHandler Object
     public static var mSVFilesHandler:SVFilesHandler? = nil             // common pointer to the SVFilesHandler Object
-    public static var mEmailHandler:EmailHandler? = nil                 // common pointer to the EmailHandler Object
     public static var mEntryFormProvisioner:EntryFormProvisioner? = nil // common pointer to the EFP for the mainline EntryViewController
 
     // basic states of the iOS Device and App regions
@@ -254,15 +255,14 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         let _ = AppDelegate.mFieldHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
         AppDelegate.mSVFilesHandler = SVFilesHandler()
         let _ = AppDelegate.mSVFilesHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
-        AppDelegate.mEmailHandler = EmailHandler()
-        let _ = AppDelegate.mEmailHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
+        let _ = EmailHandler.shared.initialize(method: "\(AppDelegate.mCTAG).initialize")
 
         // allow handlers to perform any additional first-time-of-use initializations that a particular handler may require;
         // their interrnal logic prevents repeated first-time setups, but also allow later versions of the app to retro-perform missed first-time setups
         AppDelegate.mDatabaseHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
         AppDelegate.mFieldHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
         AppDelegate.mSVFilesHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
-        AppDelegate.mEmailHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
+        EmailHandler.shared.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
         
         // prepare the mainline EFP if possible; for first time setup this will not be possible
         if AppDelegate.mFirstTImeStages < 0 { AppDelegate.setupMainlineEFP() }
@@ -335,53 +335,64 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
     //      "apiVersion":"1.0"
     //      "method":"eContactCollect.db.org.export" or "method":"eContactCollect.db.form.export"
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
-//debugPrint("\(AppDelegate.mCTAG).openURL STARTED PATH=\(url.path)")
-        // is it the correct extension?
-        if url.scheme != "file" { return false }
-        let filename = url.lastPathComponent
-        let extensionStr = filename.components(separatedBy: ".").last
-        if extensionStr != "eContactCollectConfig" { return false } // no
+//debugPrint("\(AppDelegate.mCTAG).openURL STARTED PATH=\(url.absoluteString)")
+        if url.scheme == "file" {
+            // handle a file open
+//debugPrint("\(AppDelegate.mCTAG).openURL FILE STARTED")
+            let filename = url.lastPathComponent
+            let extensionStr = filename.components(separatedBy: ".").last
+            if extensionStr != "eContactCollectConfig" { return false } // no
 
-        // must we copy it to open it?
-        let canOpenInPlace = options[UIApplication.OpenURLOptionsKey.openInPlace] as? Bool
-        var workingURL = url
-        if canOpenInPlace == nil || canOpenInPlace == false {
-            // yes must copy it first
-            workingURL = URL(fileURLWithPath: AppDelegate.mDocsApp, isDirectory: true).appendingPathComponent(url.lastPathComponent)
-            do {
-                try FileManager.default.copyItem(at: url, to: workingURL)
-            } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).application.open url", during:"FileManager.default.copyItem", errorStruct: error, extra: "\(url.path) to \(workingURL.path)")
-                // cannot show the error to the end-user at this time
-                return false
+            // must we copy it to open it?
+            let canOpenInPlace = options[UIApplication.OpenURLOptionsKey.openInPlace] as? Bool
+            var workingURL = url
+            if canOpenInPlace == nil || canOpenInPlace == false {
+                // yes must copy it first
+                workingURL = URL(fileURLWithPath: AppDelegate.mDocsApp, isDirectory: true).appendingPathComponent(url.lastPathComponent)
+                do {
+                    try FileManager.default.copyItem(at: url, to: workingURL)
+                } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).application.open url", during:"FileManager.default.copyItem", errorStruct: error, extra: "\(url.path) to \(workingURL.path)")
+                    // cannot show the error to the end-user at this time
+                    return false
+                }
             }
-        }
-        
-        // open it and make sure its our file
-        var valid:Bool = false
-        let stream = InputStream(fileAtPath: workingURL.path)
-        if stream == nil { return false }
-        stream!.open()
-        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: 257)    // must be one higher than the read length
-        buffer.initialize(to: 0)
-        let qty = stream!.read(buffer, maxLength: 256)
-        stream!.close()
-        if qty > 0 {
-            let bufferString = String(cString: buffer)
-            if bufferString.contains("\"method\":\"eContactCollect.db.org.export\"") ||
-               bufferString.contains("\"method\":\"eContactCollect.db.form.export\"") {
-                valid = true
+            
+            // open it and make sure its our file
+            var valid:Bool = false
+            let stream = InputStream(fileAtPath: workingURL.path)
+            if stream == nil { return false }
+            stream!.open()
+            let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: 257)    // must be one higher than the read length
+            buffer.initialize(to: 0)
+            let qty = stream!.read(buffer, maxLength: 256)
+            stream!.close()
+            if qty > 0 {
+                let bufferString = String(cString: buffer)
+                if bufferString.contains("\"method\":\"eContactCollect.db.org.export\"") ||
+                   bufferString.contains("\"method\":\"eContactCollect.db.form.export\"") {
+                    valid = true
+                }
             }
-        }
-        buffer.deallocate()
-        if !valid { return false }
-        
-        // all seems okay; push the file open request into the message queue so the mainline UI can handle it
+            buffer.deallocate()
+            if !valid { return false }
+            
+            // all seems okay; push the file open request into the message queue so the mainline UI can handle it
 //debugPrint("\(AppDelegate.mCTAG).openURL VALID SENDING NOTIFICATION")
-        var requestInfo = options
-        requestInfo[UIApplication.OpenURLOptionsKey.url] = workingURL
-        NotificationCenter.default.post(name: .APP_FileRequestedToOpen, object: nil, userInfo: requestInfo)
-        return true
+            var requestInfo = options
+            requestInfo[UIApplication.OpenURLOptionsKey.url] = workingURL
+            NotificationCenter.default.post(name: .APP_FileRequestedToOpen, object: nil, userInfo: requestInfo)
+            return true
+            
+        } else if url.path.starts(with: "/oauth2-callback") {
+            // handle an OAuth response
+            if (options[.sourceApplication] as? String == "com.apple.SafariViewService") {
+//debugPrint("\(AppDelegate.mCTAG).openURL OAUTH2 STARTED")
+                OAuthSwift.handle(url: url)
+                return true
+            }
+        }
+        return false
     }
     
     // setup the mainline's EFP
