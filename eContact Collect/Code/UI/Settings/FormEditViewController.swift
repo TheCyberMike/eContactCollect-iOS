@@ -94,7 +94,7 @@ class FormEditViewController: UIViewController {
 
             // gather the combined field information for this form in Shown order
             do {
-                self.mWorking_formFieldEntries = try AppDelegate.mFieldHandler!.getOrgFormFields(forEFP: self.mLocalEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false, forEditing:true)
+                self.mWorking_formFieldEntries = try FieldHandler.shared.getOrgFormFields(forEFP: self.mLocalEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false, forEditing:true)
                 self.mLocalEFP!.mFormFieldEntries = self.mWorking_formFieldEntries
             } catch {
                 AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", errorStruct: error, extra: nil)
@@ -115,13 +115,13 @@ class FormEditViewController: UIViewController {
             // create a dummy Submit button meta-data entry; it will get updated into the pre-loaded ones when the Form record is created
             self.mWorking_formFieldEntries = OrgFormFields()
             do {
-                let submitButtonEntries:OrgFormFields? = try AppDelegate.mFieldHandler!.getFieldDefsAsMatchForEditing(forFieldIDCode: FIELD_IDCODE_METADATA.SUBMIT_BUTTON.rawValue, forFormRec: self.mWorking_orgFormRec!, withOrgRec: self.mReference_orgRec!)
+                let submitButtonEntries:OrgFormFields? = try FieldHandler.shared.getFieldDefsAsMatchForEditing(forFieldIDCode: FIELD_IDCODE_METADATA.SUBMIT_BUTTON.rawValue, forFormRec: self.mWorking_orgFormRec!, withOrgRec: self.mReference_orgRec!)
                 if (submitButtonEntries?.count() ?? 0) > 0 {
                     self.mWorking_formFieldEntries!.appendNewDuringEditing(submitButtonEntries![0])
                     self.mLocalEFP!.mFormFieldEntries = self.mWorking_formFieldEntries!
                 } else {
                     AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", during: "getFieldDefsAsMatchForEditing", errorMessage: "(submitButtonEntries?.count() ?? 0) == 0", extra: FIELD_IDCODE_METADATA.SUBMIT_BUTTON.rawValue)
-                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).viewDidLoad", domain: AppDelegate.mFieldHandler!.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).viewDidLoad", domain: FieldHandler.shared.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
                 }
             } catch {
                 AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", errorStruct: error, extra: nil)
@@ -290,7 +290,7 @@ class FormEditViewController: UIViewController {
 //debugPrint("\(self.mCTAG).updateFormInDatabase.Add.ReviseMetadata STARTED")
             // first get a new set of matches from the database for only the metadata
             do {
-                let metadataFormFieldEntries:OrgFormFields = try AppDelegate.mFieldHandler!.getOrgFormFields(forEFP: self.mLocalEFP!, forceLangRegion: nil, includeOptionSets: false, metaDataOnly: true, sortedBySVFileOrder: true, forEditing:true)
+                let metadataFormFieldEntries:OrgFormFields = try FieldHandler.shared.getOrgFormFields(forEFP: self.mLocalEFP!, forceLangRegion: nil, includeOptionSets: false, metaDataOnly: true, sortedBySVFileOrder: true, forEditing:true)
                 for metadataFormFieldEntry in metadataFormFieldEntries {
                     let updaterIndex = self.mWorking_formFieldEntries!.findIndex(ofFieldIDCode: metadataFormFieldEntry.mFormFieldRec.rFieldProp_IDCode)
                     if updaterIndex >= 0 {
@@ -846,7 +846,7 @@ class FormEditFormViewController: FormViewController {
                         let row = sourceFVC.form.rowBy(tag: "add_new_field") as? PushRow<String>
                         if row != nil {
                             do {
-                                let (controlPairs, sectionMap, sectionTitles) = try AppDelegate.mFieldHandler!.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
+                                let (controlPairs, sectionMap, sectionTitles) = try FieldHandler.shared.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
                                 row!.options = controlPairs.map { $0.valueString }
                                 row!.retainedObject = (controlPairs, sectionMap, sectionTitles)
                                 presentVC.selectableRowSetup = { listRow in
@@ -886,7 +886,7 @@ class FormEditFormViewController: FormViewController {
                 let fieldNameForCollector:String? = fromPushRow.value!
                 var fieldIDCode:String? = nil
                 do {
-                    let (controlPairs, _, _) = try AppDelegate.mFieldHandler!.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
+                    let (controlPairs, _, _) = try FieldHandler.shared.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
                     fieldIDCode = CodePair.findCode(pairs: controlPairs, givenValue: fieldNameForCollector!)
                 } catch {
                     // some type of filesystem error occurred; should not happen
@@ -900,7 +900,7 @@ class FormEditFormViewController: FormViewController {
                 var newFormFieldEntries:OrgFormFields? = nil
                 if !(fieldIDCode ?? "").isEmpty {
                     do {
-                        newFormFieldEntries = try AppDelegate.mFieldHandler!.getFieldDefsAsMatchForEditing(forFieldIDCode: fieldIDCode!, forFormRec: self!.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
+                        newFormFieldEntries = try FieldHandler.shared.getFieldDefsAsMatchForEditing(forFieldIDCode: fieldIDCode!, forFormRec: self!.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
                     } catch {
                         // add new field; getFieldDefsAsMatchForEditing failed and threw; should not occur
                         AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt", errorStruct: error, extra: fieldIDCode)
@@ -913,7 +913,7 @@ class FormEditFormViewController: FormViewController {
                 if (newFormFieldEntries?.count() ?? 0) == 0 {
                     // getFieldDefsAsMatchForEditing failed to find anything but didnt throw; should not occur
                     AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt", during: "getFieldDefsAsMatchForEditing", errorMessage: "(newFormFieldEntries?.count() ?? 0) == 0", extra: fieldIDCode)
-                    AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self!.mCTAG).buildForm", domain: AppDelegate.mFieldHandler!.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+                    AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self!.mCTAG).buildForm", domain: FieldHandler.shared.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
                     // cannot throw or return from here
                 } else {
                     // add the primary field and its subfield's (if any); orderShown is fully re-synced and compacted when the changes are saved
@@ -1363,7 +1363,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
         // all the auto-indexing in the default fields is only local to this working array, not the master working set of fields;
         // however they will be pre-autolinked to the index# of the editing form field (regardless of whether it has a database or temporary index#)
         do {
-            self.mWorking_SubfieldEntries = try AppDelegate.mFieldHandler!.getAllowedSubfieldEntriesForEditing(forPrimaryFormFieldRec: self.mEdit_FormFieldEntry!.mFormFieldRec, forFormRec: self.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self.mFormEditVC!.mReference_orgRec!)
+            self.mWorking_SubfieldEntries = try FieldHandler.shared.getAllowedSubfieldEntriesForEditing(forPrimaryFormFieldRec: self.mEdit_FormFieldEntry!.mFormFieldRec, forFormRec: self.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self.mFormEditVC!.mReference_orgRec!)
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))

@@ -433,10 +433,10 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     private let mEmailRunningQueue = DispatchQueue(label: "opensource.thecybermike.econtactcollect.EmailRunningQueue")
     
     // member constants and other static content
+    public static let shared:EmailHandler = EmailHandler()
     internal var mCTAG:String = "HEM"
     internal var mThrowErrorDomain:String = NSLocalizedString("Email-Handler", comment:"")
     public static var ThrowErrorDomain:String = NSLocalizedString("Email-Handler", comment:"")
-    public static let shared:EmailHandler = EmailHandler()
     
     public enum EmailHandlerResults: Int {
         case Cancelled = 0, Error = 1, Saved = 2, Sent = 3

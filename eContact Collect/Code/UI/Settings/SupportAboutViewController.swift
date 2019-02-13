@@ -80,9 +80,7 @@ class SupportAboutViewController: FormViewController {
             let buildDate = mydateFormatter.string(from: infoDate)
             versionString = versionString + " [\(buildDate)]"
         }
-        if AppDelegate.mDatabaseHandler != nil {
-            versionString = versionString + "\n\(NSLocalizedString("DB Version", comment:"")) \(AppDelegate.mDatabaseHandler!.getVersioning()), \(NSLocalizedString("DB State is", comment:"")) \(AppDelegate.mDatabaseHandler!.mDBstatus_state)"
-        }
+        versionString = versionString + "\n\(NSLocalizedString("DB Version", comment:"")) \(DatabaseHandler.shared.getVersioning()), \(NSLocalizedString("DB State is", comment:"")) \(DatabaseHandler.shared.mDBstatus_state)"
 
         let section1 = Section()
         form +++ section1

@@ -50,7 +50,7 @@ class WizFormDefine16ViewController: UIViewController {
         do {
             var orderSVfile:Int = 10
             var orderShown:Int = 10
-            try AppDelegate.mFieldHandler!.addFieldstoForm(field_IDCodes: fieldsToAdd, forFormRec: self.mRootVC!.mWorking_Form_Rec!, withOrgRec: self.mRootVC!.mWorking_Org_Rec!, orderSVfile: &orderSVfile, orderShown: &orderShown)
+            try FieldHandler.shared.addFieldstoForm(field_IDCodes: fieldsToAdd, forFormRec: self.mRootVC!.mWorking_Form_Rec!, withOrgRec: self.mRootVC!.mWorking_Org_Rec!, orderSVfile: &orderSVfile, orderShown: &orderShown)
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).button_done_pressed", during:"addFieldstoForm", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))

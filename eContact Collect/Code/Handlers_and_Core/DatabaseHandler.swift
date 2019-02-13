@@ -27,6 +27,7 @@ public class DatabaseHandler {
     public var mAppError:APP_ERROR? = nil
 
     // member constants and other static content
+    public static let shared:DatabaseHandler = DatabaseHandler()
     internal static let CTAG:String = "HBD"
     internal let mCTAG:String = CTAG
     public static let ThrowErrorDomain:String = NSLocalizedString("Database-Handler", comment:"")
@@ -521,7 +522,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             // now add all the selected form fields
             var orderSVfile:Int = 10
             var orderShown:Int = 10
-            try AppDelegate.mFieldHandler!.addFieldstoForm(field_IDCodes: ["FC_Name1st","FC_NameLast","FC_Email","FC_PhFull"], forFormRec: formRec, withOrgRec: orgRec, orderSVfile: &orderSVfile, orderShown: &orderShown)
+            try FieldHandler.shared.addFieldstoForm(field_IDCodes: ["FC_Name1st","FC_NameLast","FC_Email","FC_PhFull"], forFormRec: formRec, withOrgRec: orgRec, orderSVfile: &orderSVfile, orderShown: &orderShown)
         } catch var appError as APP_ERROR {
             appError.prependCallStack(funcName: "\(self.mCTAG).createDefaultOrgAndForm")
             throw appError
@@ -791,7 +792,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         stream!.write(str, maxLength: str.count)
         str = "  \"appBuild\":\"\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as! String)\",\n"
         stream!.write(str, maxLength: str.count)
-        str = "  \"forDatabaseVersion\":\"\(AppDelegate.mDatabaseHandler!.getVersioning())\",\n"
+        str = "  \"forDatabaseVersion\":\"\(DatabaseHandler.shared.getVersioning())\",\n"
         stream!.write(str, maxLength: str.count)
         str = "  \"language\":\"$$\",\n"
         stream!.write(str, maxLength: str.count)

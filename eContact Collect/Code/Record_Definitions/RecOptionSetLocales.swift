@@ -249,16 +249,16 @@ public class RecOptionSetLocales {
     // return the quantity of Field records
     // throws exceptions either for local errors or from the database
     public static func optionSetLocalesGetQtyRecs() throws -> Int64 {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecOptionSetLocales.mCTAG).optionSetLocalesGetQtyRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
-        return try AppDelegate.mDatabaseHandler!.genericQueryQty(method:"\(self.mCTAG).optionSetLocalesGetQtyRecs", table:Table(RecOptionSetLocales.TABLE_NAME), whereStr:nil, valuesBindArray:nil)
+        return try DatabaseHandler.shared.genericQueryQty(method:"\(self.mCTAG).optionSetLocalesGetQtyRecs", table:Table(RecOptionSetLocales.TABLE_NAME), whereStr:nil, valuesBindArray:nil)
     }
     
     // get all Field records (which could be none); unsorted
     // throws exceptions either for local errors or from the database
     public static func optionSetLocalesGetAllRecs(forOptionSetLoc_Code:String?=nil) throws -> AnySequence<Row> {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecOptionSetLocales.mCTAG).optionSetLocalesGetAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         var optionStr:String = ""
@@ -269,27 +269,14 @@ public class RecOptionSetLocales {
         } else {
             query = query.select(*)
         }
-        return try AppDelegate.mDatabaseHandler!.genericQuery(method:"\(self.mCTAG).optionSetLocalesGetAllRecs\(optionStr)", tableQuery:query)
+        return try DatabaseHandler.shared.genericQuery(method:"\(self.mCTAG).optionSetLocalesGetAllRecs\(optionStr)", tableQuery:query)
     }
-    
-    // get one specific Field record by IDCode
-    // throws exceptions either for local errors or from the database
-    // null indicates the record was not found
-    /*public static func fieldAttribGetSpecifiedRecOfIDCode(fieldIDCode:String) throws -> RecFieldAttribDefs? {
-     guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-     throw NSError(domain:DatabaseHandler.ThrowErrorDomain, code:APP_ERROR_DATABASE_IS_NOT_ENABLED, userInfo: nil)
-     }
-        let query = Table(RecFieldAttribDefs.TABLE_NAME).select(*).filter(RecFieldAttribDefs.COL_EXPRESSION_FIELD_IDCODE == fieldIDCode)
-        let record = try AppDelegate.mDatabaseHandler!.genericQueryOne(method:"\(self.mCTAG).fieldGetSpecifiedRecOfIDCode", tableQuery:query)
-        if record == nil { return nil }
-        return RecFieldAttribDefs(row:record!)
-    }*/
     
     // add a fieldAttribLocale entry; return is the RowID of the new record (negative will not be returned);
     // WARNING: if the key field has been changed, all existing records in all Tables will need renaming;
     // throws exceptions either for local errors or from the database
     public func saveNewToDB(ignoreDups:Bool=false) throws -> Int64 {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecOptionSetLocales.mCTAG).saveNewToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         
@@ -301,45 +288,7 @@ public class RecOptionSetLocales {
             throw appError
         } catch { throw error}
         
-        let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method:"\(RecOptionSetLocales.mCTAG).saveNewToDB", table:Table(RecOptionSetLocales.TABLE_NAME), cv:setters, orReplace:ignoreDups, noAlert:false)
+        let rowID = try DatabaseHandler.shared.insertRec(method:"\(RecOptionSetLocales.mCTAG).saveNewToDB", table:Table(RecOptionSetLocales.TABLE_NAME), cv:setters, orReplace:ignoreDups, noAlert:false)
         return rowID
     }
-    
-    // replace a Field entry; return is the quantity of the replaced records (negative will not be returned);
-    // WARNING: if the key field has been changed, all existing records in all Tables will need renaming;
-    // throws exceptions either for local errors or from the database
-    /*public func saveChangesToDB(originalFieldRec:RecFieldAttribDefs) throws -> Int {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-            throw NSError(domain:DatabaseHandler.ThrowErrorDomain, code:APP_ERROR_DATABASE_IS_NOT_ENABLED, userInfo: nil)
-        }
-        var setters:[Setter]
-        do {
-            setters = try self.buildSetters()
-        } catch var appError as APP_ERROR {
-            appError.prependCallStack(funcName: "\(RecOptionSetLocales.mCTAG).saveChangesToDB")
-            throw appError
-        } catch { throw error}
-        let query = Table(RecFieldAttribDefs.TABLE_NAME).select(*).filter(RecFieldAttribDefs.COL_EXPRESSION_FIELD_ROW_TYPE == originalFieldRec.rField_Row_Type!.rawValue && RecFieldAttribDefs.COL_EXPRESSION_FIELD_ROW_TYPE_EXTENSION == originalFieldRec.rField_Row_Type_Extension!)
-        let qty = try AppDelegate.mDatabaseHandler!.updateRec(method:"\(RecFieldAttribDefs.mCTAG).saveChangesToDB", tableQuery:query, cv:setters!)
-        return qty
-    }*/
-    
-    // delete the Field record; return is the count of records deleted (negative will not be returned;
-    // throws exceptions either for local errors or from the database
-    /*public func deleteFromDB() throws -> Int {
-        if self.rField_IDCode == nil {
-            throw NSError(domain:DatabaseHandler.ThrowErrorDomain, code:APP_ERROR_MISSING_REQUIRED_CONTENT, userInfo: nil)
-        }
-        return try RecFieldAttribDefs.fieldAttribDeleteRec(fieldIDCode:self.rField_IDCode!)
-    }*/
-    
-    // delete the indicated Field record; return is the count of records deleted (negative will not be returned;
-    // throws exceptions either for local errors or from the database
-    /*public static func fieldAttribDeleteRec(fieldIDCode:String) throws -> Int {
-     guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
-     throw NSError(domain:DatabaseHandler.ThrowErrorDomain, code:APP_ERROR_DATABASE_IS_NOT_ENABLED, userInfo: nil)
-     }
-        let query = Table(RecFieldAttribDefs.TABLE_NAME).select(*).filter(RecFieldAttribDefs.COL_EXPRESSION_FIELD_IDCODE == fieldIDCode)
-        return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).fieldDeleteRec", tableQuery:query)
-    }*/
 }

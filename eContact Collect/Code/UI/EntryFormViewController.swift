@@ -185,7 +185,7 @@ class EntryFormViewController: FormViewController {
         self.mFullNameHiddenInserted = nil
         if !self.mEntryVC!.mEFP!.mPreviewMode {
             do {
-                self.mEntryVC!.mEFP!.mFormFieldEntries = try AppDelegate.mFieldHandler!.getOrgFormFields(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false)
+                self.mEntryVC!.mEFP!.mFormFieldEntries = try FieldHandler.shared.getOrgFormFields(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false)
             } catch {
                 AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
@@ -193,7 +193,7 @@ class EntryFormViewController: FormViewController {
             }
         } else {
             do {
-                try AppDelegate.mFieldHandler!.changeOrgFormFieldsLanguageShown(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil)
+                try FieldHandler.shared.changeOrgFormFieldsLanguageShown(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil)
             } catch {
                 AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
@@ -1365,7 +1365,7 @@ class EntryFormViewController: FormViewController {
         let funcName:String = "retitleForm" + (self.mEntryVC!.mEFP!.mPreviewMode ? ".previewMode":"")
         if !self.mEntryVC!.mEFP!.mPreviewMode {
             do {
-                self.mEntryVC!.mEFP!.mFormFieldEntries = try AppDelegate.mFieldHandler!.getOrgFormFields(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false)
+                self.mEntryVC!.mEFP!.mFormFieldEntries = try FieldHandler.shared.getOrgFormFields(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false)
             } catch {
                 AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
@@ -1373,7 +1373,7 @@ class EntryFormViewController: FormViewController {
             }
         } else {
             do {
-                try AppDelegate.mFieldHandler!.changeOrgFormFieldsLanguageShown(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil)
+                try FieldHandler.shared.changeOrgFormFieldsLanguageShown(forEFP: self.mEntryVC!.mEFP!, forceLangRegion: nil)
             } catch {
                 AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))

@@ -19,6 +19,7 @@ public class FieldHandler {
     private var mOptionSetLocales_json:[RecJsonOptionSetLocales]? = nil
     
     // member constants and other static content
+    public static let shared:FieldHandler = FieldHandler()
     internal var mCTAG:String = "HFl"
     internal var mThrowErrorDomain:String = NSLocalizedString("Field-Handler", comment:"")
     internal var mFILE_FIELDS_MAX_VERSION:Int = 1

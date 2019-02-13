@@ -18,6 +18,7 @@ public class SVFilesHandler {
     public var mAppError:APP_ERROR? = nil
     
     // member constants and other static content
+    public static let shared:SVFilesHandler = SVFilesHandler()
     internal var mCTAG:String = "HSV"
     internal var mThrowErrorDomain:String = NSLocalizedString("SVFiles-Handler", comment:"")
     public static let mDateFormatString:String = "yyMMdd'_'HHmmss'_'"

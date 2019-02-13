@@ -192,7 +192,7 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
         case 1:
             // create a default Org and Form
             do {
-                let (orgRec, formRec) = try AppDelegate.mDatabaseHandler!.createDefaultOrgAndForm()
+                let (orgRec, formRec) = try DatabaseHandler.shared.createDefaultOrgAndForm()
                 (UIApplication.shared.delegate as! AppDelegate).checkCurrentOrg(withOrgRec: orgRec)
                 (UIApplication.shared.delegate as! AppDelegate).checkCurrentForm(withFormRec: formRec)
                 AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: -1)

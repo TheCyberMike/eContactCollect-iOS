@@ -164,10 +164,7 @@ internal class AppDelegate: UIResponder, UIApplicationDelegate {
     internal static let mCTAG:String = "AppD"
     public static let mDeveloperEmailAddress:String = "theCyberMike@yahoo.com"
     public static let mKeychainThrownDomain:String = NSLocalizedString("Secure Storage", comment:"")
-    public static var mFirstTImeStages:Int = 0                          // -1=first time fully done; 1,2,... is the first time stage presently in; 0=stage 1 is needed
-    public static var mDatabaseHandler:DatabaseHandler? = nil           // common pointer to the DatabaseHandler Object
-    public static var mFieldHandler:FieldHandler? = nil                 // common pointer to the FieldHandler Object
-    public static var mSVFilesHandler:SVFilesHandler? = nil             // common pointer to the SVFilesHandler Object
+    public static var mFirstTImeStages:Int = 0      // -1=first time fully done; 1,2,... is the first time stage presently in; 0=stage 1 is needed
     public static var mEntryFormProvisioner:EntryFormProvisioner? = nil // common pointer to the EFP for the mainline EntryViewController
 
     // basic states of the iOS Device and App regions
@@ -249,19 +246,16 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         
         // startup any App's Handlers and Coordinators
         // errors are logged to error.log, and a user message stored within; errors will be reported to the end-user when the UI launches
-        AppDelegate.mDatabaseHandler = DatabaseHandler()        // must create and initialize the database handler first
-        let _ = AppDelegate.mDatabaseHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
-        AppDelegate.mFieldHandler = FieldHandler()
-        let _ = AppDelegate.mFieldHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
-        AppDelegate.mSVFilesHandler = SVFilesHandler()
-        let _ = AppDelegate.mSVFilesHandler!.initialize(method: "\(AppDelegate.mCTAG).initialize")
+        let _ = DatabaseHandler.shared.initialize(method: "\(AppDelegate.mCTAG).initialize")
+        let _ = FieldHandler.shared.initialize(method: "\(AppDelegate.mCTAG).initialize")
+        let _ = SVFilesHandler.shared.initialize(method: "\(AppDelegate.mCTAG).initialize")
         let _ = EmailHandler.shared.initialize(method: "\(AppDelegate.mCTAG).initialize")
 
         // allow handlers to perform any additional first-time-of-use initializations that a particular handler may require;
         // their interrnal logic prevents repeated first-time setups, but also allow later versions of the app to retro-perform missed first-time setups
-        AppDelegate.mDatabaseHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
-        AppDelegate.mFieldHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
-        AppDelegate.mSVFilesHandler!.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
+        DatabaseHandler.shared.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
+        FieldHandler.shared.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
+        SVFilesHandler.shared.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
         EmailHandler.shared.firstTimeSetup(method: "\(AppDelegate.mCTAG).initialize")
         
         // prepare the mainline EFP if possible; for first time setup this will not be possible
@@ -278,12 +272,9 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
     
     // shutdown prior to termination; also called in Unit and UI Testing
     internal func shutdown() {
-        AppDelegate.mSVFilesHandler!.shutdown()
-        AppDelegate.mSVFilesHandler = nil
-        AppDelegate.mFieldHandler!.shutdown()
-        AppDelegate.mFieldHandler = nil
-        AppDelegate.mDatabaseHandler!.shutdown()
-        AppDelegate.mDatabaseHandler = nil
+        SVFilesHandler.shared.shutdown()
+        FieldHandler.shared.shutdown()
+        DatabaseHandler.shared.shutdown()
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
@@ -1564,23 +1555,11 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             outputStream.write(str, maxLength:str.count)
             str = "iOS App \(appName) [\(appCode)], AppVersionString \(appVer), AppBuildCode \(appBuild), BuildDateTime \(buildDate)\n"
             outputStream.write(str, maxLength:str.count)
-            if AppDelegate.mDatabaseHandler != nil {
-                str = "DBHandler State \(AppDelegate.mDatabaseHandler!.mDBstatus_state), DBver \(AppDelegate.mDatabaseHandler!.getVersioning())\n"
-            } else {
-                str = "DBHandler = nil\n"
-            }
+            str = "DBHandler State \(DatabaseHandler.shared.mDBstatus_state), DBver \(DatabaseHandler.shared.getVersioning())\n"
             outputStream.write(str, maxLength:str.count)
-            if AppDelegate.mFieldHandler != nil {
-                str = "FieldHandler State \(AppDelegate.mFieldHandler!.mFHstatus_state)\n"
-            } else {
-                str = "FieldHandler = nil\n"
-            }
+            str = "FieldHandler State \(FieldHandler.shared.mFHstatus_state)\n"
             outputStream.write(str, maxLength:str.count)
-            if AppDelegate.mSVFilesHandler != nil {
-                str = "SVFileHandler State \(AppDelegate.mSVFilesHandler!.mSVHstatus_state)\n"
-            } else {
-                str = "SVFileHandler = nil\n"
-            }
+            str = "SVFileHandler State \(SVFilesHandler.shared.mSVHstatus_state)\n"
             outputStream.write(str, maxLength:str.count)
             str = "iOS Version \(UIDevice.current.systemVersion)\n"
             outputStream.write(str, maxLength:str.count)
@@ -1669,7 +1648,7 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
     // Thread Context: may be called from utility threads, so cannot perform UI actions
     // write an alert message into the database; do not throw any errors!
     public static func postAlert(message:String, extendedDetails:String?=nil) {
-        if AppDelegate.mDatabaseHandler == nil || !(AppDelegate.mDatabaseHandler?.isReady() ?? false) {
+        if !DatabaseHandler.shared.isReady() {
             print("\(AppDelegate.mCTAG).postAlert Attempt to post an alert before the DatabaseHandler has been instantiated");
             return
         }

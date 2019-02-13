@@ -216,7 +216,7 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource {
     private func displayListOfFiles() {
         var fileURLs:[URL]? = nil
         do {
-            fileURLs = try AppDelegate.mSVFilesHandler!.getPendingFiles()
+            fileURLs = try SVFilesHandler.shared.getPendingFiles()
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).displayListOfFiles", during: "getPendingFiles", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
@@ -233,17 +233,17 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource {
                     cell.textLabel?.font = .systemFont(ofSize: 12.0)
                 }
                 //$0.onCellSelection { cell, row in
-                    //self.emailSVfile(filePath:AppDelegate.mSVFilesHandler!.makePendingFullPath(fileName:row.title!), fileName:row.title!)
+                    //self.emailSVfile(filePath:SVFilesHandler.shared.makePendingFullPath(fileName:row.title!), fileName:row.title!)
                 //}
                 $0.onChange { row in
                     switch row.cell.segmentedControl.selectedSegmentIndex {
                     case 0:
-                        self.emailSVfile(filePath:AppDelegate.mSVFilesHandler!.makePendingFullPath(fileName:row.title!), fileName:row.title!)
+                        self.emailSVfile(filePath:SVFilesHandler.shared.makePendingFullPath(fileName:row.title!), fileName:row.title!)
                         break
                     case 1:
                         var anchorRect = row.cell.segmentedControl.subviews[0].frame    // segmentedRow adds buttons in backwards order
                         anchorRect = self.view.convert(anchorRect, from: row.cell.segmentedControl)
-                        self.shareSVfile(filePath:AppDelegate.mSVFilesHandler!.makePendingFullPath(fileName:row.title!), fileName:row.title!, selfViewAnchorRect: anchorRect)
+                        self.shareSVfile(filePath:SVFilesHandler.shared.makePendingFullPath(fileName:row.title!), fileName:row.title!, selfViewAnchorRect: anchorRect)
                         break
                     default:
                         break
@@ -256,7 +256,7 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource {
         }
         
         do {
-            fileURLs = try AppDelegate.mSVFilesHandler!.getSentFiles()
+            fileURLs = try SVFilesHandler.shared.getSentFiles()
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).displayListOfFiles", during: "getSentFiles", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("File Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
@@ -273,17 +273,17 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource {
                     cell.textLabel?.font = .systemFont(ofSize: 12.0)
                 }
                 //$0.onCellSelection { cell, row in
-                    //self.emailSVfile(filePath:AppDelegate.mSVFilesHandler!.makeSentFullPath(fileName:row.title!), fileName:row.title!)
+                    //self.emailSVfile(filePath:SVFilesHandler.shared.makeSentFullPath(fileName:row.title!), fileName:row.title!)
                 //}
                 $0.onChange { row in
                     switch row.cell.segmentedControl.selectedSegmentIndex {
                     case 0:
-                        self.emailSVfile(filePath:AppDelegate.mSVFilesHandler!.makeSentFullPath(fileName:row.title!), fileName:row.title!)
+                        self.emailSVfile(filePath:SVFilesHandler.shared.makeSentFullPath(fileName:row.title!), fileName:row.title!)
                         break
                     case 1:
                         var anchorRect = row.cell.segmentedControl.subviews[0].frame    // segmentedRow adds buttons in backwards order
                         anchorRect = self.view.convert(anchorRect, from: row.cell.segmentedControl)
-                        self.shareSVfile(filePath:AppDelegate.mSVFilesHandler!.makeSentFullPath(fileName:row.title!), fileName:row.title!, selfViewAnchorRect: anchorRect)
+                        self.shareSVfile(filePath:SVFilesHandler.shared.makeSentFullPath(fileName:row.title!), fileName:row.title!, selfViewAnchorRect: anchorRect)
                         break
                     default:
                         break
@@ -309,9 +309,9 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource {
                 let section = form.allSections[index] as! MultivaluedSection
                 do {
                     if section.tag == "$Pending" {
-                        try AppDelegate.mSVFilesHandler!.deletePendingFile(fileName:row.title!)
+                        try SVFilesHandler.shared.deletePendingFile(fileName:row.title!)
                     } else {
-                        try AppDelegate.mSVFilesHandler!.deleteSentFile(fileName:row.title!)
+                        try SVFilesHandler.shared.deleteSentFile(fileName:row.title!)
                     }
                 } catch {
                     AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).rowsHaveBeenRemoved", errorStruct: error, extra: nil)
@@ -323,7 +323,7 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource {
     
     private func generateNewSVFiles() -> Bool {
         do {
-            _ = try AppDelegate.mSVFilesHandler!.generateNewSVFiles()
+            _ = try SVFilesHandler.shared.generateNewSVFiles()
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).generateNewSVFiles", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("File Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
@@ -428,7 +428,7 @@ debugPrint("\(self.mCTAG).noticeEmailCompleted STARTED for \(emailResult.invoker
                 } else {
                     if emailResult.invoker_tagS != nil && (emailResult.result == .Sent || emailResult.result == .Saved) {
                         do {
-                            try AppDelegate.mSVFilesHandler!.movePendingToSent(fileName: emailResult.invoker_tagS!) // ??? move this to EmailHandler?
+                            try SVFilesHandler.shared.movePendingToSent(fileName: emailResult.invoker_tagS!) // ??? move this to EmailHandler?
                             self.displayListOfFiles()
                         } catch {
                             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).noticeEmailCompleted", errorStruct: error, extra: emailResult.invoker_tagS!)

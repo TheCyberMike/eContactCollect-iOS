@@ -135,17 +135,17 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
                 // 1. check if any of the Handler's failed their initialization;
                 // 2. check if there are any pending SV files not yet sent
                 
-                if AppDelegate.mDatabaseHandler == nil || !(AppDelegate.mDatabaseHandler!.isReady()) {
+                if !DatabaseHandler.shared.isReady() {
                     var msg:String = NSLocalizedString("The handler that manages the App's database ", comment:"") + NSLocalizedString("has experienced critical error(s) which should be in the error.log; the App may need to be shutdown and restarted; or possibly uninstalled and reinstalled.", comment:"")
-                    if AppDelegate.mDatabaseHandler!.mAppError != nil { msg = msg + "\n\n" + AppDelegate.endUserErrorMessage(errorStruct: AppDelegate.mDatabaseHandler!.mAppError!)}
+                    if DatabaseHandler.shared.mAppError != nil { msg = msg + "\n\n" + AppDelegate.endUserErrorMessage(errorStruct: DatabaseHandler.shared.mAppError!)}
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Critical Error", comment:""), message: msg, buttonText: NSLocalizedString("Okay", comment:""))
-                } else if AppDelegate.mFieldHandler == nil || !(AppDelegate.mFieldHandler!.isReady()) {
+                } else if !FieldHandler.shared.isReady() {
                     var msg:String = NSLocalizedString("The handler that manages basic definitions of form fields ", comment:"") + NSLocalizedString("has experienced critical error(s) which should be in the error.log; the App may need to be shutdown and restarted; or possibly uninstalled and reinstalled.", comment:"")
-                    if AppDelegate.mFieldHandler!.mAppError != nil { msg = msg + "\n\n" + AppDelegate.endUserErrorMessage(errorStruct: AppDelegate.mFieldHandler!.mAppError!)}
+                    if FieldHandler.shared.mAppError != nil { msg = msg + "\n\n" + AppDelegate.endUserErrorMessage(errorStruct: FieldHandler.shared.mAppError!)}
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Severe Error", comment:""), message: msg, buttonText: NSLocalizedString("Okay", comment:""))
-                } else if AppDelegate.mSVFilesHandler == nil || !(AppDelegate.mSVFilesHandler!.isReady()) {
+                } else if !SVFilesHandler.shared.isReady() {
                     var msg:String = NSLocalizedString("The handler that manages your SV files ", comment:"") + NSLocalizedString("has experienced critical error(s) which should be in the error.log; the App may need to be shutdown and restarted; or possibly uninstalled and reinstalled.", comment:"")
-                            if AppDelegate.mSVFilesHandler!.mAppError != nil { msg = msg + "\n\n" + AppDelegate.endUserErrorMessage(errorStruct: AppDelegate.mSVFilesHandler!.mAppError!)}
+                            if SVFilesHandler.shared.mAppError != nil { msg = msg + "\n\n" + AppDelegate.endUserErrorMessage(errorStruct: SVFilesHandler.shared.mAppError!)}
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Severe Error", comment:""), message: msg, buttonText: NSLocalizedString("Okay", comment:""))
                 } else if !EmailHandler.shared.isReady() {
                     var msg:String = NSLocalizedString("The handler that manages sending emails ", comment:"") + NSLocalizedString("has experienced critical error(s) which should be in the error.log; the App may need to be shutdown and restarted; or possibly uninstalled and reinstalled.", comment:"")
@@ -153,7 +153,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Severe Error", comment:""), message: msg, buttonText: NSLocalizedString("Okay", comment:""))
                 } else {
                     do {
-                        if try AppDelegate.mSVFilesHandler!.anyPendingFiles() {
+                        if try SVFilesHandler.shared.anyPendingFiles() {
                             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Notice", comment:""), message: NSLocalizedString("There are attachments waiting to be sent", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
                         }
                     } catch {
@@ -351,7 +351,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
         // gather the combined field information for this form in SV File order in prep to save to the file;
         // use the SV-File language
         do {
-            self.mEFP!.mFormFieldEntries = try AppDelegate.mFieldHandler!.getOrgFormFields(forEFP: self.mEFP!, forceLangRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCode_SV_File, includeOptionSets: false, metaDataOnly: false, sortedBySVFileOrder: true)
+            self.mEFP!.mFormFieldEntries = try FieldHandler.shared.getOrgFormFields(forEFP: self.mEFP!, forceLangRegion: self.mEFP!.mOrgRec.rOrg_LangRegionCode_SV_File, includeOptionSets: false, metaDataOnly: false, sortedBySVFileOrder: true)
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))

@@ -362,32 +362,32 @@ public class RecOrgFormDefs {
     // return the quantity of Form records
     // throws exceptions either for local errors or from the database
     public static func orgFormGetQtyRecs(forOrgShortName:String) throws -> Int64 {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(self.mCTAG).orgFormGetQtyRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let whereClause:String = "(\"\(RecOrgFormDefs.COLUMN_ORG_CODE_FOR_SV_FILE)\" = \"\(forOrgShortName)\")"
-        return try AppDelegate.mDatabaseHandler!.genericQueryQty(method:"\(self.mCTAG).orgFormGetQtyRecs", table:Table(RecOrgFormDefs.TABLE_NAME), whereStr:whereClause, valuesBindArray:nil)
+        return try DatabaseHandler.shared.genericQueryQty(method:"\(self.mCTAG).orgFormGetQtyRecs", table:Table(RecOrgFormDefs.TABLE_NAME), whereStr:whereClause, valuesBindArray:nil)
     }
     
     // get all Form records (which could be none); sorted in alphanumeric order of the short name aka name_for_sv_file
     // throws exceptions either for local errors or from the database
     public static func orgFormGetAllRecs(forOrgShortName:String) throws -> AnySequence<Row> {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(self.mCTAG).orgFormGetAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrgFormDefs.TABLE_NAME).select(*).filter(RecOrgFormDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == forOrgShortName).order(RecOrgFormDefs.COL_EXPRESSION_FORM_CODE_FOR_SV_FILE.asc)
-        return try AppDelegate.mDatabaseHandler!.genericQuery(method:"\(self.mCTAG).orgFormGetAllRecs", tableQuery:query)
+        return try DatabaseHandler.shared.genericQuery(method:"\(self.mCTAG).orgFormGetAllRecs", tableQuery:query)
     }
     
     // get one specific Form record by short name
     // throws exceptions either for local errors or from the database
     // null indicates the record was not found
     public static func orgFormGetSpecifiedRecOfShortName(formShortName:String, forOrgShortName:String) throws -> RecOrgFormDefs? {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(self.mCTAG).orgFormGetSpecifiedRecOfShortName", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrgFormDefs.TABLE_NAME).select(*).filter(RecOrgFormDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == forOrgShortName && RecOrgFormDefs.COL_EXPRESSION_FORM_CODE_FOR_SV_FILE == formShortName)
-        let record = try AppDelegate.mDatabaseHandler!.genericQueryOne(method:"\(self.mCTAG).orgFormGetSpecifiedRecOfShortName", tableQuery:query)
+        let record = try DatabaseHandler.shared.genericQueryOne(method:"\(self.mCTAG).orgFormGetSpecifiedRecOfShortName", tableQuery:query)
         if record == nil { return nil }
         return try RecOrgFormDefs(row:record!)
     }
@@ -397,7 +397,7 @@ public class RecOrgFormDefs {
     // WARNING: if the key fields have been changed, all existing records in all Tables will need renaming;
     // throws exceptions either for local errors or from the database
     public func saveNewToDB(withOrgRec:RecOrganizationDefs?) throws -> Int64 {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecOrgFormDefs.mCTAG).saveNewToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         
@@ -410,10 +410,10 @@ public class RecOrgFormDefs {
             throw appError
         } catch { throw error}
         
-        let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method:"\(RecOrgFormDefs.mCTAG).saveNewToDB", table:Table(RecOrgFormDefs.TABLE_NAME), cv:setters, orReplace:false, noAlert:false)
-        if AppDelegate.mFieldHandler != nil && withOrgRec != nil {
+        let rowID = try DatabaseHandler.shared.insertRec(method:"\(RecOrgFormDefs.mCTAG).saveNewToDB", table:Table(RecOrgFormDefs.TABLE_NAME), cv:setters, orReplace:false, noAlert:false)
+        if withOrgRec != nil {
             do {
-                try AppDelegate.mFieldHandler!.addMetadataFormFieldsToNewForm(forFormRec: self, withOrgRec: withOrgRec!)
+                try FieldHandler.shared.addMetadataFormFieldsToNewForm(forFormRec: self, withOrgRec: withOrgRec!)
             } catch var appError as APP_ERROR {
                 appError.prependCallStack(funcName: "\(RecOrgFormDefs.mCTAG).saveNewToDB")
                 throw appError
@@ -426,7 +426,7 @@ public class RecOrgFormDefs {
     // WARNING: if the key fields have been changed, all existing records in all Tables will need renaming;
     // throws exceptions either for local errors or from the database
     public func saveChangesToDB(originalFormRec:RecOrgFormDefs) throws -> Int {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecOrgFormDefs.mCTAG).saveChangesToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         
@@ -439,7 +439,7 @@ public class RecOrgFormDefs {
         } catch { throw error}
         
         let query = Table(RecOrgFormDefs.TABLE_NAME).select(*).filter(RecOrgFormDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == originalFormRec.rOrg_Code_For_SV_File && RecOrgFormDefs.COL_EXPRESSION_FORM_CODE_FOR_SV_FILE == originalFormRec.rForm_Code_For_SV_File)
-        return try AppDelegate.mDatabaseHandler!.updateRec(method:"\(RecOrgFormDefs.mCTAG).saveChangesToDB", tableQuery:query, cv:setters)
+        return try DatabaseHandler.shared.updateRec(method:"\(RecOrgFormDefs.mCTAG).saveChangesToDB", tableQuery:query, cv:setters)
     }
     
     // delete the Form record; return is the count of records deleted (negative will not be returned;
@@ -460,11 +460,11 @@ public class RecOrgFormDefs {
     // note: this will also delete all the Form's formFields and formFieldLocales
     // throws exceptions either for local errors or from the database
     public static func orgFormDeleteRec(formShortName:String, forOrgShortName:String) throws -> Int {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(self.mCTAG).orgFormDeleteRec", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrgFormDefs.TABLE_NAME).select(*).filter(RecOrgFormDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == forOrgShortName && RecOrgFormDefs.COL_EXPRESSION_FORM_CODE_FOR_SV_FILE == formShortName)
-        let qty = try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).orgFormDeleteRec", tableQuery:query)
+        let qty = try DatabaseHandler.shared.genericDeleteRecs(method:"\(self.mCTAG).orgFormDeleteRec", tableQuery:query)
         
         // maintain referential integrity
         do {
@@ -481,11 +481,11 @@ public class RecOrgFormDefs {
     // note: this is only called when an Org record is being deleted, and that Record's delete function also deletes all FormField and FormFieldLocales;
     // throws exceptions either for local errors or from the database
     public static func orgFormDeleteAllRecs(forOrgShortName:String) throws -> Int {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(self.mCTAG).orgFormDeleteAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrgFormDefs.TABLE_NAME).select(*).filter(RecOrgFormDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == forOrgShortName)
-        return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).orgFormDeleteAllRecs", tableQuery:query)
+        return try DatabaseHandler.shared.genericDeleteRecs(method:"\(self.mCTAG).orgFormDeleteAllRecs", tableQuery:query)
     }
     
     // clone this Form and all its associated records to a new Form as named;

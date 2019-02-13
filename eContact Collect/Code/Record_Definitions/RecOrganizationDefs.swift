@@ -632,7 +632,7 @@ public class RecOrganizationDefs {
         var jsonLangRec:RecJsonLangDefs?
         var newOrgLangRec:RecOrganizationLangs
         do {
-            jsonLangRec = try AppDelegate.mFieldHandler!.getLangInfo(forLangRegion: forLangRegion, noSubstitution: true)
+            jsonLangRec = try FieldHandler.shared.getLangInfo(forLangRegion: forLangRegion, noSubstitution: true)
         } catch var appError as APP_ERROR {
             appError.prependCallStack(funcName: "\(RecOrganizationDefs.mCTAG).addNewFinalLangRec")
             throw appError
@@ -743,31 +743,31 @@ public class RecOrganizationDefs {
     // return the quantity of Org records
     // throws exceptions either for local errors or from the database
     public static func orgGetQtyRecs() throws -> Int64 {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(self.mCTAG).orgGetQtyRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
-        return try AppDelegate.mDatabaseHandler!.genericQueryQty(method:"\(self.mCTAG).orgGetQtyRecs", table:Table(RecOrganizationDefs.TABLE_NAME), whereStr:nil, valuesBindArray:nil)
+        return try DatabaseHandler.shared.genericQueryQty(method:"\(self.mCTAG).orgGetQtyRecs", table:Table(RecOrganizationDefs.TABLE_NAME), whereStr:nil, valuesBindArray:nil)
     }
     
     // get all Org records (which could be none); sorted in alphanumeric order of the short name aka name_for_sv_file
     // throws exceptions either for local errors or from the database
     public static func orgGetAllRecs() throws -> AnySequence<Row> {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(self.mCTAG).orgGetAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrganizationDefs.TABLE_NAME).select(*).order(RecOrganizationDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE.asc)
-        return try AppDelegate.mDatabaseHandler!.genericQuery(method:"\(self.mCTAG).orgGetAllRecs", tableQuery:query)
+        return try DatabaseHandler.shared.genericQuery(method:"\(self.mCTAG).orgGetAllRecs", tableQuery:query)
     }
     
     // get one specific Org record by short name
     // throws exceptions either for local errors or from the database
     // null indicates the record was not found
     public static func orgGetSpecifiedRecOfShortName(orgShortName:String) throws -> RecOrganizationDefs? {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(self.mCTAG).orgGetSpecifiedRecOfShortName", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrganizationDefs.TABLE_NAME).select(*).filter(RecOrganizationDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == orgShortName)
-        let record = try AppDelegate.mDatabaseHandler!.genericQueryOne(method:"\(self.mCTAG).orgGetSpecifiedRecOfShortName", tableQuery:query)
+        let record = try DatabaseHandler.shared.genericQueryOne(method:"\(self.mCTAG).orgGetSpecifiedRecOfShortName", tableQuery:query)
         if record == nil { return nil }
         return try RecOrganizationDefs(row:record!)
     }
@@ -783,11 +783,11 @@ public class RecOrganizationDefs {
     }
     
     public static func orgGetSpecifiedRecOfShortName_TESTING_APP_ERROR(orgShortName:String) throws -> RecOrganizationDefs? {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(self.mCTAG).orgGetSpecifiedRecOfShortName", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table("INVALID").select(*).filter(COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == orgShortName)
-        let record = try AppDelegate.mDatabaseHandler!.genericQueryOne(method:"\(self.mCTAG).orgGetSpecifiedRecOfShortName", tableQuery:query)
+        let record = try DatabaseHandler.shared.genericQueryOne(method:"\(self.mCTAG).orgGetSpecifiedRecOfShortName", tableQuery:query)
         if record == nil { return nil }
         return try RecOrganizationDefs(row:record!)
     }
@@ -797,7 +797,7 @@ public class RecOrganizationDefs {
     // WARNING: if the key field has been changed, all existing records in all Tables will need renaming;
     // throws exceptions either for local errors or from the database
     public func saveNewToDB() throws -> Int64 {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecOrganizationDefs.mCTAG).saveNewToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         
@@ -809,7 +809,7 @@ public class RecOrganizationDefs {
             throw appError
         } catch { throw error}
         
-        let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method:"\(RecOrganizationDefs.mCTAG).saveNewToDB", table:Table(RecOrganizationDefs.TABLE_NAME), cv:setters, orReplace:false, noAlert:false)
+        let rowID = try DatabaseHandler.shared.insertRec(method:"\(RecOrganizationDefs.mCTAG).saveNewToDB", table:Table(RecOrganizationDefs.TABLE_NAME), cv:setters, orReplace:false, noAlert:false)
         if self.mOrg_Lang_Recs_are_changed {
             do {
                 try self.addLangRecs()
@@ -825,7 +825,7 @@ public class RecOrganizationDefs {
     // WARNING: if the key field has been changed, all existing records in all Tables will need renaming;
     // throws exceptions either for local errors or from the database
     public func saveChangesToDB(originalOrgRec:RecOrganizationDefs) throws -> Int {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecOrganizationDefs.mCTAG).saveChangesToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         
@@ -838,7 +838,7 @@ public class RecOrganizationDefs {
         } catch { throw error}
         
         let query = Table(RecOrganizationDefs.TABLE_NAME).select(*).filter(RecOrganizationDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == originalOrgRec.rOrg_Code_For_SV_File)
-        let qty = try AppDelegate.mDatabaseHandler!.updateRec(method:"\(RecOrganizationDefs.mCTAG).saveChangesToDB", tableQuery:query, cv:setters)
+        let qty = try DatabaseHandler.shared.updateRec(method:"\(RecOrganizationDefs.mCTAG).saveChangesToDB", tableQuery:query, cv:setters)
         if self.mOrg_Lang_Recs_are_changed {
             do {
                 try self.updateLangRecs()
@@ -869,11 +869,11 @@ public class RecOrganizationDefs {
     // note: this will also delete all the Org's forms and formfields
     // throws exceptions either for local errors or from the database
     public static func orgDeleteRec(orgShortName:String) throws -> Int {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(self.mCTAG).orgDeleteRec", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecOrganizationDefs.TABLE_NAME).select(*).filter(RecOrganizationDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == orgShortName)
-        let qty:Int = try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).orgDeleteRec", tableQuery:query)
+        let qty:Int = try DatabaseHandler.shared.genericDeleteRecs(method:"\(self.mCTAG).orgDeleteRec", tableQuery:query)
         
         // maintain referential integrity
         // ?? the custom Fields and FieldLocales

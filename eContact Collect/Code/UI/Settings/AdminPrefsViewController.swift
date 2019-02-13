@@ -304,7 +304,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if theResult && callbackAction == 1  {
                         // answer was Yes; reset everything
                         do {
-                            try AppDelegate.mSVFilesHandler!.deleteAll()
+                            try SVFilesHandler.shared.deleteAll()
                         } catch {
                             AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.ButtonRow.factory_reset", errorStruct: error, extra: nil)
                             // do not show this error to the end-user
@@ -319,7 +319,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                         if row2 != nil { (row2! as! TextRow).value = nil; row2!.updateCell()  }
                         self!.refreshEmailAccts()
                         self!.refreshDefaultEmailAcct()
-                        let succeeded = AppDelegate.mDatabaseHandler!.factoryResetEntireDB()
+                        let succeeded = DatabaseHandler.shared.factoryResetEntireDB()
                         if !succeeded {
                             AppDelegate.postAlert(message: NSLocalizedString("Factory reset of the database failed", comment:""))
                             AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Database Error", comment:""), message: NSLocalizedString("Database failed to Factory Reset", comment:""), buttonText: NSLocalizedString("Okay", comment:""))

@@ -241,16 +241,16 @@ public class RecContactsCollected {
     // return the quantity of CC records for a specific organization
     // throws exceptions either for local errors or from the database
     public static func ccGetQtyRecs(forOrgShortName:String) throws -> Int64 {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).ccGetQtyRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
-        return try AppDelegate.mDatabaseHandler!.genericQueryQty(method:"\(self.mCTAG).ccGetQtyRecs", table:Table(RecContactsCollected.TABLE_NAME), whereStr:"(\"\(RecContactsCollected.COLUMN_ORG_CODE_FOR_SV_FILE)\" = \"\(forOrgShortName)\")", valuesBindArray:nil)
+        return try DatabaseHandler.shared.genericQueryQty(method:"\(self.mCTAG).ccGetQtyRecs", table:Table(RecContactsCollected.TABLE_NAME), whereStr:"(\"\(RecContactsCollected.COLUMN_ORG_CODE_FOR_SV_FILE)\" = \"\(forOrgShortName)\")", valuesBindArray:nil)
     }
     
     // get all CC records for a specific organization (which could be none); sorted most recent first
     // throws exceptions either for local errors or from the database
     public static func ccGetAllRecs(forOrgShortName:String, forFormShortName:String? = nil) throws -> AnySequence<Row> {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).ccGetAllRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         var query = Table(RecContactsCollected.TABLE_NAME).select(*)
@@ -259,18 +259,18 @@ public class RecContactsCollected {
         } else {
             query = query.filter(RecContactsCollected.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == forOrgShortName).order(RecContactsCollected.COL_EXPRESSION_CC_DATETIME.desc)
         }
-        return try AppDelegate.mDatabaseHandler!.genericQuery(method:"\(self.mCTAG).ccGetAllRecs", tableQuery:query)
+        return try DatabaseHandler.shared.genericQuery(method:"\(self.mCTAG).ccGetAllRecs", tableQuery:query)
     }
     
     // get one specific CC record by index#;
     // throws exceptions either for local errors or from the database;
     // nil indicates the record was not found
     public static func ccGetSpecifiedRecOfIndex(index:Int64) throws -> RecContactsCollected? {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).ccGetSpecifiedRecOfIndex", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecContactsCollected.TABLE_NAME).select(*).filter(RecContactsCollected.COL_EXPRESSION_CC_INDEX == index)
-        let record = try AppDelegate.mDatabaseHandler!.genericQueryOne(method:"\(self.mCTAG).ccGetSpecifiedRecOfIndex", tableQuery:query)
+        let record = try DatabaseHandler.shared.genericQueryOne(method:"\(self.mCTAG).ccGetSpecifiedRecOfIndex", tableQuery:query)
         if record == nil { return nil }
         return try RecContactsCollected(row:record!)
     }
@@ -279,7 +279,7 @@ public class RecContactsCollected {
     // WARNING: if the key field has been changed, all existing records in all Tables will need renaming;
     // throws exceptions either for local errors or from the database
     public func saveNewToDB() throws -> Int64 {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).saveNewToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         
@@ -291,7 +291,7 @@ public class RecContactsCollected {
             throw appError
         } catch { throw error}
         
-        let rowID = try AppDelegate.mDatabaseHandler!.insertRec(method:"\(RecContactsCollected.mCTAG).saveNewToDB", table:Table(RecContactsCollected.TABLE_NAME), cv:setters, orReplace:false, noAlert:false)
+        let rowID = try DatabaseHandler.shared.insertRec(method:"\(RecContactsCollected.mCTAG).saveNewToDB", table:Table(RecContactsCollected.TABLE_NAME), cv:setters, orReplace:false, noAlert:false)
         self.rCC_index = rowID
         return rowID
     }
@@ -300,7 +300,7 @@ public class RecContactsCollected {
     // WARNING: if the key field has been changed, all existing records in all Tables will need renaming;
     // throws exceptions either for local errors or from the database
     public func saveChangesToDB(originalCCRec:RecContactsCollected) throws -> Int {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).saveChangesToDB", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         
@@ -313,27 +313,27 @@ public class RecContactsCollected {
         } catch { throw error}
         
         let query = Table(RecContactsCollected.TABLE_NAME).select(*).filter(RecContactsCollected.COL_EXPRESSION_CC_INDEX == originalCCRec.rCC_index)
-        let qty = try AppDelegate.mDatabaseHandler!.updateRec(method:"\(RecContactsCollected.mCTAG).saveChangesToDB", tableQuery:query, cv:setters)
+        let qty = try DatabaseHandler.shared.updateRec(method:"\(RecContactsCollected.mCTAG).saveChangesToDB", tableQuery:query, cv:setters)
         return qty
     }
     
     // delete the indicated CC record; return is the count of records deleted (negative will not be returned;
     // throws exceptions either for local errors or from the database
     public static func ccDeleteRec(index:Int64) throws -> Int {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).ccDeleteRec", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecContactsCollected.TABLE_NAME).select(*).filter(RecContactsCollected.COL_EXPRESSION_CC_INDEX == index)
-        return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).ccDeleteRec", tableQuery:query)
+        return try DatabaseHandler.shared.genericDeleteRecs(method:"\(self.mCTAG).ccDeleteRec", tableQuery:query)
     }
     
     // delete all CC records that are marked as generated; return is the count of records deleted (negative will not be returned;
     // throws exceptions either for local errors or from the database
     public static func ccDeleteGeneratedRecs() throws -> Int {
-        guard AppDelegate.mDatabaseHandler != nil, AppDelegate.mDatabaseHandler!.isReady() else {
+        guard DatabaseHandler.shared.isReady() else {
             throw APP_ERROR(funcName: "\(RecContactsCollected.mCTAG).ccDeleteGeneratedRecs", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .HANDLER_IS_NOT_ENABLED, userErrorDetails: nil, developerInfo: "==nil || !.isReady()")
         }
         let query = Table(RecContactsCollected.TABLE_NAME).select(*).filter(RecContactsCollected.COL_EXPRESSION_CC_STATUS == 1)
-        return try AppDelegate.mDatabaseHandler!.genericDeleteRecs(method:"\(self.mCTAG).ccDeleteGeneratedRecs", tableQuery:query)
+        return try DatabaseHandler.shared.genericDeleteRecs(method:"\(self.mCTAG).ccDeleteGeneratedRecs", tableQuery:query)
     }
 }
