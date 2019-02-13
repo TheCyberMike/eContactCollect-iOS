@@ -116,28 +116,28 @@ public enum APP_ERROR_CODE:Int, CustomStringConvertible {
     // APP error codes
     case NO_ERROR  = 0
     case UNKNOWN_ERROR  = -1
-    case HANDLER_IS_NOT_ENABLED  = -40
-    case FILESYSTEM_ERROR  = -41
-    case DATABASE_ERROR  = -42
-    case INTERNAL_ERROR  = -43
-    case MISSING_REQUIRED_CONTENT  = -44
-    case RECORD_NOT_FOUND = -45
-    case RECORD_IS_COMPOSED  = -46
-    case COULD_NOT_CREATE = -47
-    case COULD_NOT_ACCESS = -48
-    case DID_NOT_VALIDATE = -49
-    case DID_NOT_OPEN = -50
-    case RECORD_MARKED_DELETED = -51
-    case RECORD_MARKED_PARTIAL = -52
-    case MISSING_OR_MISMATCHED_FIELD_METADATA = -53
-    case MISSING_OR_MISMATCHED_FIELD_OPTIONS = -54
-    case MISSING_OR_MISMATCHED_FIELD_OPTIONSET = -55
-    case IOS_EMAIL_SUBSYSTEM_ERROR = -56
-    case SMTP_EMAIL_SUBSYSTEM_ERROR = -57
-    case SECURE_STORAGE_ERROR = -58
-    case MISSING_SAVED_EMAIL_ACCOUNT = -59
-    case MISSING_KNOWN_EMAIL_PROVIDER = -60
-    case MISSING_EMAIL_ACCOUNT_CREDENTIALS = -61
+    case HANDLER_IS_NOT_ENABLED  = -50
+    case FILESYSTEM_ERROR  = -51
+    case DATABASE_ERROR  = -52
+    case INTERNAL_ERROR  = -53
+    case MISSING_REQUIRED_CONTENT  = -54
+    case RECORD_NOT_FOUND = -55
+    case RECORD_IS_COMPOSED  = -56
+    case COULD_NOT_CREATE = -57
+    case COULD_NOT_ACCESS = -58
+    case DID_NOT_VALIDATE = -59
+    case DID_NOT_OPEN = -60
+    case RECORD_MARKED_DELETED = -61
+    case RECORD_MARKED_PARTIAL = -62
+    case MISSING_OR_MISMATCHED_FIELD_METADATA = -63
+    case MISSING_OR_MISMATCHED_FIELD_OPTIONS = -64
+    case MISSING_OR_MISMATCHED_FIELD_OPTIONSET = -65
+    case IOS_EMAIL_SUBSYSTEM_ERROR = -66
+    case SMTP_EMAIL_SUBSYSTEM_ERROR = -67
+    case SECURE_STORAGE_ERROR = -68
+    case MISSING_SAVED_EMAIL_ACCOUNT = -69
+    case MISSING_KNOWN_EMAIL_PROVIDER = -70
+    case MISSING_EMAIL_ACCOUNT_CREDENTIALS = -71
     
     // provide a description for the end-user in proper language
     public var localizedDescription:String {
@@ -301,6 +301,9 @@ public enum USER_ERROR_CODE:Int, CustomStringConvertible {
     case NOT_AN_EXPORTED_FILE = -32
     case EMAIL_NO_TO_AND_CC = -33
     case IOS_EMAIL_SUBSYSTEM_DISABLED = -34
+    case INVALID_OR_MISSING_SMTP_PARAMETER = -35
+    case INVALID_OR_MISSING_OAUTH_PARAMETER = -36
+    case INVALID_OAUTH_URL = -37
     
     // provide a description for the end-user in proper language
     public var localizedDescription:String {
@@ -313,10 +316,16 @@ public enum USER_ERROR_CODE:Int, CustomStringConvertible {
             return NSLocalizedString("Form does not exist", comment:"")
         case .NOT_AN_EXPORTED_FILE:
             return NSLocalizedString("Attempt to import a file not supported by this App", comment:"")
-        case .IOS_EMAIL_SUBSYSTEM_DISABLED:
-            return NSLocalizedString("iOS is not allowing the App to send email", comment:"")
         case .EMAIL_NO_TO_AND_CC:
             return NSLocalizedString("Email has no To and no CC", comment:"")
+        case .IOS_EMAIL_SUBSYSTEM_DISABLED:
+            return NSLocalizedString("iOS is not allowing the App to send email", comment:"")
+        case .INVALID_OR_MISSING_SMTP_PARAMETER:
+            return NSLocalizedString("Invalid or missing SMTP parameter", comment:"")
+        case .INVALID_OR_MISSING_OAUTH_PARAMETER:
+            return NSLocalizedString("Invalid or missing OAUTH parameter", comment:"")
+        case .INVALID_OAUTH_URL:
+            return NSLocalizedString("Invalid OAUTH URL", comment:"")
         }
     }
     
@@ -331,10 +340,16 @@ public enum USER_ERROR_CODE:Int, CustomStringConvertible {
             return "Form does not exist"
         case .NOT_AN_EXPORTED_FILE:
             return "Not an Exported File"
-        case .IOS_EMAIL_SUBSYSTEM_DISABLED:
-            return "iOS Email Subsystem is disabled"
         case .EMAIL_NO_TO_AND_CC:
             return "Email has no To and no CC"
+        case .IOS_EMAIL_SUBSYSTEM_DISABLED:
+            return "iOS Email Subsystem is disabled"
+        case .INVALID_OR_MISSING_SMTP_PARAMETER:
+            return "Invalid or missing SMTP parameter"
+        case .INVALID_OR_MISSING_OAUTH_PARAMETER:
+            return "Invalid or missing OAUTH parameter"
+        case .INVALID_OAUTH_URL:
+            return "Invalid OAUTH URL"
         }
     }
 }

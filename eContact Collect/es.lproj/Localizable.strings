@@ -36,6 +36,9 @@
 "iOS is not allowing the App to send email" = "iOS is not allowing the App to send email";
 "iOS Email Subsystem is disabled" = "iOS Email Subsystem is disabled";
 "Email has no To and no CC" = "Email has no To and no CC";
+"Invalid or missing SMTP parameter" = "Invalid or missing SMTP parameter";
+"Invalid or missing OAUTH parameter" = "Invalid or missing OAUTH parameter";
+"Invalid OAUTH URL" = "Invalid OAUTH URL";
 
 // AppDelegate.swift
 "Secure Storage" = "Secure Storage";
@@ -109,10 +112,15 @@
 "SASL Kerberos-V4" = "SASL Kerberos-V4";
 "OAuth2" = "OAuth2";
 "OAuth2 Outlook.com" = "OAuth2 Outlook.com";
+"Code" = "Code";
+"Token" = "Token";
 "Other SMTP Email Provider" = "Other SMTP Email Provider";
 "SMTP Connection Test FAILED!" = "SMTP Connection Test FAILED!";
 "SMTP Connection Test Passed" = "SMTP Connection Test Passed";
 "See Alerts for error details" = "See Alerts for error details";
+"Callback Scheme" = "Callback Scheme";
+"Authorize URL" = "Authorize URL";
+"Token URL" = "Token URL";
 
 // PopupFirstTimeViewController.swift
 "Entry Error" = "Entry Error";
@@ -235,11 +243,13 @@
 "Email Acct: UserID" = "Email Acct: UserID";
 "Email Acct: Password" = "Email Acct: Password";
 "SMTP Email Provider Settings" = "SMTP Email Provider Settings";
-"Override standard settings?" = "Override standard settings?";
+"Override standard SMTP settings?" = "Override standard SMTP settings?";
 "HostName" = "HostName";
 "Port" = "Port";
 "Connection Type" = "Connection Type";
 "Authentication Type" = "Authentication Type";
+"OAUTH Email Provider Settings" = "OAUTH Email Provider Settings";
+"Override standard OAUTH settings?" = "Override standard OAUTH settings?";
 
 // WizDefinePINViewController
 "App PIN" = "App PIN";
