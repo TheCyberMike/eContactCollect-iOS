@@ -375,7 +375,7 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             NotificationCenter.default.post(name: .APP_FileRequestedToOpen, object: nil, userInfo: requestInfo)
             return true
             
-        } else if url.path.starts(with: "/oauth2-callback") {
+        } else if url.path.starts(with: "/\(EmailHandler.mOAuthCallbackPath)") {
             // handle an OAuth response
             if (options[.sourceApplication] as? String == "com.apple.SafariViewService") {
 //debugPrint("\(AppDelegate.mCTAG).openURL OAUTH2 STARTED")

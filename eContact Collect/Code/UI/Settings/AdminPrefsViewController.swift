@@ -750,6 +750,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
             }
         }
         self.mWorkingVia!.emailProvider_SMTP?.viaNameLocalized = self.mWorkingVia!.viaNameLocalized
+        self.mWorkingVia!.emailProvider_SMTP_OAuth?.viaNameLocalized = self.mWorkingVia!.viaNameLocalized
         self.mWorkingVia!.emailProvider_Credentials?.viaNameLocalized = self.mWorkingVia!.viaNameLocalized
         
         // save or update the EmailVia into the proper storage areas
@@ -957,6 +958,9 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 $0.hidden = Condition.function(["override_smtp_settings"], { form in
                     return !((form.rowBy(tag: "override_smtp_settings") as? SwitchRow)?.value ?? false)
                 })
+                $0.disabled = Condition.function(["override_smtp_settings"], { form in
+                    return !((form.rowBy(tag: "override_smtp_settings") as? SwitchRow)?.value ?? false)
+                })
                 $0.add(rule: RuleRequired() )
                 $0.validationOptions = .validatesAlways
                 }.cellUpdate { cell, row in
@@ -981,6 +985,9 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 $0.tag = "smtp_port"
                 $0.value = self.mWorkingVia!.emailProvider_SMTP?.port
                 $0.hidden = Condition.function(["override_smtp_settings"], { form in
+                    return !((form.rowBy(tag: "override_smtp_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.disabled = Condition.function(["override_smtp_settings"], { form in
                     return !((form.rowBy(tag: "override_smtp_settings") as? SwitchRow)?.value ?? false)
                 })
                 $0.add(rule: RuleRequired() )
@@ -1014,6 +1021,9 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     $0.value = Set([EmailHandler.connectionTypeDefs[2].typeStrLocalized])
                 }
                 $0.hidden = Condition.function(["override_smtp_settings"], { form in
+                    return !((form.rowBy(tag: "override_smtp_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.disabled = Condition.function(["override_smtp_settings"], { form in
                     return !((form.rowBy(tag: "override_smtp_settings") as? SwitchRow)?.value ?? false)
                 })
                 $0.add(rule: RuleRequired() )
@@ -1050,6 +1060,9 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     $0.value = EmailHandler.authTypeDefs[1].typeStrLocalized
                 }
                 $0.hidden = Condition.function(["override_smtp_settings"], { form in
+                    return !((form.rowBy(tag: "override_smtp_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.disabled = Condition.function(["override_smtp_settings"], { form in
                     return !((form.rowBy(tag: "override_smtp_settings") as? SwitchRow)?.value ?? false)
                 })
                 $0.add(rule: RuleRequired() )
@@ -1093,8 +1106,11 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 $0.hidden = Condition.function(["override_oauth_settings"], { form in
                     return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
                 })
-                //???$0.add(rule: RuleRequired() )
-                //???$0.validationOptions = .validatesAlways
+                $0.disabled = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.add(rule: RuleRequired() )
+                $0.validationOptions = .validatesAlways
                 }.cellUpdate { cell, row in
                     cell.titleLabel?.font = .systemFont(ofSize: 14.0)
                     cell.textField?.font = .systemFont(ofSize: 14.0)
@@ -1119,6 +1135,9 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 $0.tag = "oauth_clientSecret"
                 $0.value = self.mWorkingVia!.emailProvider_SMTP_OAuth?.oAuthConsumerSecret
                 $0.hidden = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.disabled = Condition.function(["override_oauth_settings"], { form in
                     return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
                 })
                 }.cellUpdate { cell, row in
@@ -1149,8 +1168,12 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 $0.hidden = Condition.function(["override_oauth_settings"], { form in
                     return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
                 })
-                //???$0.add(rule: RuleRequired() )
-                //???$0.validationOptions = .validatesAlways
+                $0.disabled = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.add(rule: RuleRequired() )
+                $0.add(rule: RuleURL() )
+                $0.validationOptions = .validatesAlways
                 }.cellUpdate { cell, row in
                     cell.titleLabel?.font = .systemFont(ofSize: 14.0)
                     cell.textField?.font = .systemFont(ofSize: 14.0)
@@ -1179,8 +1202,12 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 $0.hidden = Condition.function(["override_oauth_settings"], { form in
                     return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
                 })
-                //???$0.add(rule: RuleRequired() )
-                //???$0.validationOptions = .validatesAlways
+                $0.disabled = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.add(rule: RuleRequired() )
+                $0.add(rule: RuleURL() )
+                $0.validationOptions = .validatesAlways
                 }.cellUpdate { cell, row in
                     cell.titleLabel?.font = .systemFont(ofSize: 14.0)
                     cell.textField?.font = .systemFont(ofSize: 14.0)
@@ -1200,6 +1227,71 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                         self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthAccessTokenURL = chgRow.value!.absoluteString
                     }
             }
+            section3 <<< URLRow() {
+                $0.title = NSLocalizedString("Check Token URL", comment:"")
+                $0.tag = "oauth_checkTokenURL"
+                if self.mWorkingVia!.emailProvider_SMTP_OAuth != nil {
+                    $0.value = URL(string: self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCheckAccessTokenURL)
+                }
+                $0.hidden = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.disabled = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.add(rule: RuleRequired() )
+                $0.add(rule: RuleURL() )
+                $0.validationOptions = .validatesAlways
+                }.cellUpdate { cell, row in
+                    cell.titleLabel?.font = .systemFont(ofSize: 14.0)
+                    cell.textField?.font = .systemFont(ofSize: 14.0)
+                    cell.textField?.autocapitalizationType = .none
+                    cell.textField?.autocorrectionType = .no
+                    cell.textField?.spellCheckingType = .no
+                    if #available(iOS 11.0, *) {
+                        cell.textField?.smartQuotesType = .no
+                        cell.textField?.smartDashesType = .no
+                    }
+                    if !row.isValid {
+                        cell.titleLabel?.textColor = .red
+                    }
+                }.onChange { chgRow in
+                    if chgRow.value != nil {
+                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCheckAccessTokenURL = chgRow.value!.absoluteString
+                    }
+            }
+            section3 <<< TextRow() {
+                $0.title = NSLocalizedString("Check Token URL Parameter", comment:"")
+                $0.tag = "oauth_checkTokenURLParameter"
+                $0.value = self.mWorkingVia!.emailProvider_SMTP_OAuth?.oAuthCheckAccessTokenURLParameter
+                $0.hidden = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.disabled = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.add(rule: RuleRequired() )
+                $0.validationOptions = .validatesAlways
+                }.cellUpdate { cell, row in
+                    cell.titleLabel?.font = .systemFont(ofSize: 14.0)
+                    cell.textField?.font = .systemFont(ofSize: 14.0)
+                    cell.textField?.autocapitalizationType = .none
+                    cell.textField?.autocorrectionType = .no
+                    cell.textField?.spellCheckingType = .no
+                    if #available(iOS 11.0, *) {
+                        cell.textField?.smartQuotesType = .no
+                        cell.textField?.smartDashesType = .no
+                    }
+                    if !row.isValid {
+                        cell.titleLabel?.textColor = .red
+                    }
+                }.onChange { chgRow in
+                    if chgRow.value != nil {
+                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCheckAccessTokenURLParameter = chgRow.value!
+                    }
+            }
             section3 <<< TextRow() {
                 $0.title = NSLocalizedString("Callback Scheme", comment:"")
                 $0.tag = "oauth_callbackScheme"
@@ -1207,8 +1299,11 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 $0.hidden = Condition.function(["override_oauth_settings"], { form in
                     return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
                 })
-                //???$0.add(rule: RuleRequired() )
-                //???$0.validationOptions = .validatesAlways
+                $0.disabled = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.add(rule: RuleRequired() )
+                $0.validationOptions = .validatesAlways
                 }.cellUpdate { cell, row in
                     cell.titleLabel?.font = .systemFont(ofSize: 14.0)
                     cell.textField?.font = .systemFont(ofSize: 14.0)
@@ -1229,14 +1324,46 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     }
             }
             section3 <<< TextRow() {
+                $0.title = NSLocalizedString("Callback Hostname", comment:"")
+                $0.tag = "oauth_callbackHostname"
+                $0.value = self.mWorkingVia!.emailProvider_SMTP_OAuth?.oAuthCallbackHostname
+                $0.hidden = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.disabled = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                }.cellUpdate { cell, row in
+                    cell.titleLabel?.font = .systemFont(ofSize: 14.0)
+                    cell.textField?.font = .systemFont(ofSize: 14.0)
+                    cell.textField?.autocapitalizationType = .none
+                    cell.textField?.autocorrectionType = .no
+                    cell.textField?.spellCheckingType = .no
+                    if #available(iOS 11.0, *) {
+                        cell.textField?.smartQuotesType = .no
+                        cell.textField?.smartDashesType = .no
+                    }
+                    if !row.isValid {
+                        cell.titleLabel?.textColor = .red
+                    }
+                }.onChange { chgRow in
+                    if chgRow.value != nil {
+                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCallbackHostname = chgRow.value!
+                    }
+            }
+            section3 <<< TextRow() {
                 $0.title = NSLocalizedString("Scope", comment:"")
                 $0.tag = "oauth_scope"
                 $0.value = self.mWorkingVia!.emailProvider_SMTP_OAuth?.oAuthScope
                 $0.hidden = Condition.function(["override_oauth_settings"], { form in
                     return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
                 })
-                //$0.add(rule: RuleRequired() )
-                //$0.validationOptions = .validatesAlways
+                $0.disabled = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.add(rule: RuleRequired() )
+                $0.validationOptions = .validatesAlways
                 }.cellUpdate { cell, row in
                     cell.titleLabel?.font = .systemFont(ofSize: 14.0)
                     cell.textField?.font = .systemFont(ofSize: 14.0)
@@ -1274,8 +1401,11 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 $0.hidden = Condition.function(["override_oauth_settings"], { form in
                     return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
                 })
-                //$0.add(rule: RuleRequired() )
-                //$0.validationOptions = .validatesAlways
+                $0.disabled = Condition.function(["override_oauth_settings"], { form in
+                    return !((form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                })
+                $0.add(rule: RuleRequired() )
+                $0.validationOptions = .validatesAlways
                 }.cellUpdate { cell, row in
                     cell.titleLabel?.font = .systemFont(ofSize: 14.0)
                     if !row.isValid {
@@ -1308,8 +1438,39 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     //cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
                 }.onCellSelection { [weak self] cell, row in
                     if self!.validateForm() {
+                        let testVia:EmailVia = self!.mWorkingVia!
+                        if testVia.viaType == .SMTPknown {
+                            var overrideSMTP:Bool = ((self!.form.rowBy(tag: "override_smtp_settings") as? SwitchRow)?.value ?? false)
+                            var overrideOAUTH:Bool = ((self!.form.rowBy(tag: "override_oauth_settings") as? SwitchRow)?.value ?? false)
+                            if !overrideSMTP && !overrideOAUTH {
+                                testVia.emailProvider_SMTP = nil
+                                testVia.emailProvider_SMTP_OAuth = nil
+                            } else {
+                                if overrideSMTP && testVia.emailProvider_SMTP == self!.mEditVia!.emailProvider_SMTP {
+                                    overrideSMTP = false
+                                }
+                                if overrideOAUTH && testVia.emailProvider_SMTP_OAuth == self!.mEditVia!.emailProvider_SMTP_OAuth {
+                                    overrideOAUTH = false
+                                }
+                                if overrideSMTP || overrideOAUTH {
+                                    testVia.viaType = .SMTPsettings
+                                } else {
+                                    testVia.emailProvider_SMTP = nil
+                                    testVia.emailProvider_SMTP_OAuth = nil
+                                }
+                            }
+                            
+                            if testVia.emailProvider_SMTP == nil {
+                                testVia.emailProvider_SMTP = EmailProviderSMTP(localizedName: testVia.viaNameLocalized, knownProviderInternalName: testVia.emailProvider_InternalName)
+                            }
+                            if testVia.emailProvider_SMTP_OAuth == nil {
+                                testVia.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth(localizedName: testVia.viaNameLocalized, knownProviderInternalName: testVia.emailProvider_InternalName)
+                            }
+                        }
+                        
+                        
                         do {
-                            try EmailHandler.shared.testEmailViaMailCore(vc: self!, invoker: "AdminPrefsEditEmailAccountViewController", tagI: 1, tagS: "$test", via: self!.mWorkingVia!)
+                            try EmailHandler.shared.testEmailViaMailCore(vc: self!, invoker: "AdminPrefsEditEmailAccountViewController", tagI: 1, tagS: "$test", via: testVia)
                         } catch {
                             // do not post these test errors to error.log
                             AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Email Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))

@@ -250,6 +250,18 @@
 "Authentication Type" = "Authentication Type";
 "OAUTH Email Provider Settings" = "OAUTH Email Provider Settings";
 "Override standard OAUTH settings?" = "Override standard OAUTH settings?";
+"Client ID" = "Client ID";
+"Client 'Secret'" = "Client 'Secret'";
+"Authorize URL" = "Authorize URL";
+"Token URL" = "Token URL";
+"Check Token URL" = "Check Token URL";
+"Check Token URL Parameter" = "Check Token URL Parameter";
+"Callback Scheme" = "Callback Scheme";
+"Callback Hostname" = "Callback Hostname";
+"Scope" = "Scope";
+"Response Type" = "Response Type";
+"Test the Settings" = "Test the Settings";
+"Press HERE to test access to Email Provider" = "Press HERE to test access to Email Provider";
 
 // WizDefinePINViewController
 "App PIN" = "App PIN";
