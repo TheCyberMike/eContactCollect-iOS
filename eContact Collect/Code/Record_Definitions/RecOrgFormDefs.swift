@@ -150,7 +150,7 @@ public class RecOrgFormDefs {
     public var rForm_Lingual_LangRegions:[String]?              // show the form as MonoLingual or BiLingual if specified
     public var rForm_XML_Collection_Tag:String = "contacts"     // tag used for the collection of records
     public var rForm_XML_Record_Tag:String = "contact"          // tag used for each record
-    public var rForm_Override_Email_Via:String?                 // override email Via; see EmailHandler.swift
+    public var rForm_Override_Email_Via:String?                 // override email Via; see EmailHandler.swift; ??FUTURE; DBver 2
     public var rForm_Override_Email_To:String?                  // override email TO
     public var rForm_Override_Email_CC:String?                  // override email CC
     public var rForm_Override_Email_Subject:String?             // override email Subject

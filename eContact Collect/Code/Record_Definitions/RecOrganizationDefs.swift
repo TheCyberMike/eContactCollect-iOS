@@ -165,7 +165,7 @@ public class RecOrganizationDefs {
     public var rOrg_Logo_Image_PNG_Blob:Data?                       // organization's logo (stored in 3x size as PNG)
     public var rOrg_Event_Code_For_SV_File:String?                  // optional-event: code for the SV-File
     public var rOrg_Visuals:OrgVisuals                              // visual settings
-    public var rOrg_Email_Via:String?                               // email Via:  see EmailHandler.swift
+    public var rOrg_Email_Via:String?                               // email Via:  see EmailHandler.swift; ??FUTURE; DBver 2
     public var rOrg_Email_To:String?                                // email TO
     public var rOrg_Email_CC:String?                                // email CC
                                                                     // email Subject

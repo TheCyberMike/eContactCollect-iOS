@@ -183,6 +183,7 @@
 "Include error.log?" = "Include error.log?";
 "Send email to Developer" = "Send email to Developer";
 "Email Error" = "Email Error";
+"Email successfully sent" = "Email successfully sent";
 
 // AlertsMgmtViewController.swift
 "Delete Confirmation" = "Delete Confirmation";

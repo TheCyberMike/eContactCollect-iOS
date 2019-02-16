@@ -388,6 +388,8 @@ debugPrint("\(self.mCTAG).noticeEmailCompleted STARTED")
                     // returned errors will properly have the 'noPost' setting for those email or oauth errors that should not get posted to error.log
                     AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).noticeEmailCompleted", errorStruct: emailResult.error!, extra: nil)
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: emailResult.error!, buttonText: NSLocalizedString("Okay", comment:""))
+                } else {
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Result", comment:""), message: NSLocalizedString("Email successfully sent", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
                 }
             }
         }

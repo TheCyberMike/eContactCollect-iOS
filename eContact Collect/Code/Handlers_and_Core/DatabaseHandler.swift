@@ -175,6 +175,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             do {
                 // invoke/perform upgrade activities inside a transaction so database integrity is preserved
                 try self.mDB!.transaction {     // throws Result
+                    try RecAlert.upgrade_1_to_2(db: self.mDB!)              // throws APP_ERROR
                     try RecOrganizationDefs.upgrade_1_to_2(db: self.mDB!)   // throws APP_ERROR
                     try RecOrgFormDefs.upgrade_1_to_2(db: self.mDB!)        // throws APP_ERROR
                 }
@@ -237,6 +238,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         
         // all good; finalize
         self.mDBstatus_state = .Valid
+        AppDelegate.noticeToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).initialize", during: nil, notice: "Database successfully upgraded from version \(currentVersion) to version \(self.mVersion)", extra: nil, noAlert: true)
     }
     
     // perform any handler first time setups that have not already been performed; the sequence# allows later versions to retro-add a first-time setup;

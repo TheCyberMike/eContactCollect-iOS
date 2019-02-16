@@ -828,7 +828,7 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     
     // test the email connection and credentials via SMTP using MailCore; do the OAuth precheck if necessary
     public func testEmailViaMailCore(vc:UIViewController, invoker:String, tagI:Int, tagS:String?, via:EmailVia) throws {
-debugPrint("\(self.mCTAG).testEmailViaMailCore STARTED")
+//debugPrint("\(self.mCTAG).testEmailViaMailCore STARTED")
         if via.emailProvider_SMTP == nil {
             throw APP_ERROR(funcName: "\(self.mCTAG).testEmailViaMailCore", domain: self.mThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: nil, developerInfo: "via.emailProvider_SMTP == nil ")
         }
@@ -851,10 +851,10 @@ debugPrint("\(self.mCTAG).testEmailViaMailCore STARTED")
             self.validateOAuth(vc: vc, pending: pending, callback: { error in
                 pending.oAuth2Swift = nil
                 if error == nil {
-debugPrint("\(self.mCTAG).testEmailViaMailCore.validateOAuth.error==nil ")
+//debugPrint("\(self.mCTAG).testEmailViaMailCore.validateOAuth.error==nil ")
                     self.enqueueEmail(withEmail: pending)
                 } else {
-debugPrint("\(self.mCTAG).testEmailViaMailCore.validateOAuth.error!=nil ")
+//debugPrint("\(self.mCTAG).testEmailViaMailCore.validateOAuth.error!=nil ")
                     // post a result notification of the OAuth error (its already in the main UI thread)
                     let result:EmailResult
                     if var appError = error as? APP_ERROR {
@@ -1001,7 +1001,7 @@ debugPrint("\(self.mCTAG).testEmailViaMailCore.validateOAuth.error!=nil ")
     
     // send the email via SMTP using MailCore; do the OAuth precheck if necessary
     private func sendEmailViaMailCore(vc:UIViewController, invoker:String, tagI:Int, tagS:String?, localizedTitle:String, via:EmailVia, to:String?, cc:String?, subject:String?, body:String?, includingAttachment:URL?, mimeType:String) throws {
-debugPrint("\(self.mCTAG).sendEmailViaMailCore STARTED")
+//debugPrint("\(self.mCTAG).sendEmailViaMailCore STARTED")
         if via.emailProvider_SMTP == nil {
             throw APP_ERROR(funcName: "\(self.mCTAG).sendEmailViaMailCore", domain: self.mThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: nil, developerInfo: "via.emailProvider_SMTP == nil")
         }
@@ -1084,55 +1084,55 @@ debugPrint("\(self.mCTAG).sendEmailViaMailCore STARTED")
            pending.via.emailProvider_Credentials!.oAuthRefreshToken.isEmpty {
             
             // there are no oAuth credentials at all
-debugPrint("\(self.mCTAG).validateOAuth NO OAUTH CREDENTIALS; ASK FOR AUTH")
+//debugPrint("\(self.mCTAG).validateOAuth NO OAUTH CREDENTIALS; ASK FOR AUTH")
             self.validateOAuthAskForAuthorization(vc: vc, pending: pending, callback: callback)
             
         } else if pending.via.emailProvider_Credentials!.oAuthAccessToken.isEmpty &&
                   !pending.via.emailProvider_Credentials!.oAuthRefreshToken.isEmpty {
             
             // strange case; no accessToken but do have a refreshToken; attempt a refresh
-debugPrint("\(self.mCTAG).validateOAuth ONLY REFRESH TOKEN; ASK FOR REFRESH")
+//debugPrint("\(self.mCTAG).validateOAuth ONLY REFRESH TOKEN; ASK FOR REFRESH")
             self.validateOAuthRenew(vc: vc, pending: pending, callback: { error in
                 if error == nil {
                     // refresh succeeded
                     callback(nil)
                 } else {
                     // refresh failed
-debugPrint("\(self.mCTAG).validateOAuth REFRESH FAILED; NEED TO RE-ASK FOR AUTH")
+//debugPrint("\(self.mCTAG).validateOAuth REFRESH FAILED; NEED TO RE-ASK FOR AUTH")
                     self.validateOAuthAskForAuthorization(vc: vc, pending: pending, callback: callback)
                 }
             })
             
         } else {
             // we have an access token; just check it since it may have been invalidated much less expired
-debugPrint("\(self.mCTAG).validateOAuth HAVE ACCESS TOKEN; CHECK IT")
+//debugPrint("\(self.mCTAG).validateOAuth HAVE ACCESS TOKEN; CHECK IT")
             self.validateOAuthCheckExisting(vc: vc, pending: pending, callback: { error in
                 if error == nil {
                     // check passed successfully
-                    var msg:String = "\(self.mCTAG).validateOAuth CHECKED & AVAILABLE & NOT YET EXPIRED; REUSE"
-                    if pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime != nil {
-                        msg = msg + "; [\(pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime!)]"
-                    }
-debugPrint(msg)
+/*var msg:String = "\(self.mCTAG).validateOAuth CHECKED & AVAILABLE & NOT YET EXPIRED; REUSE"
+if pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime != nil {
+    msg = msg + "; [\(pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime!)]"
+}
+debugPrint(msg)*/
                     callback(nil)
                 } else {
                     // check of the existing access token failed
                     if !pending.via.emailProvider_Credentials!.oAuthRefreshToken.isEmpty {
                         // there is a refresh token; attempt to do a refresh
-debugPrint("\(self.mCTAG).validateOAuth CHECK FAILED; REFRESH TOKEN AVAILABLE; ATTEMPT REFRESH")
+//debugPrint("\(self.mCTAG).validateOAuth CHECK FAILED; REFRESH TOKEN AVAILABLE; ATTEMPT REFRESH")
                         self.validateOAuthRenew(vc: vc, pending: pending, callback: { error in
                             if error == nil {
                                 // refresh succeeded
                                 callback(nil)
                             } else {
                                 // refresh failed
-debugPrint("\(self.mCTAG).validateOAuth REFRESH FAILED; NEED TO RE-ASK FOR AUTH")
+//debugPrint("\(self.mCTAG).validateOAuth REFRESH FAILED; NEED TO RE-ASK FOR AUTH")
                                 self.validateOAuthAskForAuthorization(vc: vc, pending: pending, callback: callback)
                             }
                         })
                     } else {
                         // there is no refresh token available; just re-ask for authorization
-debugPrint("\(self.mCTAG).validateOAuth CHECK FAILED; NO REFRESH TOKEN; NEED TO RE-ASK FOR AUTH")
+//debugPrint("\(self.mCTAG).validateOAuth CHECK FAILED; NO REFRESH TOKEN; NEED TO RE-ASK FOR AUTH")
                         self.validateOAuthAskForAuthorization(vc: vc, pending: pending, callback: callback)
                     }
                 }
@@ -1148,7 +1148,7 @@ debugPrint("\(self.mCTAG).validateOAuth CHECK FAILED; NO REFRESH TOKEN; NEED TO 
     // need to do a full OAuth2 authorization from-scratch
     private func validateOAuthAskForAuthorization(vc:UIViewController, pending:EmailPending, callback:@escaping ((Error?) -> Void)) {
         // setup the oAuth2 parameters
-debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization ASK FOR AUTHORIZATION STARTED")
+//debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization ASK FOR AUTHORIZATION STARTED")
         pending.oAuth2Swift = OAuth2Swift(
             consumerKey:    pending.via.emailProvider_SMTP_OAuth!.oAuthConsumerKey,
             consumerSecret: pending.via.emailProvider_SMTP_OAuth!.oAuthConsumerSecret,
@@ -1160,7 +1160,7 @@ debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization ASK FOR AUTHORIZATION
         // perform the user-interaction; if responseType == "code" then the second stage request for the access token is automatically performed
         pending.oAuth2Swift!.authorizeURLHandler = SafariURLHandler(viewController: vc, oauthSwift: pending.oAuth2Swift!)
         let callbackURL:URL = pending.via.emailProvider_SMTP_OAuth!.getCallbackURL(withPath: EmailHandler.mOAuthCallbackPath)!
-debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization RedirectURL=\(callbackURL.absoluteString)")
+//debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization RedirectURL=\(callbackURL.absoluteString)")
         let _ = pending.oAuth2Swift!.authorize(
             withCallbackURL: callbackURL,
             scope: pending.via.emailProvider_SMTP_OAuth!.oAuthScope,
@@ -1168,7 +1168,7 @@ debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization RedirectURL=\(callbac
             success: { credential, response, parameters in
                 // initial authorization interaction with the end-user succceeded;
                 // we should have been given an authorization code and a refresh token but the expiration should be ignored
-debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization.authorize.success AT=\(credential.oauthToken), RT=\(credential.oauthRefreshToken), ED=\(credential.oauthTokenExpiresAt), parameters=\(parameters)")
+//debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization.authorize.success AT=\(credential.oauthToken), RT=\(credential.oauthRefreshToken), ED=\(credential.oauthTokenExpiresAt), parameters=\(parameters)")
                 pending.via.emailProvider_Credentials!.oAuthAccessToken = credential.oauthToken
                 pending.via.emailProvider_Credentials!.oAuthRefreshToken = credential.oauthRefreshToken
                 pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime = credential.oauthTokenExpiresAt
@@ -1188,13 +1188,13 @@ debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization.authorize.failure \(e
                 return // from failure callback
             }
         )
-debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization ASK FOR AUTHORIZATION POSTED AND ENDED")
+//debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization ASK FOR AUTHORIZATION POSTED AND ENDED")
     }
     
     // need to do an OAuth renew
     private func validateOAuthRenew(vc:UIViewController, pending:EmailPending, callback:@escaping ((Error?) -> Void)) {
         // setup the oAuth2 parameters
-debugPrint("\(self.mCTAG).validateOAuthRenew RENEW AUTHORIZATION STARTED")
+//debugPrint("\(self.mCTAG).validateOAuthRenew RENEW AUTHORIZATION STARTED")
         pending.oAuth2Swift = OAuth2Swift(
             consumerKey:    pending.via.emailProvider_SMTP_OAuth!.oAuthConsumerKey,
             consumerSecret: pending.via.emailProvider_SMTP_OAuth!.oAuthConsumerSecret,
@@ -1207,7 +1207,7 @@ debugPrint("\(self.mCTAG).validateOAuthRenew RENEW AUTHORIZATION STARTED")
         let _ = pending.oAuth2Swift!.renewAccessToken(
             withRefreshToken: pending.via.emailProvider_Credentials!.oAuthRefreshToken,
             success: { credential, response, parameters in
-debugPrint("\(self.mCTAG).validateOAuthRenew.renewAccessToken.success AT=\(credential.oauthToken), RT=\(credential.oauthRefreshToken), ED=\(credential.oauthTokenExpiresAt), parameters=\(parameters)")
+//debugPrint("\(self.mCTAG).validateOAuthRenew.renewAccessToken.success AT=\(credential.oauthToken), RT=\(credential.oauthRefreshToken), ED=\(credential.oauthTokenExpiresAt), parameters=\(parameters)")
                 pending.via.emailProvider_Credentials!.oAuthAccessToken = credential.oauthToken
                 if !credential.oauthRefreshToken.isEmpty { pending.via.emailProvider_Credentials!.oAuthRefreshToken = credential.oauthRefreshToken }
                 pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime = credential.oauthTokenExpiresAt
@@ -1227,13 +1227,13 @@ debugPrint("\(self.mCTAG).validateOAuthRenew.renewAccessToken.failure \(error.de
                 return // from failure callback
             }
         )
-debugPrint("\(self.mCTAG).validateOAuthRenew RENEW AUTHORIZATION POSTED AND ENDED")
+//debugPrint("\(self.mCTAG).validateOAuthRenew RENEW AUTHORIZATION POSTED AND ENDED")
     }
     
     // need to do an OAuth renew
     private func validateOAuthCheckExisting(vc:UIViewController, pending:EmailPending, callback:@escaping ((Error?) -> Void)) {
         // setup the oAuth2 parameters
-debugPrint("\(self.mCTAG).validateOAuthCheckExisting CHECK ACCESS TOKEN STARTED")
+//debugPrint("\(self.mCTAG).validateOAuthCheckExisting CHECK ACCESS TOKEN STARTED")
         pending.oAuth2Swift = OAuth2Swift(
             consumerKey:    pending.via.emailProvider_SMTP_OAuth!.oAuthConsumerKey,
             consumerSecret: pending.via.emailProvider_SMTP_OAuth!.oAuthConsumerSecret,
@@ -1248,7 +1248,7 @@ debugPrint("\(self.mCTAG).validateOAuthCheckExisting CHECK ACCESS TOKEN STARTED"
             checkURLParameter: pending.via.emailProvider_SMTP_OAuth!.oAuthCheckAccessTokenURLParameter,
             token: pending.via.emailProvider_Credentials!.oAuthAccessToken,
             success: { credential, response, parameters in
-debugPrint("\(self.mCTAG).validateOAuthCheckExisting.checkToken.success parameters=\(parameters)")
+//debugPrint("\(self.mCTAG).validateOAuthCheckExisting.checkToken.success parameters=\(parameters)")
                 callback(nil)
                 return // from success callback
             },
@@ -1259,7 +1259,7 @@ debugPrint("\(self.mCTAG).validateOAuthCheckExisting.checkToken.failure \(error.
                 return // from failure callback
             }
         )
-debugPrint("\(self.mCTAG).validateOAuthCheckExisting CHECK ACCESS TOKEN POSTED AND ENDED")
+//debugPrint("\(self.mCTAG).validateOAuthCheckExisting CHECK ACCESS TOKEN POSTED AND ENDED")
     }
     
     /////////////////////////////////////////////////////////////////////////////////////////
@@ -1271,7 +1271,7 @@ debugPrint("\(self.mCTAG).validateOAuthCheckExisting CHECK ACCESS TOKEN POSTED A
     // OAuth credentials have already been authorized and set
     // THREADING: this will only be called from the Main UI thread
     private func enqueueEmail(withEmail:EmailPending) {
-debugPrint("\(self.mCTAG).enqueueEmail MAIN_UI_THREAD STARTED")
+//debugPrint("\(self.mCTAG).enqueueEmail MAIN_UI_THREAD STARTED")
         self.mEmailPendingQueue.async { [weak self] in
             self!.dequeueEmail(withEmail: withEmail)
         }
@@ -1279,7 +1279,7 @@ debugPrint("\(self.mCTAG).enqueueEmail MAIN_UI_THREAD STARTED")
     
     // THREADING: this will be called by the MailQueue thread
     private func dequeueEmail(withEmail:EmailPending) {
-debugPrint("\(self.mCTAG).dequeueEmail MAILQUEUE_THREAD STARTED")
+//debugPrint("\(self.mCTAG).dequeueEmail MAILQUEUE_THREAD STARTED")
         if withEmail.testTheVia { self.testEmailViaMailCore_send(withEmail: withEmail) }
         else { self.sendEmailViaMailCore_send(withEmail: withEmail) }
     }
@@ -1287,7 +1287,7 @@ debugPrint("\(self.mCTAG).dequeueEmail MAILQUEUE_THREAD STARTED")
     // test the email connection and credentials via SMTP using MailCore
     // THREADING:  this will be called by the MailQueue thread
     private func testEmailViaMailCore_send(withEmail:EmailPending) {
-debugPrint("\(self.mCTAG).testEmailViaMailCore_send MAILQUEUE_THREAD STARTED")
+//debugPrint("\(self.mCTAG).testEmailViaMailCore_send MAILQUEUE_THREAD STARTED")
         
         // build the from address
         var from:MCOAddress
@@ -1377,13 +1377,13 @@ debugPrint("\(self.mCTAG).testEmailViaMailCore_send.Connectionlogger: \(flow) 33
             }
             return
         } // end of callback
-debugPrint("\(self.mCTAG).testEmailViaMailCore_send MAILQUEUE_THREAD ENDED")
+//debugPrint("\(self.mCTAG).testEmailViaMailCore_send MAILQUEUE_THREAD ENDED")
     }
     
     // send the email via SMTP using MailCore
     // THREADING:  this will be called by the MailQueue thread
     private func sendEmailViaMailCore_send(withEmail:EmailPending) {
-debugPrint("\(self.mCTAG).sendEmailViaMailCore_send MAILQUEUE_THREAD STARTED")
+//debugPrint("\(self.mCTAG).sendEmailViaMailCore_send MAILQUEUE_THREAD STARTED")
 
         // build up the needed to/cc arrays
         var emailToArray:[MCOAddress] = []
@@ -1505,7 +1505,7 @@ debugPrint("\(self.mCTAG).sendEmailViaMailCore_send.Connectionlogger: \(flow) 33
             }
             return
         } // end of callback
-debugPrint("\(self.mCTAG).sendEmailViaMailCore_send MAILQUEUE_THREAD ENDED")
+//debugPrint("\(self.mCTAG).sendEmailViaMailCore_send MAILQUEUE_THREAD ENDED")
     }
 }
 

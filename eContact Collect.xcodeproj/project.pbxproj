@@ -14,6 +14,8 @@
 		D7BA6B4321EED9F400F45AFC /* Eureka.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D7BA6B6021EEDA6300F45AFC /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; };
 		D7BA6B6121EEDA6300F45AFC /* SQLite.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		D7C35BBB2217A13900BDCD2A /* OAuthSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D74C37A4220CB2BE00A5B23E /* OAuthSwift.framework */; };
+		D7C35BBC2217A13900BDCD2A /* OAuthSwift.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D74C37A4220CB2BE00A5B23E /* OAuthSwift.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D7CC2A982201456200F39E36 /* EmailHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CC2A972201456200F39E36 /* EmailHandler.swift */; };
 		D7CC2AA122027DED00F39E36 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AA022027DED00F39E36 /* CFNetwork.framework */; };
 		D7CC2AA322027E0E00F39E36 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AA222027E0E00F39E36 /* Security.framework */; };
@@ -222,6 +224,13 @@
 			remoteGlobalIDString = EE247AD21C3F04ED00AE3E12;
 			remoteInfo = "SQLite iOS";
 		};
+		D7C35BBD2217A13900BDCD2A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D74C3790220CB2BE00A5B23E /* OAuthSwift.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F43502791A6791B200038A29;
+			remoteInfo = OAuthSwift;
+		};
 		D7CC2AAF22027E4500F39E36 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */;
@@ -303,6 +312,7 @@
 			files = (
 				D7BA6B6121EEDA6300F45AFC /* SQLite.framework in Embed Frameworks */,
 				D7BA6B4321EED9F400F45AFC /* Eureka.framework in Embed Frameworks */,
+				D7C35BBC2217A13900BDCD2A /* OAuthSwift.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -419,6 +429,7 @@
 				D7CC2AA122027DED00F39E36 /* CFNetwork.framework in Frameworks */,
 				D7BA6B6021EEDA6300F45AFC /* SQLite.framework in Frameworks */,
 				D7BA6B4221EED9F400F45AFC /* Eureka.framework in Frameworks */,
+				D7C35BBB2217A13900BDCD2A /* OAuthSwift.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -742,6 +753,7 @@
 			dependencies = (
 				D7BA6B4521EED9F400F45AFC /* PBXTargetDependency */,
 				D7BA6B6321EEDA6300F45AFC /* PBXTargetDependency */,
+				D7C35BBE2217A13900BDCD2A /* PBXTargetDependency */,
 			);
 			name = "eContact Collect";
 			productName = "eContact Collect";
@@ -1157,6 +1169,11 @@
 			isa = PBXTargetDependency;
 			name = "SQLite iOS";
 			targetProxy = D7BA6B6221EEDA6300F45AFC /* PBXContainerItemProxy */;
+		};
+		D7C35BBE2217A13900BDCD2A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = OAuthSwift;
+			targetProxy = D7C35BBD2217A13900BDCD2A /* PBXContainerItemProxy */;
 		};
 		D94CFD052155A6E1009CE207 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

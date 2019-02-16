@@ -28,7 +28,7 @@ debugPrint("\(mCTAG).deinit STARTED")
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
     // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
     override func viewDidLoad() {
-debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+//debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
         
         self.mEmailDefault = EmailHandler.shared.getLocalizedDefaultEmail()
@@ -45,7 +45,7 @@ debugPrint("\(self.mCTAG).viewDidLoad STARTED")
     // called by the framework when the view will *re-appear* (first time, from popovers, etc)
     // parent and all children are now available
     override func viewWillAppear(_ animated:Bool) {
-debugPrint("\(self.mCTAG).viewWillAppear STARTED")
+//debugPrint("\(self.mCTAG).viewWillAppear STARTED")
         super.viewWillAppear(animated)
         tableView.setEditing(true, animated: false) // this is necessary if in a ContainerView
         self.refreshEmailAccts()
@@ -58,14 +58,14 @@ debugPrint("\(self.mCTAG).viewWillAppear STARTED")
     override func viewDidDisappear(_ animated:Bool) {
         if self.isBeingDismissed || self.isMovingFromParent ||
             (self.navigationController?.isBeingDismissed ?? false) || (self.navigationController?.isMovingFromParent ?? false) {
-debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED")
+//debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED")
             form.removeAll()
             tableView.reloadData()
             self.mEmailViaOptions = nil
             self.mMVSaccts = nil
             self.mDefaultAcct = nil
         } else {
-debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed")
+//debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed")
         }
         super.viewDidDisappear(animated)
     }
@@ -388,7 +388,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 // this removal or move or hide occured in the email_mvs_accounts MultivaluedSection
                 let br:ButtonRow = rows[inx] as! ButtonRow
                 if br.tag != nil, br.tag!.starts(with: "AC,") {
-debugPrint("\(self.mCTAG).rowsHaveBeenRemoved.email_mvs_accounts Delete #\(inx): \(indexPath.item) is \(br.title!)")
+//debugPrint("\(self.mCTAG).rowsHaveBeenRemoved.email_mvs_accounts Delete #\(inx): \(indexPath.item) is \(br.title!)")
                     do {
                         try EmailHandler.shared.deleteEmailVia(localizedName: br.title!)
                     } catch {
@@ -523,7 +523,7 @@ debugPrint("\(mCTAG).deinit STARTED")
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
     // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
     override func viewDidLoad() {
-debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+//debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
         
         // build the form entirely
@@ -538,7 +538,7 @@ debugPrint("\(self.mCTAG).viewDidLoad STARTED")
     // called by the framework when the view will *re-appear* (first time, from popovers, etc)
     // parent and all children are now available
     override func viewWillAppear(_ animated:Bool) {
-debugPrint("\(self.mCTAG).viewWillAppear STARTED")
+//debugPrint("\(self.mCTAG).viewWillAppear STARTED")
         super.viewWillAppear(animated)
         tableView.setEditing(true, animated: false) // this is necessary if in a ContainerView
     }
@@ -549,11 +549,11 @@ debugPrint("\(self.mCTAG).viewWillAppear STARTED")
     override func viewDidDisappear(_ animated:Bool) {
         if self.isBeingDismissed || self.isMovingFromParent ||
             (self.navigationController?.isBeingDismissed ?? false) || (self.navigationController?.isMovingFromParent ?? false) {
-debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED")
+//debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED")
             form.removeAll()
             tableView.reloadData()
         } else {
-debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed")
+//debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed")
         }
         super.viewDidDisappear(animated)
     }
@@ -606,8 +606,8 @@ class AdminPrefsEditEmailAccountViewController: FormViewController {
     public var mAction:APEEAVC_Actions = .Add       // .Add or .Change
     
     // member variables
-    public var mWorkingVia:EmailVia? = nil
-    private var mTestResultsRow:TextAreaRowExt? = nil
+    public var mWorkingVia:EmailVia? = nil                  // local copy of the EMailVia with working changes
+    private weak var mTestResultsRow:TextAreaRowExt? = nil  // test results row
     
     // member constants and other static content
     private let mCTAG:String = "VCSPEA"
@@ -626,7 +626,7 @@ debugPrint("\(mCTAG).deinit STARTED")
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
     // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
     override func viewDidLoad() {
-debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+//debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
         assert(self.mEditVia != nil, "\(self.mCTAG).viewDidLoad mEditVia == nil")    // this is a programming error
         self.mWorkingVia = EmailVia(fromExisting: self.mEditVia!)    // make a deep-copy duplicate
@@ -680,7 +680,7 @@ debugPrint("\(self.mCTAG).viewDidLoad STARTED")
     // called by the framework when the view will *re-appear* (first time, from popovers, etc)
     // parent and all children are now available
     override func viewWillAppear(_ animated:Bool) {
-debugPrint("\(self.mCTAG).viewWillAppear STARTED")
+//debugPrint("\(self.mCTAG).viewWillAppear STARTED")
         super.viewWillAppear(animated)
         tableView.setEditing(true, animated: false) // this is necessary if in a ContainerView
     }
@@ -691,13 +691,14 @@ debugPrint("\(self.mCTAG).viewWillAppear STARTED")
     override func viewDidDisappear(_ animated:Bool) {
         if self.isBeingDismissed || self.isMovingFromParent ||
             (self.navigationController?.isBeingDismissed ?? false) || (self.navigationController?.isMovingFromParent ?? false) {
-debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED")
+//debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED")
+            self.mTestResultsRow = nil
             form.removeAll()
             tableView.reloadData()
             self.mEditVia = nil
             self.mWorkingVia = nil
         } else {
-debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed")
+//debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed")
         }
         super.viewDidDisappear(animated)
     }
@@ -817,9 +818,9 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 if !row.isValid {
                     cell.titleLabel?.textColor = .red
                 }
-            }.onChange { chgRow in
+            }.onChange { [weak self] chgRow in
                 if chgRow.value != nil {
-                    self.mWorkingVia!.viaNameLocalized = chgRow.value!
+                    self!.mWorkingVia!.viaNameLocalized = chgRow.value!
                 }
         }
         
@@ -833,9 +834,9 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 if !row.isValid {
                     cell.titleLabel?.textColor = .red
                 }
-            }.onChange { chgRow in
+            }.onChange { [weak self] chgRow in
                 if chgRow.value != nil {
-                    self.mWorkingVia!.userDisplayName = chgRow.value!
+                    self!.mWorkingVia!.userDisplayName = chgRow.value!
                 }
         }
         section1 <<< EmailRow() {
@@ -856,9 +857,9 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 if !row.isValid {
                     cell.titleLabel?.textColor = .red
                 }
-            }.onChange { chgRow in
+            }.onChange { [weak self] chgRow in
                 if chgRow.value != nil {
-                    self.mWorkingVia!.sendingEmailAddress = chgRow.value!
+                    self!.mWorkingVia!.sendingEmailAddress = chgRow.value!
                 }
         }
         section1 <<< TextRow() {
@@ -879,10 +880,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                 if !row.isValid {
                     cell.titleLabel?.textColor = .red
                 }
-            }.onChange { chgRow in
+            }.onChange { [weak self] chgRow in
                 if chgRow.value != nil {
-                    if self.mWorkingVia!.emailProvider_Credentials == nil { self.mWorkingVia!.emailProvider_Credentials = EmailAccountCredentials() }
-                    self.mWorkingVia!.emailProvider_Credentials!.username = chgRow.value!
+                    if self!.mWorkingVia!.emailProvider_Credentials == nil { self!.mWorkingVia!.emailProvider_Credentials = EmailAccountCredentials() }
+                    self!.mWorkingVia!.emailProvider_Credentials!.username = chgRow.value!
                 }
         }
         if self.mAction == .Add {
@@ -905,10 +906,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_Credentials == nil { self.mWorkingVia!.emailProvider_Credentials = EmailAccountCredentials() }
-                        self.mWorkingVia!.emailProvider_Credentials!.password = chgRow.value!
+                        if self!.mWorkingVia!.emailProvider_Credentials == nil { self!.mWorkingVia!.emailProvider_Credentials = EmailAccountCredentials() }
+                        self!.mWorkingVia!.emailProvider_Credentials!.password = chgRow.value!
                     }
             }
         } else {
@@ -931,10 +932,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_Credentials == nil { self.mWorkingVia!.emailProvider_Credentials = EmailAccountCredentials() }
-                        self.mWorkingVia!.emailProvider_Credentials!.password = chgRow.value!
+                        if self!.mWorkingVia!.emailProvider_Credentials == nil { self!.mWorkingVia!.emailProvider_Credentials = EmailAccountCredentials() }
+                        self!.mWorkingVia!.emailProvider_Credentials!.password = chgRow.value!
                     }
             }
         }
@@ -974,10 +975,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP == nil { self.mWorkingVia!.emailProvider_SMTP = EmailProviderSMTP() }
-                        self.mWorkingVia!.emailProvider_SMTP!.hostname = chgRow.value!
+                        if self!.mWorkingVia!.emailProvider_SMTP == nil { self!.mWorkingVia!.emailProvider_SMTP = EmailProviderSMTP() }
+                        self!.mWorkingVia!.emailProvider_SMTP!.hostname = chgRow.value!
                     }
             }
             section2 <<< IntRow() {
@@ -998,10 +999,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP == nil { self.mWorkingVia!.emailProvider_SMTP = EmailProviderSMTP() }
-                        self.mWorkingVia!.emailProvider_SMTP!.port = chgRow.value!
+                        if self!.mWorkingVia!.emailProvider_SMTP == nil { self!.mWorkingVia!.emailProvider_SMTP = EmailProviderSMTP() }
+                        self!.mWorkingVia!.emailProvider_SMTP!.port = chgRow.value!
                     }
             }
             
@@ -1032,13 +1033,13 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP == nil { self.mWorkingVia!.emailProvider_SMTP = EmailProviderSMTP() }
+                        if self!.mWorkingVia!.emailProvider_SMTP == nil { self!.mWorkingVia!.emailProvider_SMTP = EmailProviderSMTP() }
                         for item in chgRow.value! {
                             for aConnTypeDef in EmailHandler.connectionTypeDefs {
                                 if item == aConnTypeDef.typeStrLocalized {
-                                    self.mWorkingVia!.emailProvider_SMTP!.connectionType = aConnTypeDef.type
+                                    self!.mWorkingVia!.emailProvider_SMTP!.connectionType = aConnTypeDef.type
                                     break
                                 }
                             }
@@ -1071,12 +1072,12 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     //if !row.isValid {
                         //cell.titleLabel?.textColor = .red
                     //}
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP == nil { self.mWorkingVia!.emailProvider_SMTP = EmailProviderSMTP() }
+                        if self!.mWorkingVia!.emailProvider_SMTP == nil { self!.mWorkingVia!.emailProvider_SMTP = EmailProviderSMTP() }
                         for anAuthTypeDef in EmailHandler.authTypeDefs {
                             if chgRow.value! == anAuthTypeDef.typeStrLocalized {
-                                self.mWorkingVia!.emailProvider_SMTP!.authType = anAuthTypeDef.type
+                                self!.mWorkingVia!.emailProvider_SMTP!.authType = anAuthTypeDef.type
                                 break
                             }
                         }
@@ -1124,10 +1125,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
-                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthConsumerKey = chgRow.value!
+                        if self!.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self!.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self!.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthConsumerKey = chgRow.value!
                     }
             }
             section3 <<< TextRow() {
@@ -1153,10 +1154,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
-                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthConsumerSecret = chgRow.value!
+                        if self!.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self!.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self!.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthConsumerSecret = chgRow.value!
                     }
             }
             section3 <<< URLRow() {
@@ -1187,10 +1188,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
-                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthAuthorizeURL = chgRow.value!.absoluteString
+                        if self!.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self!.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self!.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthAuthorizeURL = chgRow.value!.absoluteString
                     }
             }
             section3 <<< URLRow() {
@@ -1221,10 +1222,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
-                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthAccessTokenURL = chgRow.value!.absoluteString
+                        if self!.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self!.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self!.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthAccessTokenURL = chgRow.value!.absoluteString
                     }
             }
             section3 <<< URLRow() {
@@ -1255,10 +1256,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
-                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCheckAccessTokenURL = chgRow.value!.absoluteString
+                        if self!.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self!.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self!.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCheckAccessTokenURL = chgRow.value!.absoluteString
                     }
             }
             section3 <<< TextRow() {
@@ -1286,10 +1287,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
-                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCheckAccessTokenURLParameter = chgRow.value!
+                        if self!.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self!.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self!.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCheckAccessTokenURLParameter = chgRow.value!
                     }
             }
             section3 <<< TextRow() {
@@ -1317,10 +1318,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
-                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCallbackScheme = chgRow.value!
+                        if self!.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self!.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self!.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCallbackScheme = chgRow.value!
                     }
             }
             section3 <<< TextRow() {
@@ -1346,10 +1347,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
-                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCallbackHostname = chgRow.value!
+                        if self!.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self!.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self!.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthCallbackHostname = chgRow.value!
                     }
             }
             section3 <<< TextRow() {
@@ -1377,10 +1378,10 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
-                        self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthScope = chgRow.value!
+                        if self!.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self!.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        self!.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthScope = chgRow.value!
                     }
             }
             section3 <<< SegmentedRowExt<String>() {
@@ -1411,13 +1412,13 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
-                }.onChange { chgRow in
+                }.onChange { [weak self] chgRow in
                     if chgRow.value != nil {
-                        if self.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
+                        if self!.mWorkingVia!.emailProvider_SMTP_OAuth == nil { self!.mWorkingVia!.emailProvider_SMTP_OAuth = EmailProviderSMTP_OAuth() }
                         for item in chgRow.value! {
                             for aResponseTypeDef in EmailHandler.oauthResponseTypeDefs {
                                 if item == aResponseTypeDef.typeStrLocalized {
-                                    self.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthResponseType = aResponseTypeDef.typeStr
+                                    self!.mWorkingVia!.emailProvider_SMTP_OAuth!.oAuthResponseType = aResponseTypeDef.typeStr
                                     break
                                 }
                             }
@@ -1497,7 +1498,7 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
     @objc func noticeEmailCompleted(_ notification:Notification) {
         if let emailResult:EmailResult = notification.object as? EmailResult {
             if emailResult.invoker == "AdminPrefsEditEmailAccountViewController" {
-debugPrint("\(self.mCTAG).noticeEmailCompleted STARTED")
+//debugPrint("\(self.mCTAG).noticeEmailCompleted STARTED")
                 self.mTestResultsRow!.value = emailResult.extendedDetails
                 self.mTestResultsRow!.updateCell()
                 tableView.reloadData()  // allow the TextAreaRowExt to re-size its height

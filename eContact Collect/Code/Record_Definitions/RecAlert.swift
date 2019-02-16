@@ -52,8 +52,8 @@ public class RecAlert {
     public var rAlert_Timestamp_MS_UTC:Int64 = 0           // timestamp of the alert
     public var rAlert_Timezone_MS_UTC_Offset:Int64 = 0     // current timezone of the device at the alert
     public var rAlert_SameDay_Dup_Count:Int = 0            // FUTURE??:  duplication count to reduce duplicated entries
-    public var rAlert_Message:String                       // alert text; blank text line is allowed
-    public var rAlert_ExtendedDetails:String? = nil        // optional multi-line extended details about the alert
+    public var rAlert_Message:String                       // alert text; blank text line is allowe
+    public var rAlert_ExtendedDetails:String? = nil        // optional multi-line extended details about the alert; DBver 2
     
     // member constants and other static content
     private static let mCTAG:String = "RA"
@@ -82,6 +82,17 @@ public class RecAlert {
             t.column(COL_EXPRESSION_ALERT_SAMEDAY_DUP_COUNT)
             t.column(COL_EXPRESSION_ALERT_MESSAGE)
             t.column(COL_EXPRESSION_ALERT_EXTENDED_DETAILS)
+        }
+    }
+    
+    // upgrade the table going from db version 1 to 2;
+    // upgrades:  add column "alert_extended_details"
+    public static func upgrade_1_to_2(db:Connection) throws {
+        do {
+            try db.run(Table(TABLE_NAME).addColumn(COL_EXPRESSION_ALERT_EXTENDED_DETAILS))
+        } catch {
+            let appError = APP_ERROR(funcName: "\(self.mCTAG).upgrade_1_to_2", during: "Run(addColumn).alert_extended_details", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: "DB table \(TABLE_NAME)", noAlert: true)
+            throw appError
         }
     }
 
