@@ -301,7 +301,7 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
                 cell.textLabel?.numberOfLines = 2
                 cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
             }.onCellSelection { cell, row in
-                UIApplication.shared.open(NSURL(string:"https://groups.google.com/forum/#!forum/econtact-collect")! as URL)
+                UIApplication.shared.open(NSURL(string:"https://groups.google.com/forum/?nomobile=true#!forum/econtact-collect")! as URL)
         }
         section1 <<< ButtonRow() {
             $0.tag = "shareLog"
