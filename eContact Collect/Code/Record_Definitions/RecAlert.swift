@@ -95,6 +95,23 @@ public class RecAlert {
             throw appError
         }
     }
+    // ?? temporary for version 1.2 only
+    public static func test_upgrade_1_to_2(db:Connection) throws {
+        do {
+            let tableInfo = try db.prepare("PRAGMA table_info('\(TABLE_NAME)')")
+            let foundColumn = tableInfo.makeIterator().filter { col in
+                col[1] as! String == COLUMN_ALERT_EXTENDED_DETAILS
+            }
+            if foundColumn.count == 0 {
+                try db.run(Table(TABLE_NAME).addColumn(COL_EXPRESSION_ALERT_EXTENDED_DETAILS))
+                debugPrint("\(mCTAG).test_upgrade_1_to_2 DATABASE success patching RecAlert")
+            }
+        } catch {
+            debugPrint("\(mCTAG).test_upgrade_1_to_2 DATABASE FAILED to patch RecAlert")
+            let appError = APP_ERROR(funcName: "\(self.mCTAG).test_upgrade_1_to_2", during: "Run(addColumn).alert_extended_details", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: "DB table \(TABLE_NAME)", noAlert: true)
+            throw appError
+        }
+    }
 
     // constructor creates the record from entered values
     init(timestamp_ms_utc:Int64, timezone_ms_utc_offset:Int64, message:String) {

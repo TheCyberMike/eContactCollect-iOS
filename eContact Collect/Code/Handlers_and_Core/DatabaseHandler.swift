@@ -114,6 +114,10 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 AppDelegate.postAlert(message: NSLocalizedString("Database successfully upgraded to version ", comment:"") + String(self.mVersion))
             } else {
                 self.mDBstatus_state = .Valid
+                // ?? temporary for version 1.2 only
+                do {
+                    try RecAlert.test_upgrade_1_to_2(db: self.mDB!)
+                } catch {}
             }
 
         }
