@@ -14,7 +14,6 @@
 		D7BA6B4321EED9F400F45AFC /* Eureka.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D7BA6B6021EEDA6300F45AFC /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; };
 		D7BA6B6121EEDA6300F45AFC /* SQLite.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		D7C35BBB2217A13900BDCD2A /* OAuthSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D74C37A4220CB2BE00A5B23E /* OAuthSwift.framework */; };
 		D7C35BBC2217A13900BDCD2A /* OAuthSwift.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D74C37A4220CB2BE00A5B23E /* OAuthSwift.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D7CC2A982201456200F39E36 /* EmailHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CC2A972201456200F39E36 /* EmailHandler.swift */; };
 		D7CC2AA122027DED00F39E36 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AA022027DED00F39E36 /* CFNetwork.framework */; };
@@ -429,7 +428,6 @@
 				D7CC2AA122027DED00F39E36 /* CFNetwork.framework in Frameworks */,
 				D7BA6B6021EEDA6300F45AFC /* SQLite.framework in Frameworks */,
 				D7BA6B4221EED9F400F45AFC /* Eureka.framework in Frameworks */,
-				D7C35BBB2217A13900BDCD2A /* OAuthSwift.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1381,7 +1379,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = opensource.theCyberMike.eContactCollect;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "eContact Collect/Code/Project-Name-Bridging-Header.h";
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -1414,7 +1412,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = opensource.theCyberMike.eContactCollect;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "eContact Collect/Code/Project-Name-Bridging-Header.h";
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -1436,7 +1434,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "opensource.eContact-CollectTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/eContact Collect.app/eContact Collect";
 			};
@@ -1457,7 +1455,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "opensource.eContact-CollectTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/eContact Collect.app/eContact Collect";
 			};
@@ -1468,7 +1466,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = CWMY2LW9A2;
+				DEVELOPMENT_TEAM = Z224ZX8APG;
 				INFOPLIST_FILE = "eContact CollectUITests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1477,7 +1475,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "opensource.eContact-CollectUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = "eContact Collect";
 			};
@@ -1488,7 +1486,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = CWMY2LW9A2;
+				DEVELOPMENT_TEAM = Z224ZX8APG;
 				INFOPLIST_FILE = "eContact CollectUITests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1497,7 +1495,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "opensource.eContact-CollectUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = "eContact Collect";
 			};
@@ -1596,7 +1594,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = opensource.theCyberMike.eContactCollect;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "eContact Collect/Code/Project-Name-Bridging-Header.h";
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Testing;
@@ -1618,7 +1616,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "opensource.eContact-CollectTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/eContact Collect.app/eContact Collect";
 			};
@@ -1629,7 +1627,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = CWMY2LW9A2;
+				DEVELOPMENT_TEAM = Z224ZX8APG;
 				INFOPLIST_FILE = "eContact CollectUITests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1639,7 +1637,7 @@
 				OTHER_SWIFT_FLAGS = "-DTESTING";
 				PRODUCT_BUNDLE_IDENTIFIER = "opensource.eContact-CollectUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = "eContact Collect";
 			};

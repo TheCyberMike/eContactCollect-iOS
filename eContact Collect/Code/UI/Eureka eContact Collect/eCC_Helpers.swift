@@ -113,7 +113,7 @@ extension Section /* Helpers */ {
      *  It throws an error if the old row is not in this section.
      */
     public func insert(row newRow: BaseRow, before previousRow: BaseRow) throws {
-        guard let rowIndex = (kvoWrapper._allRows as [BaseRow]).index(of: previousRow) else {
+        guard let rowIndex = (kvoWrapper._allRows as [BaseRow]).firstIndex(of: previousRow) else {
             throw EurekaError.rowNotInSection(row: previousRow)
         }
         kvoWrapper._allRows.insert(newRow, at: rowIndex )

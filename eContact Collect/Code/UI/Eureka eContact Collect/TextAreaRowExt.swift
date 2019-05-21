@@ -256,13 +256,13 @@ open class _TextAreaCellExt<T> : Cell<T>, UITextViewDelegate, AreaCell where T: 
         case .dynamic(let initialHeight):
             if initialHeight > 0.0 {
                 self.textView.layer.frame.size.height = initialHeight
-                newDynConstraints.append(NSLayoutConstraint(item: self.textView, attribute: .height, relatedBy: .greaterThanOrEqual, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: initialHeight))
+                newDynConstraints.append(NSLayoutConstraint(item: self.textView as Any, attribute: .height, relatedBy: .greaterThanOrEqual, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: initialHeight))
             }
             break
         case .fixed(let fixedHeight):
             if fixedHeight > 0.0 {
                 self.textView.layer.frame.size.height = fixedHeight
-                newDynConstraints.append(NSLayoutConstraint(item: self.textView, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: fixedHeight))
+                newDynConstraints.append(NSLayoutConstraint(item: self.textView as Any, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: fixedHeight))
             }
             break
         }
@@ -270,14 +270,14 @@ open class _TextAreaCellExt<T> : Cell<T>, UITextViewDelegate, AreaCell where T: 
         case .dynamic(let initialWidth):
             if initialWidth > 0.0 {
                 self.textView.layer.frame.size.width = initialWidth
-                newDynConstraints.append(NSLayoutConstraint(item: self.textView, attribute: .width, relatedBy: .greaterThanOrEqual, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: initialWidth))
+                newDynConstraints.append(NSLayoutConstraint(item: self.textView as Any, attribute: .width, relatedBy: .greaterThanOrEqual, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: initialWidth))
             }
             break
         case .fixed(let fixedWidth):
             if fixedWidth > 0.0 {
                 isFixedWidth = true
                 self.textView.layer.frame.size.width = fixedWidth
-                newDynConstraints.append(NSLayoutConstraint(item: self.textView, attribute: .width, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: fixedWidth))
+                newDynConstraints.append(NSLayoutConstraint(item: self.textView as Any, attribute: .width, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: fixedWidth))
             }
             break
         }

@@ -283,12 +283,12 @@ open class SegmentedCellExt<Tb: Hashable, T: Hashable> : Cell<T>, CellType {
         if row.value == nil { return nil }
         if let sRow:SegmentedRowExt<String> = (row as? SegmentedRowExt<String>) {
             for v in sRow.value! {
-                let inx:Int = sRow.options?.index(of: v) ?? -1
+                let inx:Int = sRow.options?.firstIndex(of: v) ?? -1
                 if inx >= 0 { return inx }
             }
         } else if let iRow:SegmentedRowExt<UIImage> = (row as? SegmentedRowExt<UIImage>) {
             for v in iRow.value! {
-                let inx:Int = iRow.options?.index(of: v) ?? -1
+                let inx:Int = iRow.options?.firstIndex(of: v) ?? -1
                 if inx >= 0 { return inx }
             }
         }
@@ -301,12 +301,12 @@ open class SegmentedCellExt<Tb: Hashable, T: Hashable> : Cell<T>, CellType {
         var indexes:[Int] = []
         if let sRow:SegmentedRowExt<String> = (row as? SegmentedRowExt<String>) {
             for v in sRow.value! {
-                let inx:Int = sRow.options?.index(of: v) ?? -1
+                let inx:Int = sRow.options?.firstIndex(of: v) ?? -1
                 if inx >= 0 { indexes.append(inx) }
             }
         } else if let iRow:SegmentedRowExt<UIImage> = (row as? SegmentedRowExt<UIImage>) {
             for v in iRow.value! {
-                let inx:Int = iRow.options?.index(of: v) ?? -1
+                let inx:Int = iRow.options?.firstIndex(of: v) ?? -1
                 if inx >= 0 { indexes.append(inx) }
             }
         }

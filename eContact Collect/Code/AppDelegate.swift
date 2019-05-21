@@ -751,8 +751,8 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
                                   kSecAttrAccount as String: key,
                                   kSecAttrSecurityDomain as String: label,
                                   kSecMatchLimit as String: kSecMatchLimitOne,
-                                  kSecReturnAttributes as String: kCFBooleanTrue,
-                                  kSecReturnData as String: kCFBooleanFalse]
+                                  kSecReturnAttributes as String: kCFBooleanTrue as Any,
+                                  kSecReturnData as String: kCFBooleanFalse as Any]
         
         // perform the read query
         var queryResult: AnyObject?
@@ -813,8 +813,8 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
                                   kSecAttrAccount as String: key,
                                   kSecAttrSecurityDomain as String: label,
                                   kSecMatchLimit as String: kSecMatchLimitOne,
-                                  kSecReturnAttributes as String: kCFBooleanTrue,
-                                  kSecReturnData as String: kCFBooleanFalse]
+                                  kSecReturnAttributes as String: kCFBooleanTrue as Any,
+                                  kSecReturnData as String: kCFBooleanFalse as Any]
         
         // perform the read query
         var queryResult: AnyObject?
@@ -841,8 +841,8 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
                                   kSecAttrAccount as String: key,
                                   kSecAttrSecurityDomain as String: label,
                                   kSecMatchLimit as String: kSecMatchLimitOne,
-                                  kSecReturnAttributes as String: kCFBooleanTrue,
-                                  kSecReturnData as String: kCFBooleanTrue]
+                                  kSecReturnAttributes as String: kCFBooleanTrue as Any,
+                                  kSecReturnData as String: kCFBooleanTrue as Any]
         
         // perform the read query
         var queryResult: AnyObject?
@@ -873,7 +873,7 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         // build the read query
         var query:[String:Any] = [kSecClass as String: kSecClassInternetPassword,
                                   kSecMatchLimit as String: kSecMatchLimitAll,
-                                  kSecReturnAttributes as String: kCFBooleanTrue]
+                                  kSecReturnAttributes as String: kCFBooleanTrue as Any]
         if !(key ?? "").isEmpty { query[kSecAttrAccount as String] = key! }
         
         // perform the read query

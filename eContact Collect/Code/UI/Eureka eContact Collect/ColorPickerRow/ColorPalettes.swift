@@ -58,7 +58,7 @@ public struct ColorPalette {
 }
 
 public extension Sequence where Iterator.Element == ColorPalette {
-    public func combined(usingName name: String) -> ColorPalette {
+    func combined(usingName name: String) -> ColorPalette {
         var colorSpecs = [ColorSpec]()
         for colorPalette in self {
             colorSpecs.append(contentsOf: colorPalette.palette)

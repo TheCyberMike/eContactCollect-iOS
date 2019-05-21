@@ -983,6 +983,9 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
                 case .sent:
                     resultHEM = .Sent
                     break
+                default:
+                    resultHEM = .Error
+                    break
                 }
             }
             
@@ -1334,6 +1337,9 @@ debugPrint("\(self.mCTAG).validateOAuthCheckExisting.checkToken.failure \(error.
                     case .errorSent:
                         flow = "=E> "
                         break
+                    default:
+                        flow = "<=?=> "
+                        break
                     }
                     let stringSwift = string as String
 debugPrint("\(self.mCTAG).testEmailViaMailCore_send.Connectionlogger: \(flow)\(stringSwift)")
@@ -1461,6 +1467,9 @@ debugPrint("\(self.mCTAG).testEmailViaMailCore_send.Connectionlogger: \(flow) 33
                         break
                     case .errorSent:
                         flow = "=E> "
+                        break
+                    default:
+                        flow = "<=?=> "
                         break
                     }
                     let stringSwift = string as String
