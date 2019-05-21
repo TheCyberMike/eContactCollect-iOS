@@ -99,6 +99,8 @@ class eContact_CollectTests_001_APPDelegate: XCTestCase {
             }
         } catch let appError as APP_ERROR {
             debugPrint("eContact_CollectTests_001_APPDelegate.teardown: SecureStorage: APP_ERROR thrown: \(appError.description)")
+        } catch let userError as USER_ERROR {
+            debugPrint("eContact_CollectTests_001_APPDelegate.teardown: SecureStorage: USER_ERROR thrown: \(userError.description)")
         } catch {
             debugPrint("eContact_CollectTests_001_APPDelegate.teardown: SecureStorage: Error thrown: \(error.localizedDescription)")
         }
@@ -150,19 +152,41 @@ class eContact_CollectTests_001_APPDelegate: XCTestCase {
             XCTAssertEqual(appError.callStack, "TestPrepend:test_001_FileSystemErrors", "APP_ERROR.prependCallStack.\(stage):  appError.callStack prepending wrong")
         }
         
-        // stage 2 - test an APP_ERROR throw from a one-level-deep function; filesystem type error
+        // stage 2 - test a USER_ERROR throw from a one-level-deep function
         stage = 2
-        let baseAppError1:APP_ERROR = APP_ERROR(funcName: "\(DatabaseHandler.CTAG).importOrgOrForm", during: "FileManager.default.contents", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_OPEN, userErrorDetails: NSLocalizedString("Import File", comment:""), developerInfo: "!!!CANNOT_EXIST!!!")
-        let baseAppError2:APP_ERROR = APP_ERROR(funcName: "testFileSystemErrors:\(DatabaseHandler.CTAG).importOrgOrForm", during: "FileManager.default.contents", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_OPEN, userErrorDetails: NSLocalizedString("Import File", comment:""), developerInfo: "!!!CANNOT_EXIST!!!")
+        let baseUserError:USER_ERROR = USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .NOT_AN_EXPORTED_FILE, userErrorDetails: NSLocalizedString("Import File", comment:""))
         do {
             let _ = try DatabaseHandler.importOrgOrForm(fromFileAtPath: "!!!CANNOT_EXIST!!!")
+            XCTFail("APP_ERROR.*.\(stage): improperly returned a result")
+        } catch let userError as USER_ERROR {
+#if TESTING
+            XCTAssertTrue(baseUserError.sameAs(baseError: userError), "APP_ERROR.*.\(stage): error obtained not as expected")
+#endif
+        } catch let appError as APP_ERROR {
+            XCTFail("APP_ERROR.*.\(stage): did not return a USER_ERROR but rather an APP_ERROR")
+        } catch {
+            XCTFail("APP_ERROR.*.\(stage): did not return a USER_ERROR")
+        }
+        
+        // stage 3 - test an APP_ERROR throw from a one-level-deep function; filesystem type error
+        stage = 3
+        let targetPath = SVFilesHandler.shared.mSVPendingDirPath + "/" + "!!!CANNOT_EXIST!!!"
+        let baseAppError1:APP_ERROR = APP_ERROR(funcName: "\(SVFilesHandler.CTAG).deletePendingFile", during: "removeItem", domain: SVFilesHandler.ThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: nil, developerInfo: targetPath)
+        let baseAppError2:APP_ERROR = APP_ERROR(funcName: "testFileSystemErrors:\(SVFilesHandler.CTAG).deletePendingFile", during: "removeItem", domain: SVFilesHandler.ThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: nil, developerInfo: targetPath)
+        do {
+            let _ = try SVFilesHandler.shared.deletePendingFile(fileName: "!!!CANNOT_EXIST!!!")
             XCTFail("APP_ERROR.*.\(stage): improperly returned a result")
         } catch var appError as APP_ERROR {
 #if TESTING
             XCTAssertTrue(baseAppError1.sameAs(baseError: appError), "APP_ERROR.*.\(stage): error obtained not as expected")
+            XCTAssertNotNil(appError.error, "APP_ERROR.*.\(stage): error.code is nil")
+            XCTAssert(appError.error!._code == 4, "APP_ERROR.*.\(stage): error._code not as expected")
+            XCTAssert(appError.error!._domain == "NSCocoaErrorDomain", "APP_ERROR.*.\(stage): error._domain not as expected")
             appError.prependCallStack(funcName: "testFileSystemErrors")
             XCTAssertTrue(baseAppError2.sameAs(baseError: appError), "APP_ERROR.*.\(stage): prepended error obtained not as expected")
 #endif
+        } catch let userError as USER_ERROR {
+            XCTFail("APP_ERROR.*.\(stage): did not return an APP_ERROR but rather a USER_ERROR")
         } catch {
             XCTFail("APP_ERROR.*.\(stage): did not return an APP_ERROR")
         }
@@ -624,8 +648,7 @@ class eContact_CollectTests_002_Database: XCTestCase {
 
     func test_001_Alerts() {
         continueAfterFailure = false
-        XCTAssertNotNil(AppDelegate.mDatabaseHandler, "RecAlert: Fatal-DatabaseHandler is nil")
-        XCTAssertEqual(AppDelegate.mDatabaseHandler!.mDBstatus_state, HandlerStatusStates.Valid, "RecAlert: Fatal-DatabaseHandler is in state \(AppDelegate.mDatabaseHandler!.mDBstatus_state.rawValue)")
+        XCTAssertEqual(DatabaseHandler.shared.mDBstatus_state, HandlerStatusStates.Valid, "RecAlert: Fatal-DatabaseHandler is in state \(DatabaseHandler.shared.mDBstatus_state.rawValue)")
         let baseAlertRec1:RecAlert = RecAlert(timestamp_ms_utc: AppDelegate.utcCurrentTimeMillis(), timezone_ms_utc_offset: -33000, message: "Alert message 1")
         let baseAlertRec2:RecAlert = RecAlert(timestamp_ms_utc: AppDelegate.utcCurrentTimeMillis(), timezone_ms_utc_offset: 44000, message: "Alert #2 message")
         let baseAlertRec3:RecAlert = RecAlert(timestamp_ms_utc: AppDelegate.utcCurrentTimeMillis(), timezone_ms_utc_offset: 0, message: "Alert message the third")
@@ -727,8 +750,7 @@ class eContact_CollectTests_002_Database: XCTestCase {
     
     func test_002_Organizations() {
         continueAfterFailure = false
-        XCTAssertNotNil(AppDelegate.mDatabaseHandler, "RecOrganizationDefs: Fatal-DatabaseHandler is nil")
-        XCTAssertEqual(AppDelegate.mDatabaseHandler!.mDBstatus_state, HandlerStatusStates.Valid, "RecOrganizationDefs: Fatal-DatabaseHandler is in state \(AppDelegate.mDatabaseHandler!.mDBstatus_state.rawValue)")
+        XCTAssertEqual(DatabaseHandler.shared.mDBstatus_state, HandlerStatusStates.Valid, "RecOrganizationDefs: Fatal-DatabaseHandler is in state \(DatabaseHandler.shared.mDBstatus_state.rawValue)")
         
         let baseOrgRec1:RecOrganizationDefs = RecOrganizationDefs(org_code_sv_file: "Test Org1", org_title_mode: RecOrganizationDefs.ORG_TITLE_MODE.ONLY_TITLE, org_logo_image_png_blob: nil, org_email_to: "email1@email.com", org_email_cc: "emailcc1@smail.net", org_email_subject: "Subject1")
         baseOrgRec1.rOrg_Event_Code_For_SV_File = "AA18"

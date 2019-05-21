@@ -19,11 +19,13 @@ public class SVFilesHandler {
     
     // member constants and other static content
     public static let shared:SVFilesHandler = SVFilesHandler()
-    internal var mCTAG:String = "HSV"
-    internal var mThrowErrorDomain:String = NSLocalizedString("SVFiles-Handler", comment:"")
+    internal static let CTAG:String = "HBD"
+    internal var mCTAG:String = CTAG
+    public static let ThrowErrorDomain:String = NSLocalizedString("SVFiles-Handler", comment:"")
+    internal var mThrowErrorDomain:String = ThrowErrorDomain
     public static let mDateFormatString:String = "yyMMdd'_'HHmmss'_'"
-    private let mSVSentDirPath:String = "\(AppDelegate.mDocsApp)/SVfiles_sent"
-    private let mSVPendingDirPath:String = "\(AppDelegate.mDocsApp)/SVfiles_pending"
+    public let mSVSentDirPath:String = "\(AppDelegate.mDocsApp)/SVfiles_sent"
+    public let mSVPendingDirPath:String = "\(AppDelegate.mDocsApp)/SVfiles_pending"
     
     // constructor;
     public init() {}
