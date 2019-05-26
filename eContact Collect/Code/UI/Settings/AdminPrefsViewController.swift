@@ -499,7 +499,12 @@ debugPrint("\(mCTAG).deinit STARTED")
     
     // return from the document picker
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        UIHelpers.importConfigFile(fromURL: urls[0], usingVC: self)
+        let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+        let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC PopupImport") as! PopupImportViewController
+        newViewController.mFromExternal = false
+        newViewController.mFileURL = urls[0]
+        newViewController.modalPresentationStyle = .custom
+        self.present(newViewController, animated: true, completion: nil)
     }
 }
 

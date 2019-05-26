@@ -89,8 +89,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
 
         super.viewDidLoad()
         
-        // listen for file-open notifications since this View Controller acts as the mainline
-        NotificationCenter.default.addObserver(self, selector: #selector(noticeOpenConfigFile(_:)), name: .APP_FileRequestedToOpen, object: nil)
+        // listen for notifications
         NotificationCenter.default.addObserver(self, selector: #selector(noticeCreatedMainEFP(_:)), name: .APP_CreatedMainEFP, object: nil)
     }
     
@@ -188,7 +187,6 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
         if self.isBeingDismissed || self.isMovingFromParent ||
             (self.navigationController?.isBeingDismissed ?? false) || (self.navigationController?.isMovingFromParent ?? false) {
 //debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSING \(self)")
-            NotificationCenter.default.removeObserver(self, name: .APP_FileRequestedToOpen, object: nil)
             NotificationCenter.default.removeObserver(self, name: .APP_CreatedMainEFP, object: nil)
             if self.mEFP != nil && self.mListenersEstablished {
                 NotificationCenter.default.removeObserver(self, name: .APP_EFP_OrgFormChange, object: self.mEFP!)
@@ -277,14 +275,6 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
             self.mEFP?.changeNewMultiLingual(toLangRegion: wasChosen!)
             self.refresh()
         }
-    }
-    
-    // received a notification that the end-user opened an OrgConfigs file
-    @objc func noticeOpenConfigFile(_ notification:Notification) {
-//debugPrint("\(self.mCTAG).openConfigFileNotice STARTED")
-        if notification.userInfo == nil { return }
-        let url:URL = notification.userInfo![UIApplication.OpenURLOptionsKey.url] as! URL
-        UIHelpers.importConfigFile(fromURL: url, usingVC: self, fromExternal: true)
     }
     
     // refresh the limited content on the upper portion of the screen;

@@ -132,11 +132,13 @@ public struct PreferencesKeys {
 
 // App internal Notification definitions
 extension Notification.Name {
+    // global notifications
     static let APP_CreatedMainEFP = Notification.Name("APP_CreatedMainEFP")
-    static let APP_EFP_OrgFormChange = Notification.Name("APP_EFP_OrgFormChange")
-    static let APP_EFP_LangRegionChanged = Notification.Name("APP_EFP_LangRegionChanged")
     static let APP_FileRequestedToOpen = Notification.Name("APP_FileRequestedToOpen")
     static let APP_EmailCompleted = Notification.Name("APP_EmailCompleted")
+    // per-object notifications
+    static let APP_EFP_OrgFormChange = Notification.Name("APP_EFP_OrgFormChange")
+    static let APP_EFP_LangRegionChanged = Notification.Name("APP_EFP_LangRegionChanged")
 }
 
 // Handler status enumerator

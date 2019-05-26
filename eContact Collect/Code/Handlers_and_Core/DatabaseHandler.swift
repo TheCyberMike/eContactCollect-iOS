@@ -612,6 +612,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         var funcString:String = "\(self.CTAG).exportOrgOrForm"
         var orgRec:RecOrganizationDefs? = nil
         var formRec:RecOrgFormDefs? = nil
+        var formNames:String = ""
         do {
             orgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: forOrgShortName)
             if orgRec == nil {
@@ -687,6 +688,8 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                     let orgFormRec:RecOrgFormDefs = try RecOrgFormDefs(row:rowObj)
                     let jsonFormObj = orgFormRec.buildJSONObject()
                     jsonFormsItemsObj.add(jsonFormObj!)
+                    if formNames.isEmpty { formNames = orgFormRec.rForm_Code_For_SV_File }
+                    else { formNames = formNames + "," + orgFormRec.rForm_Code_For_SV_File }
                 }
                 jsonFormsObj = NSMutableDictionary()
                 jsonFormsObj!["items"] = jsonFormsItemsObj
@@ -773,12 +776,12 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         if forFormShortName == nil {
             str = "\"method\":\"eContactCollect.db.org.export\",\n"
             stream!.write(str, maxLength: str.count)
-            str = "\"context\":\"\(forOrgShortName)\",\n"
+            str = "\"context\":\"\(forOrgShortName);\(formNames)\",\n"
             stream!.write(str, maxLength: str.count)
         } else {
             str = "\"method\":\"eContactCollect.db.form.export\",\n"
             stream!.write(str, maxLength: str.count)
-            str = "\"context\":\"\(forOrgShortName),\(forFormShortName!)\",\n"
+            str = "\"context\":\"\(forOrgShortName);\(forFormShortName!)\",\n"
             stream!.write(str, maxLength: str.count)
         }
         str = "\"id\":\"1\",\n"
@@ -889,18 +892,23 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         return filename
     }
     
-    // return structure for validateJSONdbFile
+    // return structure for importOrgOrForm
     public struct ImportOrgOrForm_Result {
-        public var wasForm:Bool = false
+        public var wasFormOnly:Bool = false
         public var wasOrgShortName:String = ""
         public var wasFormShortName:String = ""
     }
     
-    // imports an organization's entire definition (languages, forms, formfields) to a JSON file
-    // if the Org Short Name (rOrg_Code_For_SV_File) is already present, it and all its sub records are deleted first;
-    // can also import just a form if its Organization already exists;
+    // Imports an eContactCollect configuration export file, either Org & Forms, or one Org's Form, or a Sample Form;
+    // Default behavior:
+    // - Org & Forms: if the Org short name is already present, it and all its sub records are deleted first
+    // - Form-only:   if the Form short is already present, it and all its sub records are deleted first; Org must pre-exist
+    // Overrides:
+    // - Org & Forms: intoOrgShortName can override the file's Org name; asFormShortName is ignored
+    // - Form-only:   intoOrgShortName can override the file's Org name, it is required if the file is a Sample Form;
+    //                asFormShortName can override the file's Form name
     // throws exceptions for all errors (does not post them to error.log nor alert)
-    public static func importOrgOrForm(fromFileAtPath:String) throws -> ImportOrgOrForm_Result {
+    public static func importOrgOrForm(fromFileAtPath:String, intoOrgShortName:String?, asFormShortName:String?) throws -> ImportOrgOrForm_Result {
         var result:ImportOrgOrForm_Result = ImportOrgOrForm_Result()
         var funcString:String = "\(self.CTAG).importOrgOrForm"
         
@@ -916,7 +924,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             appError.prependCallStack(funcName: funcString)
             throw appError
         } catch { throw error }
-        let methodStr:String = validationResult.jsonTopLevel!["method"] as! String  // these are verified as present and have content
+        let methodStr:String = validationResult.jsonTopLevel!["method"] as! String      // these are verified as present and have content
         let contextStr:String = validationResult.jsonTopLevel!["context"] as! String
         
         // validate the import type
@@ -927,29 +935,67 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             // do nothing
         } else if methodStr == "eContactCollect.db.form.export" {
             funcString = funcString + ".FormOnly"
-            result.wasForm = true
+            result.wasFormOnly = true
             formOnlyMode = true
-            let nameComponents = contextStr.components(separatedBy: ",")
-            if nameComponents.count < 2 {
-                throw APP_ERROR(funcName: funcString, during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Import File", comment:""), developerInfo: "Form-only import; 'context'.components.count < 2 (\"\(contextStr)\"); " + fromFileAtPath)
+        } else {
+            throw APP_ERROR(funcName: funcString, during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Import File", comment:""), developerInfo: "'method' != acceptable values (\"\(methodStr)\"); " + fromFileAtPath)
+        }
+        
+        // obtain and validate the context's information
+        let nameComponents1 = contextStr.components(separatedBy: ";")
+        if nameComponents1.count >= 2 {
+            // new format of 'context' for Org & Forms:  Org;Form,Form,...
+            // new format of 'context' for Form-only:    Org;Form        ;Form
+            result.wasOrgShortName = nameComponents1[0]     // can be blank or nil at this stage if formOnlyMode
+            if formOnlyMode {
+                let nameComponents2 = nameComponents1[1].components(separatedBy: ",")
+                result.wasFormShortName = nameComponents2[0]
             }
-            result.wasOrgShortName = nameComponents[0]
-            result.wasFormShortName = nameComponents[1]
+        } else {
+            // old format of 'context' for Org & Forms:  Org
+            // old format of 'context' for Form-only:    Org,Form
+            let nameComponents2 = contextStr.components(separatedBy: ",")
+            result.wasOrgShortName = nameComponents2[0]
+            if formOnlyMode {
+                if nameComponents2.count < 2 {
+                    throw APP_ERROR(funcName: funcString, during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Import File", comment:""), developerInfo: "Form-only import; 'context'.components.count < 2 (\"\(contextStr)\"); " + fromFileAtPath)
+                }
+                result.wasFormShortName = nameComponents2[1]
+            }
+        }
+        
+        // any name overrides?
+        if !(intoOrgShortName ?? "").isEmpty {
+            result.wasOrgShortName = intoOrgShortName!
+        }
+        if formOnlyMode && !(asFormShortName ?? "").isEmpty {
+            result.wasFormShortName = asFormShortName!
+        }
+        
+        // is the import possible?
+        if result.wasOrgShortName.isEmpty {
+            // this is a user problem to resolve and should not be posted into the error.log
+            throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Into Organization short code has not been specified", comment:""))
+        }
+        if formOnlyMode {
+            if result.wasFormShortName.isEmpty {
+                // this is a user problem to resolve and should not be posted into the error.log
+                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .FORM_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("As Form short code has not been specified", comment:""))
+            }
+            
             do {
-                existingOrgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: nameComponents[0])
+                existingOrgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: result.wasOrgShortName)
             } catch var appError as APP_ERROR {
                 appError.prependCallStack(funcName: funcString)
                 throw appError
             } catch { throw error }
             if existingOrgRec == nil {
                 // this is a user problem to resolve and should not be posted into the error.log
-                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Organization for the Form must pre-exist: ", comment:"") + nameComponents[0])
+                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Organization for the Form must pre-exist: ", comment:"") + result.wasOrgShortName)
             }
-        } else {
-            throw APP_ERROR(funcName: funcString, during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Import File", comment:""), developerInfo: "Form-only import; 'method' != acceptable values (\"\(methodStr)\"); " + fromFileAtPath)
         }
         
-        // start importing; is this an entire Org import
+        // start importing; is this an entire Org import?
         var inx:Int = 1
         if !formOnlyMode {
             // yes, import first the single Org record
@@ -958,6 +1004,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult1.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
 
                 let tempNewOrgRec:RecOrganizationDefs_Optionals = RecOrganizationDefs_Optionals(jsonObj: getResult1.jsonItemLevel!, context: validationResult)
+                tempNewOrgRec.rOrg_Code_For_SV_File = result.wasOrgShortName
                 
                 if !tempNewOrgRec.validate() {
                     var developer_error_message = "Validate \(getResult1.tableName) 'table' entries; ; record \(inx) did not validate"
@@ -968,7 +1015,8 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 }
                 let newOrgRec:RecOrganizationDefs = try RecOrganizationDefs(existingRec: tempNewOrgRec)
             
-                let _ = try RecOrganizationDefs.orgDeleteRec(orgShortName: newOrgRec.rOrg_Code_For_SV_File)    // this will delete its linked entries in every other table
+                // first delete the Org record if it pre-exists and its linked entries in every other table
+                let _ = try RecOrganizationDefs.orgDeleteRec(orgShortName: newOrgRec.rOrg_Code_For_SV_File)
                 let _ = try newOrgRec.saveNewToDB()
             } catch var appError as APP_ERROR {
                 appError.prependCallStack(funcName: funcString)
@@ -984,6 +1032,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                     let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
                     if jsonItem != nil {
                         let newOrgLangRecOpt:RecOrganizationLangs_Optionals = RecOrganizationLangs_Optionals(jsonObj: jsonItem!, context: validationResult)
+                        newOrgLangRecOpt.rOrg_Code_For_SV_File = result.wasOrgShortName
                         if !newOrgLangRecOpt.validate() {
                             var developer_error_message = "record \(inx) did not validate"
                             if !(newOrgLangRecOpt.rOrgLang_LangRegionCode ?? "").isEmpty {
@@ -1010,6 +1059,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                     let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
                     if jsonItem != nil {
                         let newFormRecOpt:RecOrgFormDefs_Optionals = RecOrgFormDefs_Optionals(jsonObj: jsonItem!, context: validationResult)
+                        newFormRecOpt.rOrg_Code_For_SV_File = result.wasOrgShortName
                         if !newFormRecOpt.validate() {
                             var developer_error_message = "record \(inx) did not validate"
                             if !(newFormRecOpt.rForm_Code_For_SV_File ?? "").isEmpty {
@@ -1033,6 +1083,8 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult1.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
                 
                 let newFormRecOpt:RecOrgFormDefs_Optionals = RecOrgFormDefs_Optionals(jsonObj: getResult1.jsonItemLevel!, context: validationResult)
+                newFormRecOpt.rOrg_Code_For_SV_File = result.wasOrgShortName
+                newFormRecOpt.rForm_Code_For_SV_File = result.wasFormShortName
                 inx = 1
                 if !newFormRecOpt.validate() {
                     var developer_error_message = "record \(inx) did not validate"
@@ -1041,8 +1093,9 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                     }
                     throw APP_ERROR(funcName: funcString, during: "Validate \(getResult1.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
                 }
-                // this will delete its linked entries in every other table
                 let newFormRec:RecOrgFormDefs = try RecOrgFormDefs(existingRec: newFormRecOpt)
+
+                // first delete the Form record if it pre-exists and its linked entries in every other table
                 let _ = try RecOrgFormDefs.orgFormDeleteRec(formShortName: newFormRec.rForm_Code_For_SV_File, forOrgShortName: newFormRec.rOrg_Code_For_SV_File)
                 let _ = try newFormRec.saveNewToDB(withOrgRec: nil)    // do not auto-include the meta-data fields
             } catch var appError as APP_ERROR {
@@ -1062,6 +1115,8 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
                 if jsonItem != nil {
                     let newFormFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRecObj: jsonItem!, context: validationResult)
+                    newFormFieldRecOpt.rOrg_Code_For_SV_File = result.wasOrgShortName
+                    if formOnlyMode { newFormFieldRecOpt.rForm_Code_For_SV_File = result.wasFormShortName }
                     if !newFormFieldRecOpt.validate() {
                         var developer_error_message = "Validate \(getResult4.tableName) 'table' entries; ; record \(inx) did not validate"
                         if newFormFieldRecOpt.rFormField_Index != nil {
@@ -1085,6 +1140,8 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
                 if jsonItem != nil {
                     let newFormFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRecObj: jsonItem!, context: validationResult)
+                    newFormFieldRecOpt.rOrg_Code_For_SV_File = result.wasOrgShortName
+                    if formOnlyMode { newFormFieldRecOpt.rForm_Code_For_SV_File = result.wasFormShortName }
                     if !newFormFieldRecOpt.validate() {
                         var developer_error_message = "record \(inx) did not validate"
                         if newFormFieldRecOpt.rFormField_Index != nil {
@@ -1117,6 +1174,8 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
                 if jsonItem != nil {
                     let newFormFieldLocaleOptRec:RecOrgFormFieldLocales_Optionals = RecOrgFormFieldLocales_Optionals(jsonObj: jsonItem!, context: validationResult)
+                    newFormFieldLocaleOptRec.rOrg_Code_For_SV_File = result.wasOrgShortName
+                    if formOnlyMode { newFormFieldLocaleOptRec.rForm_Code_For_SV_File = result.wasFormShortName }
                     if !newFormFieldLocaleOptRec.validate() {
                         var developer_error_message = "record \(inx) did not validate"
                         if newFormFieldLocaleOptRec.rFormFieldLoc_Index != nil {

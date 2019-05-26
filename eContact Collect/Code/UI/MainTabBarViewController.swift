@@ -18,6 +18,10 @@ class MainTabBarViewController: UITabBarController, UITabBarControllerDelegate {
         super.viewDidLoad()
         self.delegate = self
         
+        // listen for notifications
+        NotificationCenter.default.addObserver(self, selector: #selector(noticeOpenConfigFile(_:)), name: .APP_FileRequestedToOpen, object: nil)
+
+        // choose proper enabled tabs during the first time
         if AppDelegate.mFirstTImeStages >= 0 {
             // first time the App has ever been run; force the entire wizard sequence to be utilized
             tabBar.items![0].isEnabled = false
@@ -31,6 +35,19 @@ class MainTabBarViewController: UITabBarController, UITabBarControllerDelegate {
             tabBar.items![2].isEnabled = false
             selectedIndex = 0
         }
+    }
+    
+    // received a notification that the end-user wants to open a Config file
+    @objc func noticeOpenConfigFile(_ notification:Notification) {
+//debugPrint("\(self.mCTAG).openConfigFileNotice STARTED")
+        if notification.userInfo == nil { return }
+        let url:URL = notification.userInfo![UIApplication.OpenURLOptionsKey.url] as! URL
+        let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+        let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC PopupImport") as! PopupImportViewController
+        newViewController.mFromExternal = true
+        newViewController.mFileURL = url
+        newViewController.modalPresentationStyle = .custom
+        self.present(newViewController, animated: true, completion: nil)
     }
     
     // a new tab was selected

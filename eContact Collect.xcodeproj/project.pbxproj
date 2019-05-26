@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D71FF33121D4452C00C4A370 /* UIHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D71FF33021D4452C00C4A370 /* UIHelpers.swift */; };
 		D7416EAE21F78A9D004850C6 /* ContactsReviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7416EAD21F78A9D004850C6 /* ContactsReviewViewController.swift */; };
 		D74C37B7220CC52500A5B23E /* OAuthSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D74C37A4220CB2BE00A5B23E /* OAuthSwift.framework */; };
 		D7BA6B4221EED9F400F45AFC /* Eureka.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; };
@@ -21,6 +20,7 @@
 		D7CC2ABF22027EAB00F39E36 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AB222027E4500F39E36 /* libMailCore-ios.a */; };
 		D7D852F221C9724200948408 /* PopupFirstTimeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */; };
 		D7D87FD621E67B7B002847DE /* ChooserLangRegionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */; };
+		D7EB06122296105200D0CA02 /* PopupImportViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7EB06112296105200D0CA02 /* PopupImportViewController.swift */; };
 		D7EE5BEC21FB7E0700769CA6 /* App_Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */; };
 		D903B63A21778B110021A80E /* ChooserRatingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D903B63921778B110021A80E /* ChooserRatingViewController.swift */; };
 		D903B63C21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D903B63B21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift */; };
@@ -319,7 +319,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		D71FF33021D4452C00C4A370 /* UIHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIHelpers.swift; sourceTree = "<group>"; };
 		D7416EAD21F78A9D004850C6 /* ContactsReviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsReviewViewController.swift; sourceTree = "<group>"; };
 		D74C3790220CB2BE00A5B23E /* OAuthSwift.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = OAuthSwift.xcodeproj; path = "../SubModules/OAuthSwift-master/OAuthSwift.xcodeproj"; sourceTree = "<group>"; };
 		D7BA6B3621EED9BC00F45AFC /* Eureka.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Eureka.xcodeproj; path = "../SubModules/Eureka-master/Eureka.xcodeproj"; sourceTree = "<group>"; };
@@ -333,6 +332,7 @@
 		D7CC2AC222027F4400F39E36 /* Project-Name-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Project-Name-Bridging-Header.h"; path = "Code/Project-Name-Bridging-Header.h"; sourceTree = "<group>"; };
 		D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupFirstTimeViewController.swift; sourceTree = "<group>"; };
 		D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserLangRegionViewController.swift; sourceTree = "<group>"; };
+		D7EB06112296105200D0CA02 /* PopupImportViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupImportViewController.swift; sourceTree = "<group>"; };
 		D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App_Error.swift; sourceTree = "<group>"; };
 		D903B63921778B110021A80E /* ChooserRatingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserRatingViewController.swift; sourceTree = "<group>"; };
 		D903B63B21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupEnterCollectorNotesViewController.swift; sourceTree = "<group>"; };
@@ -527,8 +527,8 @@
 				D92EFC30216DB9B000C1F12A /* PopupEnterEventViewController.swift */,
 				D903B63B21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift */,
 				D9EA940C21B38A9E00F78543 /* PopupEnterCloneViewController.swift */,
+				D7EB06112296105200D0CA02 /* PopupImportViewController.swift */,
 				D9229EAB219F46C300404079 /* UIColorExtension.swift */,
-				D71FF33021D4452C00C4A370 /* UIHelpers.swift */,
 			);
 			path = Utility_and_Popup;
 			sourceTree = "<group>";
@@ -1090,7 +1090,6 @@
 				D9278382217398EA00B9B88A /* SVFilesHandler.swift in Sources */,
 				D94BBC1D21B1E539003B6C6B /* WizOrgDefine1ViewController.swift in Sources */,
 				D90D6EAB2182A262000A90EB /* RecJsonFieldLocales.swift in Sources */,
-				D71FF33121D4452C00C4A370 /* UIHelpers.swift in Sources */,
 				D93957932161799E004E9BE9 /* WizDefineNicknameViewController.swift in Sources */,
 				D90D6EA421823807000A90EB /* RecOrganizationLangs.swift in Sources */,
 				D94399E42169115B00FC2AD8 /* WizFormDefine16ViewController.swift in Sources */,
@@ -1117,6 +1116,7 @@
 				D9A654D021671F4D00F0CD1E /* WizMenuViewController.swift in Sources */,
 				D92EFC31216DB9B000C1F12A /* PopupEnterEventViewController.swift in Sources */,
 				D903B63C21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift in Sources */,
+				D7EB06122296105200D0CA02 /* PopupImportViewController.swift in Sources */,
 				D9395791216175B1004E9BE9 /* WizDefinePINViewController.swift in Sources */,
 				D9254B3221597569006FDBF8 /* RecOrgCustomFieldDefs.swift in Sources */,
 				D9F2D2A721891BC4001507CB /* HexKeyboard.swift in Sources */,

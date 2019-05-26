@@ -47,9 +47,6 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
     override func viewDidLoad() {
 //debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
-        
-        // listen for file-open notifications since the end-user may be attempting to load a config file at initial startup
-        NotificationCenter.default.addObserver(self, selector: #selector(noticeOpenConfigFile(_:)), name: .APP_FileRequestedToOpen, object: nil)
     }
     
     // called by the framework when the view will *re-appear* (first time, from popovers, etc)
@@ -85,7 +82,6 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
         if self.isBeingDismissed || self.isMovingFromParent ||
             (self.navigationController?.isBeingDismissed ?? false) || (self.navigationController?.isMovingFromParent ?? false) {
             
-            NotificationCenter.default.removeObserver(self, name: .APP_FileRequestedToOpen, object: nil)
 //debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED \(self)")
         } else {
 //debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed \(self)")
@@ -174,14 +170,6 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
             }
             break
         }
-    }
-    
-    // received a notification that the end-user opened an OrgConfigs file
-    @objc func noticeOpenConfigFile(_ notification:Notification) {
-//debugPrint("\(self.mCTAG).openConfigFileNotice STARTED")
-        if notification.userInfo == nil { return }
-        let url:URL = notification.userInfo![UIApplication.OpenURLOptionsKey.url] as! URL
-        UIHelpers.importConfigFile(fromURL: url, usingVC: self, fromExternal: true)
     }
     
     // return from the Popup First Time view

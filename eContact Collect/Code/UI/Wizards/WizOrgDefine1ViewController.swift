@@ -7,7 +7,7 @@
 
 import UIKit
 
-class WizOrgDefine1ViewController: UIViewController, UIDocumentPickerDelegate {
+class WizOrgDefine1ViewController: UIViewController, UIDocumentPickerDelegate, CIVC_Delegate {
     // member constants and other static content
     private let mCTAG:String = "VCW2-1"
     private weak var mRootVC:WizMenuViewController? = nil
@@ -54,12 +54,20 @@ class WizOrgDefine1ViewController: UIViewController, UIDocumentPickerDelegate {
     // return from the document picker
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
 //debugPrint("\(self.mCTAG).documentPicker.didPickDocumentsAt STARTED URL=\(urls[0].path)")
-        UIHelpers.importConfigFile(fromURL: urls[0], usingVC: self, finalDialogCompletion: { vc, url, theChoice, theResult in
-            if theResult {
-                self.mRootVC!.mWorking_Org_Rec = nil
-                self.navigationController?.popToRootViewController(animated: true)
-            }
-        })
+        let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+        let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC PopupImport") as! PopupImportViewController
+        newViewController.mCIVCdelegate = self
+        newViewController.mFromExternal = false
+        newViewController.mFileURL = urls[0]
+        newViewController.modalPresentationStyle = .custom
+        self.present(newViewController, animated: true, completion: nil)
+    }
+    
+    // return from a successful import
+    func completed_CIVC_ImportSuccess() {
+//debugPrint("\(self.mCTAG).completed_CIVC_ImportSuccess STARTED")
+        self.mRootVC!.mWorking_Org_Rec = nil
+        self.navigationController?.popToRootViewController(animated: true)
     }
     
     // intercept the Next segue

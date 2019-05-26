@@ -81,6 +81,7 @@ public class EntryFormProvisioner {
     
     // reassess the provided OrgRec and FormRec (since they were changed)
     public func reassess() {
+debugPrint("\(self.mCTAG).reassess STARTED")
         self.mShownBilingualLanguage = ""
         self.mShowMode = .SINGLE_LANG
         
