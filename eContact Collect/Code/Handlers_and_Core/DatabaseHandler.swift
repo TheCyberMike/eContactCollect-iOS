@@ -710,7 +710,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             
             // load and build all the Org's or Form's FormField records into json array and validate them all
             let jsonFormFieldsItemsObj:NSMutableArray = NSMutableArray()
-            let records2:AnySequence<Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: forOrgShortName, forFormShortName: nil, sortedBySVFileOrder: false)
+            let records2:AnySequence<Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: forOrgShortName, forFormShortName: forFormShortName, sortedBySVFileOrder: false)
             for rowObj in records2 {
                 let orgFormFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(row:rowObj)
                 let jsonFormFieldObj = orgFormFieldRec.buildJSONObject()
@@ -724,7 +724,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             
             // load and build all the Org's or Form's FormFieldLocale records into json array and validate them all
             let jsonFormFieldLocalesItemsObj:NSMutableArray = NSMutableArray()
-            let records3:AnySequence<Row> = try RecOrgFormFieldLocales.formFieldLocalesGetAllRecs(forOrgShortName: forOrgShortName, forFormShortName: nil)
+            let records3:AnySequence<Row> = try RecOrgFormFieldLocales.formFieldLocalesGetAllRecs(forOrgShortName: forOrgShortName, forFormShortName: forFormShortName)
             for rowObj in records3 {
                 let orgFormFieldLocaleRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(row:rowObj)
                 let jsonFormFieldLocaleObj = orgFormFieldLocaleRec.buildJSONObject()
