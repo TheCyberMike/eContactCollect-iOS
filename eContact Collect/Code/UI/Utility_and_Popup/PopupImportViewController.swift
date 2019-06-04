@@ -91,7 +91,7 @@ debugPrint("\(mCTAG).deinit STARTED")
         // open the proposed file and get its header information
         let stream = InputStream(fileAtPath: self.mFileURL!.path)
         if stream == nil {
-            self.mPreImportErrors.append(NSLocalizedString("Could not open the chosen file", comment: ""))
+            self.mPreImportErrors.append(NSLocalizedString("Could not open the file", comment: ""))
             return
         }
         stream!.open()
@@ -314,7 +314,7 @@ debugPrint("\(mCTAG).deinit STARTED")
                 msgString = msgString + msg + "\n\n"
             }
 
-            let section2 = Section("PRE-IMPORT ERRORS OCCURED")
+            let section2 = Section(NSLocalizedString("PRE-IMPORT ERRORS OCCURED", comment:""))
             form +++ section2
             section2 <<< TextAreaRow() {
                 $0.value = msgString
@@ -329,7 +329,7 @@ debugPrint("\(mCTAG).deinit STARTED")
         // build the import information form depending upon file contents and database contents
         if self.mParentVC!.mFormOnly {
             // Form-Only
-            let section2 = Section("Into Organization")
+            let section2 = Section(NSLocalizedString("Into Organization", comment:""))
             form +++ section2
             if self.mParentVC!.mOrgShortNames.count == 1 {      // case of mOrgShortNames.count == 0 already covered in pre-import errors
                 self.mParentVC!.mStoreAsOrgName = self.mParentVC!.mOrgShortNames[0]
@@ -372,7 +372,7 @@ debugPrint("\(mCTAG).deinit STARTED")
                 }
             }
             
-            let section3 = Section("As Form")
+            let section3 = Section(NSLocalizedString("As Form", comment:""))
             form +++ section3
             section3 <<< TextRow() {
                 $0.tag = "formName"
@@ -411,7 +411,7 @@ debugPrint("\(mCTAG).deinit STARTED")
         } else {
             
             // Org and Forms
-            let section2 = Section("As Organization")
+            let section2 = Section(NSLocalizedString("As Organization", comment:""))
             form +++ section2
             section2 <<< TextRow() {
                 $0.tag = "orgName"
@@ -450,7 +450,7 @@ debugPrint("\(mCTAG).deinit STARTED")
                     cell.textLabel!.font = .systemFont(ofSize: 14.0)
             }
             
-            let section3 = Section("Contains Forms")
+            let section3 = Section(NSLocalizedString("Contains Forms", comment:""))
             form +++ section3
             section3 <<< LabelRow() {
                 $0.tag = "formNames"

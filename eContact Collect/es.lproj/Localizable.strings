@@ -6,6 +6,7 @@
 //
 
 // App_error
+// APP_ERROR
 "No error" = "No error";
 "Unknown error" = "Unknown error";
 "Suberror:" = "Suberror:";
@@ -30,7 +31,7 @@
 "Missing known Email Provider" = "Missing known Email Provider";
 "Missing Email Account Credentials" = "Missing Email Account Credentials";
 "SMTP Email Subsystem returned error" = "SMTP Email Subsystem returned error";
-
+// USER_ERROR
 "Organization does not exist" = "Organization does not exist";
 "Form does not exist" = "Form does not exist";
 "iOS is not allowing the App to send email" = "iOS is not allowing the App to send email";
@@ -131,16 +132,26 @@
 "Name shown in " = "Name shown in ";
 "Must have an Event short code if any Names shown are filled in" = "Must have an Event short code if any Names shown are filled in";
 
-// UIHelpers.swift
-"Import Confirmation" = "Import Confirmation";
-"Import Configuration from file:\n" = "Import Configuration from file:\n";
-"\n\nWARNING: if you have this Organization or Form already in your database, it will be replaced with the new configuration in this file; any customization you may have done will be lost and need to be re-entered." = "\n\nWARNING: if you have this Organization or Form already in your database, it will be replaced with the new configuration in this file; any customization you may have done will be lost and need to be re-entered.";
-" You can press No then invoke the import later in the Settings-> Preferences menu." = " You can press No then invoke the import later in the Settings-> Preferences menu.";
+// PopupImportViewController.swift
+"Form" = "Form";
+"Sample Form" = "Sample Form";
 "Success" = "Success";
+"The selected file was empty" = "The selected file was empty";
+"The selected file was not one of this App's configuration files" = "The selected file was not one of this App's configuration files";
+"The selected file's 'context' is improperly formatted" = "The selected file's 'context' is improperly formatted";
+"The Form configuration file is missing its stored Form name" = "The Form configuration file is missing its stored Form name";
+"A Form configuration file cannot be imported if you have no Organizations defined" = "A Form configuration file cannot be imported if you have no Organizations defined";
+"The Org configuration file is missing its stored Org name" = "The Org configuration file is missing its stored Org name";
 "The Form configuration file was successfully imported." = "The Form configuration file was successfully imported.";
 "The Organization configuration file was successfully imported." = "The Organization configuration file was successfully imported.";
-"The configuration file failed to be imported: " = "The configuration file failed to be imported: ";
 "Import Error" = "Import Error";
+"PRE-IMPORT ERRORS OCCURED" = "PRE-IMPORT ERRORS OCCURED";
+"Into Organization" = "Into Organization";
+"As Form" = "As Form";
+"As Organization" = "As Organization";
+"Contains Forms" = "Contains Forms";
+"WARNING: There is a Form already in the database for the chosen Org with the same name; if you import then the existing Form will be replaced with this file's form" = "WARNING: There is a Form already in the database for the chosen Org with the same name; if you import then the existing Form will be replaced with this file's form";
+"WARNING: There is an Org already in the database with the same name; if you import then all the existing Org's setting and forms will be replaced with this file's new configurations" = "WARNING: There is an Org already in the database with the same name; if you import then all the existing Org's setting and forms will be replaced with this file's new configurations";
 
 // AdminPINViewController.swift
 "Must enter a PIN" = "Must enter a PIN";
