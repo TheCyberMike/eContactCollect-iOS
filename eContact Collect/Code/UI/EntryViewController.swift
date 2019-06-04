@@ -90,7 +90,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
         super.viewDidLoad()
         
         // listen for notifications
-        NotificationCenter.default.addObserver(self, selector: #selector(noticeCreatedMainEFP(_:)), name: .APP_CreatedMainEFP, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(noticeMainEFPaddedRemoved(_:)), name: .APP_MainEFPaddedRemoved, object: nil)
     }
     
     // called by the framework when the view will *re-appear* (first time, from popovers, etc)
@@ -187,7 +187,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
         if self.isBeingDismissed || self.isMovingFromParent ||
             (self.navigationController?.isBeingDismissed ?? false) || (self.navigationController?.isMovingFromParent ?? false) {
 //debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSING \(self)")
-            NotificationCenter.default.removeObserver(self, name: .APP_CreatedMainEFP, object: nil)
+            NotificationCenter.default.removeObserver(self, name: .APP_MainEFPaddedRemoved, object: nil)
             if self.mEFP != nil && self.mListenersEstablished {
                 NotificationCenter.default.removeObserver(self, name: .APP_EFP_OrgFormChange, object: self.mEFP!)
                 NotificationCenter.default.removeObserver(self, name: .APP_EFP_LangRegionChanged, object: self.mEFP!)
@@ -226,7 +226,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
     
     // received a notification that the mainline EFP was just created and made ready; note it could indicate a nil during a factory reset
     // usually this will be triggered when the VC is currently NOT showing
-    @objc func noticeCreatedMainEFP(_ notification:Notification) {
+    @objc func noticeMainEFPaddedRemoved(_ notification:Notification) {
         if AppDelegate.mEntryFormProvisioner != nil {
             // is being changed
             if self.mEFP == nil {
@@ -238,7 +238,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
                 self.mEntryFormVC!.noticeCreatedMainEFPPassThru()
             }
         } else {
-            // is a factory reset
+            // is a factory reset or all Orgs have been removed from the database
             if self.mEFP != nil {
                 if self.mEFP!.mIsMainlineEFP {
 //debugPrint("\(self.mCTAG).noticeCreatedMainEFP IS AFFECTED BY FACTORY RESET \(self)")

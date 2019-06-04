@@ -8,8 +8,10 @@
 import Eureka
 import SQLite
 
-class AdminPrefsViewController: FormViewController, COVC_Delegate, CFVC_Delegate, UIDocumentPickerDelegate {
+class AdminPrefsViewController: FormViewController, COVC_Delegate, CFVC_Delegate, CIVC_Delegate, UIDocumentPickerDelegate {
     // member variables
+    private var mOrgQty:Int64 = 0
+    private var mOrgShortName:String? = nil
     private var mEmailDefault:String? = nil
     private var mEmailViaOptions:[EmailVia]? = nil
     private weak var mMVSaccts:MultivaluedSection? = nil
@@ -92,9 +94,11 @@ debugPrint("\(mCTAG).deinit STARTED")
     // refresh the Email Accts MVS
     private func refreshEmailAccts() {
         self.mEmailViaOptions = EmailHandler.shared.getListEmailOptions()
-        self.mDefaultAcct!.options = self.mEmailViaOptions!.map { $0.viaNameLocalized }
+        let theNames = self.mEmailViaOptions!.map { $0.viaNameLocalized }
+        self.mDefaultAcct!.options = theNames
         
         // check the recorded EmailVias against what is in the MVS
+        var addedRemoved:Bool = false
         for emailVia in self.mEmailViaOptions! {
             if let br = form.rowBy(tag: "AC," + emailVia.viaNameLocalized) {
                 // EmailVia already exists as a buttonRow; change it
@@ -107,17 +111,76 @@ debugPrint("\(mCTAG).deinit STARTED")
                 let ar = form.rowBy(tag: "add_new_account")
                 do {
                     try self.mMVSaccts!.insert(row: br1, before: ar!)
+                    addedRemoved = true
                 } catch {
                     AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refreshEmailAccts", errorStruct: error, extra: nil)
                     // do not show an error to the end-user
                 }
             }
         }
-        // not going to check for deletions
+        
+        // now look for deletions which would only happen during a factory reset
+        if self.mMVSaccts!.allRows.count > 0 {
+            for inx:Int in stride(from: self.mMVSaccts!.allRows.count - 1, through: 0, by: -1) {
+                let row = self.mMVSaccts!.allRows[inx]
+                let sp = row.tag!.components(separatedBy: ",")
+                if sp.count == 2 && sp[0] == "AC" {
+                    let pos = theNames.firstIndex(of: sp[1])
+                    if pos == nil {
+                        self.mMVSaccts!.remove(at: inx)
+                        addedRemoved = true
+                    }
+                }
+            }
+        }
+        if addedRemoved { tableView.reloadData() }
     }
+    
+    // refresh the default email account
     private func refreshDefaultEmailAcct() {
         self.mEmailDefault = EmailHandler.shared.getLocalizedDefaultEmail()
         self.mDefaultAcct!.value = self.mEmailDefault
+    }
+    
+    // refresh the actions that are dependent upon Orgs in the database
+    private func refreshActions() {
+        // determine quantity of Org records and the name of the only Org record
+        self.mOrgQty = 0
+        self.mOrgShortName = nil
+        do {
+            self.mOrgQty = try RecOrganizationDefs.orgGetQtyRecs()
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refreshActions", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+        }
+        if self.mOrgQty == 1 {
+            do {
+                let records:AnySequence<SQLite.Row> = try RecOrganizationDefs.orgGetAllRecs()
+                for rowObj in records {
+                    let lastOrgRec:RecOrganizationDefs? = try RecOrganizationDefs(row:rowObj)
+                    self.mOrgShortName = lastOrgRec?.rOrg_Code_For_SV_File
+                    break
+                }
+                
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refreshActions", errorStruct: error, extra: nil)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            }
+        }
+        
+        // now update the proper form fields
+        let br1 = form.rowBy(tag: "export_settings_org")
+        if br1 != nil {
+            if self.mOrgQty <= 0 { br1!.disabled = true }
+            else { br1!.disabled = false }
+            br1!.evaluateDisabled()
+        }
+        let br2 = form.rowBy(tag: "export_settings_form")
+        if br2 != nil {
+            if self.mOrgQty <= 0 { br2!.disabled = true }
+            else { br2!.disabled = false }
+            br2!.evaluateDisabled()
+        }
     }
     
     // build the form
@@ -185,30 +248,6 @@ debugPrint("\(mCTAG).deinit STARTED")
                 }
         }
         
-        // determine quantity of Org records and the name of the only Org record
-        var orgQty:Int64 = 0
-        var orgShortName:String? = nil
-        do {
-            orgQty = try RecOrganizationDefs.orgGetQtyRecs()
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).buildForm", errorStruct: error, extra: nil)
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
-        }
-        if orgQty == 1 {
-            do {
-                let records:AnySequence<SQLite.Row> = try RecOrganizationDefs.orgGetAllRecs()
-                for rowObj in records {
-                    let lastOrgRec:RecOrganizationDefs? = try RecOrganizationDefs(row:rowObj)
-                    orgShortName = lastOrgRec?.rOrg_Code_For_SV_File
-                    break
-                }
-                
-            } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).buildForm", errorStruct: error, extra: nil)
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
-            }
-        }
-
         let defaultAcctRow = PushRow<String>(){ row in
             row.title = NSLocalizedString("Default Sending Email Acct", comment:"")
             row.tag = "email_default"
@@ -219,7 +258,6 @@ debugPrint("\(mCTAG).deinit STARTED")
                 if chgRow.value != nil {
                     self!.mEmailDefault =  chgRow.value!
                     EmailHandler.shared.setLocalizedDefaultEmail(localizedName: chgRow.value!)
-                    self!.refreshEmailAccts()
                 }
         }
         section1 <<< defaultAcctRow
@@ -245,7 +283,7 @@ debugPrint("\(mCTAG).deinit STARTED")
                     }
                 }  // end of addButtonProvider
                 /*mvSection.multivaluedRowToInsertAt = { [weak self] index in
-                    // not necessary for this particular MVS
+                 // not necessary for this particular MVS; will get auto-added during viewWillAppear()
                 }*/
         }
         form +++ mvs_accounts
@@ -256,10 +294,9 @@ debugPrint("\(mCTAG).deinit STARTED")
         section3 <<< ButtonRow() {
             $0.tag = "export_settings_org"
             $0.title = NSLocalizedString("Export/Backup all Settings for an Organization", comment:"")
-            if orgQty <= 0 { $0.disabled = true }
             }.onCellSelection { [weak self] cell, row in
-                if orgQty == 1 || orgShortName != nil {
-                    self!.generateOrgOrFormConfigFile(forOrgShortName: orgShortName!)
+                if self!.mOrgQty == 1 || self!.mOrgShortName != nil {
+                    self!.generateOrgOrFormConfigFile(forOrgShortName: self!.mOrgShortName!)
                 } else {
                     let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
                     let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC ChooseOrg") as! ChooserOrgViewController
@@ -272,10 +309,9 @@ debugPrint("\(mCTAG).deinit STARTED")
         section3 <<< ButtonRow() {
             $0.tag = "export_settings_form"
             $0.title = NSLocalizedString("Export/Backup all Settings for one Form", comment:"")
-            if orgQty <= 0 { $0.disabled = true }
             }.onCellSelection { [weak self] cell, row in
-                if orgQty == 1 || orgShortName != nil {
-                    self!.chooseForm(forOrgShortName: orgShortName!)
+                if self!.mOrgQty == 1 || self!.mOrgShortName != nil {
+                    self!.chooseForm(forOrgShortName: self!.mOrgShortName!)
                 } else {
                     let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
                     let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC ChooseOrg") as! ChooserOrgViewController
@@ -326,10 +362,12 @@ debugPrint("\(mCTAG).deinit STARTED")
                         } else {
                             AppDelegate.postAlert(message: NSLocalizedString("Factory reset was successful", comment:""))
                         }
+                        self!.refreshActions()
                     }
                     return  // from callback
                 })
         }
+        self.refreshActions()
     }
     
     // create the pretty complex button row needed for existing and new FormField records
@@ -400,7 +438,6 @@ debugPrint("\(mCTAG).deinit STARTED")
             }
             inx = inx + 1
         }
-        self.refreshEmailAccts()
     }
     
     // return from the Org Chooser view;
@@ -497,14 +534,21 @@ debugPrint("\(mCTAG).deinit STARTED")
         }
     }
     
-    // return from the document picker
+    // return from the document picker which chose an exported config file which to import
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
         let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC PopupImport") as! PopupImportViewController
+        newViewController.mCIVCdelegate = self
         newViewController.mFromExternal = false
         newViewController.mFileURL = urls[0]
         newViewController.modalPresentationStyle = .custom
         self.present(newViewController, animated: true, completion: nil)
+    }
+    
+    // return from a successful import
+    func completed_CIVC_ImportSuccess() {
+//debugPrint("\(self.mCTAG).completed_CIVC_ImportSuccess STARTED")
+        self.refreshActions()
     }
 }
 

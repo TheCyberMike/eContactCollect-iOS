@@ -23,7 +23,7 @@ class OrgTitleViewController: UIViewController {
     // called when the object instance is being destroyed
     deinit {
 //debugPrint("\(mCTAG).deinit STARTED \(self)")
-        NotificationCenter.default.removeObserver(self, name: .APP_CreatedMainEFP, object: nil)
+        NotificationCenter.default.removeObserver(self, name: .APP_MainEFPaddedRemoved, object: nil)
         if self.mListenersEstablished && self.mEFP != nil {
             NotificationCenter.default.removeObserver(self, name: .APP_EFP_OrgFormChange, object: self.mEFP!)
             NotificationCenter.default.removeObserver(self, name: .APP_EFP_LangRegionChanged, object: self.mEFP!)
@@ -57,7 +57,7 @@ class OrgTitleViewController: UIViewController {
             self.mEFP = AppDelegate.mEntryFormProvisioner
             self.mEFP?.mIsMainlineEFP = true
         }
-        NotificationCenter.default.addObserver(self, selector: #selector(noticeCreatedMainEFP(_:)), name: .APP_CreatedMainEFP, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(noticeMainEFPaddedRemoved(_:)), name: .APP_MainEFPaddedRemoved, object: nil)
 
         if self.mEFP != nil && !self.mListenersEstablished {
             NotificationCenter.default.addObserver(self, selector: #selector(noticeNewOrgForm(_:)), name: .APP_EFP_OrgFormChange, object: self.mEFP!)
@@ -113,7 +113,7 @@ class OrgTitleViewController: UIViewController {
     }
     
     // received a notification that the mainline EFP was just created and made ready; note it could indicate a nil during a factory reset
-    @objc func noticeCreatedMainEFP(_ notification:Notification) {
+    @objc func noticeMainEFPaddedRemoved(_ notification:Notification) {
         if AppDelegate.mEntryFormProvisioner != nil {
             // is being changed
             if self.mEFP == nil {
@@ -128,7 +128,7 @@ class OrgTitleViewController: UIViewController {
                 }
             }
         } else {
-            // is a factory reset
+            // is a factory reset or no Orgs are left in the database
             if self.mEFP != nil {
                 if self.mEFP!.mIsMainlineEFP {
 //debugPrint("\(self.mCTAG).noticeCreatedMainEFP IS AFFECTED BY FACTORY RESET \(self)")

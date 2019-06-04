@@ -94,9 +94,6 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
     // called when the object instance is being destroyed
     deinit {
 //debugPrint("\(self.mCTAG).deinit STARTED")
-        if self.mHasNotification && AppDelegate.mEntryFormProvisioner != nil {
-            NotificationCenter.default.removeObserver(self, name: .APP_EFP_OrgFormChange, object: AppDelegate.mEntryFormProvisioner!)
-        }
     }
     
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
@@ -112,7 +109,8 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
         navigationOptions = RowNavigationOptions.Enabled.union(.SkipCanNotBecomeFirstResponderRow)
         rowKeyboardSpacing = 5
         
-        // setup a notification listener if the current Org or Form has changed
+        // setup a notification listeners if the main EFP has been added or removed, or if the current Org or Form has changed
+        NotificationCenter.default.addObserver(self, selector: #selector(noticeMainEFPaddedRemoved(_:)), name: .APP_MainEFPaddedRemoved, object: nil)
         if AppDelegate.mEntryFormProvisioner != nil {
             NotificationCenter.default.addObserver(self, selector: #selector(newCurrentsNotice(_:)), name: .APP_EFP_OrgFormChange, object: AppDelegate.mEntryFormProvisioner!)
             self.mHasNotification = true
@@ -135,10 +133,12 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
         if myParent != nil {
             if myParent!.mDismissing {
 //debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND PARENT VC IS DISMISSED parent=\(self.parent!)")
+                NotificationCenter.default.removeObserver(self, name: .APP_MainEFPaddedRemoved, object: nil)
                 if self.mHasNotification && AppDelegate.mEntryFormProvisioner != nil {
                     NotificationCenter.default.removeObserver(self, name: .APP_EFP_OrgFormChange, object: AppDelegate.mEntryFormProvisioner!)
                     self.mHasNotification = false
                 }
+                NotificationCenter.default.removeObserver(self, name: .APP_EFP_OrgFormChange, object: nil)
                 self.mButtonRowEditContacts = nil
                 self.mButtonRowSendContacts = nil
                 self.mButtonRowSwitchEvent = nil
@@ -161,9 +161,25 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
         // Dispose of any resources that can be recreated.
     }
     
+    // received a notification that the mainline EFP was just created and made ready; note it could indicate a nil during a factory reset
+    // usually this will be triggered when the VC is currently NOT showing
+    @objc func noticeMainEFPaddedRemoved(_ notification:Notification) {
+debugPrint("\(self.mCTAG).noticeMainEFPaddedRemoved STARTED")
+        if AppDelegate.mEntryFormProvisioner != nil {
+            // added
+            NotificationCenter.default.addObserver(self, selector: #selector(newCurrentsNotice(_:)), name: .APP_EFP_OrgFormChange, object: AppDelegate.mEntryFormProvisioner!)
+            self.mHasNotification = true
+        } else {
+            // removed
+            NotificationCenter.default.removeObserver(self, name: .APP_EFP_OrgFormChange, object: nil)
+            self.mHasNotification = false
+        }
+        self.refresh()
+    }
+    
     // received a notification that the AppDelegate current Org or Form has changed
     @objc func newCurrentsNotice(_ notification:Notification) {
-//debugPrint("\(self.mCTAG).newCurrentsNotice STARTED")
+debugPrint("\(self.mCTAG).newCurrentsNotice STARTED")
         self.refresh()
     }
     
@@ -219,7 +235,7 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
             $0.disabled = (hasCurrentOrg) ? false : true
             }.cellUpdate { cell, row in
                 cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-                if hasCurrentOrg {
+                if hasCurrentOrg && AppDelegate.mEntryFormProvisioner != nil {
                     cell.detailTextLabel?.text = AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Event_Code_For_SV_File
                 }
             }.onCellSelection { [weak self] cell, row in
@@ -237,7 +253,7 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
             $0.disabled = (!hasCurrentOrg || formQty < 2) ? true : false
             }.cellUpdate { cell, row in
                 cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-                if hasCurrentOrg && hasCurrentForm {
+                if hasCurrentOrg && hasCurrentForm && AppDelegate.mEntryFormProvisioner != nil {
                     cell.detailTextLabel?.text = AppDelegate.mEntryFormProvisioner!.mFormRec!.rForm_Code_For_SV_File
                 }
             }.onCellSelection { [weak self] cell, row in
@@ -255,7 +271,7 @@ class AdminMenuFormViewController: FormViewController, COVC_Delegate, CFVC_Deleg
             $0.disabled = (orgQty < 2) ? true : false
             }.cellUpdate { cell, row in
                 cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-                if hasCurrentOrg {
+                if hasCurrentOrg && AppDelegate.mEntryFormProvisioner != nil {
                     cell.detailTextLabel?.text = AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File
                 }
             }.onCellSelection { [weak self] cell, row in

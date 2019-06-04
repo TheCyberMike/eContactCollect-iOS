@@ -201,14 +201,16 @@ debugPrint("\(mCTAG).deinit STARTED")
     // perform the actual import
     private func importConfigFile() {
         do {
-            let result:DatabaseHandler.ImportOrgOrForm_Result = try DatabaseHandler.importOrgOrForm(fromFileAtPath: self.mFileURL!.path, intoOrgShortName: nil, asFormShortName: nil)
+            let result:DatabaseHandler.ImportOrgOrForm_Result = try DatabaseHandler.importOrgOrForm(fromFileAtPath: self.mFileURL!.path, intoOrgShortName: self.mStoreAsOrgName, asFormShortName: self.mStoreAsFormName)
             if self.mFormOnly {
                 // Form-only import was performed
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Success", comment:""), message: NSLocalizedString("The Form configuration file was successfully imported.", comment:""), buttonText: NSLocalizedString("Okay", comment:""), completion: { self.dismiss(animated: true, completion: {
                         if self.mCIVCdelegate != nil { self.mCIVCdelegate!.completed_CIVC_ImportSuccess() }
-                }) })
+                    })
+                })
                 if AppDelegate.mEntryFormProvisioner == nil {
-                    // do nothing if the mainline EFP has not been established yet
+                    // this will trigger an auto-create of the mainline EFP and an auto-load of the first Org and Form in the DB
+                    (UIApplication.shared.delegate as! AppDelegate).setCurrentOrg(toOrgShortName: result.wasOrgShortName)
                 } else if AppDelegate.mEntryFormProvisioner!.mOrgRec.rOrg_Code_For_SV_File == result.wasOrgShortName &&
                     AppDelegate.mEntryFormProvisioner!.mFormRec!.rForm_Code_For_SV_File == result.wasFormShortName {
                     // the shown Org's Form is the same as the imported Org's Form; need to inform of the shown Form's changes throughout the App
@@ -218,7 +220,8 @@ debugPrint("\(mCTAG).deinit STARTED")
                 // entire Org and all its Forms inport was performed
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Success", comment:""), message: NSLocalizedString("The Organization configuration file was successfully imported.", comment:""), buttonText: NSLocalizedString("Okay", comment:""), completion: { self.dismiss(animated: true, completion: {
                         if self.mCIVCdelegate != nil { self.mCIVCdelegate!.completed_CIVC_ImportSuccess() }
-                }) })
+                    })
+                })
                 if AppDelegate.mEntryFormProvisioner == nil {
                     // this will trigger an auto-create of the mainline EFP and an auto-load of the first Org in the DB
                     (UIApplication.shared.delegate as! AppDelegate).setCurrentOrg(toOrgRec: nil)

@@ -133,7 +133,7 @@ public struct PreferencesKeys {
 // App internal Notification definitions
 extension Notification.Name {
     // global notifications
-    static let APP_CreatedMainEFP = Notification.Name("APP_CreatedMainEFP")
+    static let APP_MainEFPaddedRemoved = Notification.Name("APP_MainEFPaddedRemoved")
     static let APP_FileRequestedToOpen = Notification.Name("APP_FileRequestedToOpen")
     static let APP_EmailCompleted = Notification.Name("APP_EmailCompleted")
     // per-object notifications
@@ -522,23 +522,29 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
             // do not show an error to the end-user
         }
         
-        // were both found and consistent with each other?
-        if lastOrgRec != nil && (lastFormRec?.isPartOfOrg(orgRec: lastOrgRec!) ?? false) == true {
-            // yes, create or alter the mainline EntryFormProvisioner
-            if AppDelegate.mEntryFormProvisioner == nil {
-                // create the new mainline EntryFormProvisioner; must also send out a global notification this its been late-created
-                AppDelegate.mEntryFormProvisioner = EntryFormProvisioner(forOrgRec: lastOrgRec!, forFormRec: lastFormRec!)
-                NotificationCenter.default.post(name: .APP_CreatedMainEFP, object: nil)
+        // examine what was found in the database
+        if lastOrgRec == nil {
+            // there are no Org records in the database; eliminate the Main EFP and let every VC know
+            self.resetCurrents()
+        } else {
+            // an Org record was found
+            if (lastFormRec?.isPartOfOrg(orgRec: lastOrgRec!) ?? false) == true {
+                // yes both were found and are consistent with each other; create or alter the mainline EntryFormProvisioner
+                if AppDelegate.mEntryFormProvisioner == nil {
+                    // create the new mainline EntryFormProvisioner; must also send out a global notification this its been late-created
+                    AppDelegate.mEntryFormProvisioner = EntryFormProvisioner(forOrgRec: lastOrgRec!, forFormRec: lastFormRec!)
+                    NotificationCenter.default.post(name: .APP_MainEFPaddedRemoved, object: nil)
+                } else {
+                    // change the existing mainline EntryFormProvisioner; it will auto-notify those listening to it
+                    AppDelegate.mEntryFormProvisioner!.setBoth(orgRec: lastOrgRec!, formRec: lastFormRec!)
+                }
+                // remember the OrgRec and FormRec
+                AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastOrganization, value: lastOrgRec!.rOrg_Code_For_SV_File)
+                AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastForm, value: lastFormRec!.rForm_Code_For_SV_File)
             } else {
-                // change the existing mainline EntryFormProvisioner; it will auto-notify those listening to it
-                AppDelegate.mEntryFormProvisioner!.setBoth(orgRec: lastOrgRec!, formRec: lastFormRec!)
+                // no, at least remember the OrgRec's short name
+                AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastOrganization, value: lastOrgRec!.rOrg_Code_For_SV_File)
             }
-            // remember the OrgRec and FormRec
-            AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastOrganization, value: lastOrgRec!.rOrg_Code_For_SV_File)
-            AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastForm, value: lastFormRec!.rForm_Code_For_SV_File)
-        } else if lastOrgRec != nil {
-            // no, at least remember the OrgRec
-            AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastOrganization, value: lastOrgRec!.rOrg_Code_For_SV_File)
         }
     }
     
@@ -586,8 +592,30 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         var lastOrgRec:RecOrganizationDefs? = nil
         var lastFormRec:RecOrgFormDefs? = nil
         do {
-            if toFormRec == nil {
-                // being told to load the first or only Form that the remembered Org has
+            if toFormRec != nil {
+                // being told to change to a specified Form; have to make sure the Org record is also present in the database
+                lastFormRec = toFormRec!
+                if AppDelegate.mEntryFormProvisioner != nil {
+                    if toFormRec!.isPartOfOrg(orgRec: AppDelegate.mEntryFormProvisioner!.mOrgRec) {
+                        // new Form is part of our existing EFP, so just do a change
+                        lastOrgRec = AppDelegate.mEntryFormProvisioner!.mOrgRec
+                    } else {
+                        // new Form apparently is dictating a change in Org too, so do both
+                        lastOrgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: toFormRec!.rOrg_Code_For_SV_File)
+                    }
+                } else {
+                    // no mainline EFP exists, so create one for this Form and its implied Org
+                    lastOrgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: toFormRec!.rOrg_Code_For_SV_File)
+                }
+            }
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).setCurrentForm(toFormRec.1", errorStruct: error, extra: nil)
+            // do not show an error to the end-user
+        }
+        
+        do {
+            if toFormRec == nil || lastOrgRec == nil {
+                // being told to load the first or only Form that the remembered Org has; or the Form's Org was not found
                 if AppDelegate.mEntryFormProvisioner != nil {
                     lastOrgRec = AppDelegate.mEntryFormProvisioner?.mOrgRec
                 } else {
@@ -603,30 +631,28 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
                         break
                     }
                 }
-            } else {
-                // being told to change to a specified Form
-                lastFormRec = toFormRec!
-                if AppDelegate.mEntryFormProvisioner != nil {
-                    if toFormRec!.isPartOfOrg(orgRec: AppDelegate.mEntryFormProvisioner!.mOrgRec) {
-                        // new Form is part of our existing EFP, so just do a change
-                        lastOrgRec = AppDelegate.mEntryFormProvisioner!.mOrgRec
-                    } else {
-                        // new Form apparently is dictating a change in Org too, so do both
-                        lastOrgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: toFormRec!.rOrg_Code_For_SV_File)
-                    }
-                } else {
-                    // no mainline EFP exists, so create one for this Form and its implied Org
-                    lastOrgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: toFormRec!.rOrg_Code_For_SV_File)
-                }
             }
-            
-            // were both found and consistent with each other?
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).setCurrentForm(toFormRec.2", errorStruct: error, extra: nil)
+            // do not show an error to the end-user
+        }
+        
+        // examine what was found in the database
+        if lastOrgRec == nil {
+            // there are no Org records in the database; eliminate the Main EFP and let every VC know
+            self.resetCurrents()
+        } else if lastFormRec == nil {
+            // there are no Form records for the current Org; eliminate the Main EFP and let every VC know
+            self.resetCurrents()
+            AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastOrganization, value: lastOrgRec!.rOrg_Code_For_SV_File)
+        } else {
+            // an Org and Form were found
             if lastOrgRec != nil && (lastFormRec?.isPartOfOrg(orgRec: lastOrgRec!) ?? false) == true {
-                // yes, create or alter the mainline EntryFormProvisioner
+                // yes both are consistent with each other; create or alter the mainline EntryFormProvisioner
                 if AppDelegate.mEntryFormProvisioner == nil {
                     // create the new mainline EntryFormProvisioner; must also send out a global notification this its been late-created
                     AppDelegate.mEntryFormProvisioner = EntryFormProvisioner(forOrgRec: lastOrgRec!, forFormRec: lastFormRec!)
-                    NotificationCenter.default.post(name: .APP_CreatedMainEFP, object: nil)
+                    NotificationCenter.default.post(name: .APP_MainEFPaddedRemoved, object: nil)
                 } else {
                     // change the existing mainline EntryFormProvisioner; it will auto-notify those listening to it
                     AppDelegate.mEntryFormProvisioner!.setBoth(orgRec: lastOrgRec!, formRec: lastFormRec!)
@@ -634,13 +660,10 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
                 // remember the OrgRec and FormRec
                 AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastOrganization, value: lastOrgRec!.rOrg_Code_For_SV_File)
                 AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastForm, value: lastFormRec!.rForm_Code_For_SV_File)
-            } else if lastFormRec != nil {
-                // no, at least remember the FormRec
+            } else {
+                // no, at least remember the FormRec's short name
                 AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastForm, value: lastFormRec!.rForm_Code_For_SV_File)
             }
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).setCurrentForm(toFormRec", errorStruct: error, extra: nil)
-            // do not show an error to the end-user
         }
     }
     
@@ -654,12 +677,12 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
         }
     }
     
-    // reset everything during a factory reset
+    // reset everything; usually during a factory reset or when all Orgs are deleted
     public func resetCurrents() {
         AppDelegate.mEntryFormProvisioner = nil
         AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastOrganization, value: nil)
         AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_LastForm, value: nil)
-        NotificationCenter.default.post(name: .APP_CreatedMainEFP, object: nil)    // let all OrgTitle VCs and any other VCs know
+        NotificationCenter.default.post(name: .APP_MainEFPaddedRemoved, object: nil)    // let all OrgTitle VCs and any other VCs know
     }
     
     ///////////////////////////////////////////////////////////////////
