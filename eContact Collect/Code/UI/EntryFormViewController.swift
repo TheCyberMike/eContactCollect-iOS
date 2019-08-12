@@ -2062,6 +2062,7 @@ class EntryFormViewController: FormViewController {
         let includeBilingual:Bool = ((forFormFieldEntry.mComposedFormFieldLocalesRec.mFieldLocProp_Options_Name_Shown_Bilingual_2nd?.count() ?? 0) > 0)
         for svCP in forFormFieldEntry.mFormFieldRec.rFieldProp_Options_Code_For_SV_File!.mAttributes {
             if !svCP.codeString.starts(with: "***OSLC_") {
+                // pull in locally defined options
                 let shownString:String = forFormFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Options_Name_Shown!.findValue(givenCode: svCP.codeString)!
                 if !includeBilingual {
                     controlPairs.append(CodePair(svCP.valueString, shownString))
@@ -2074,9 +2075,12 @@ class EntryFormViewController: FormViewController {
                     }
                 }
             } else {
-                for oslSVcp in optionSetLocaleComposedRec!.rFieldLocProp_Options_Code_For_SV_File!.mAttributes {
-                    let shownString:String = optionSetLocaleComposedRec!.rFieldLocProp_Options_Name_Shown!.findValue(givenCode: oslSVcp.codeString)!
-                    controlPairs.append(CodePair(oslSVcp.valueString, shownString))
+                if optionSetLocaleComposedRec != nil {
+                    // pull in any found external options
+                    for oslSVcp in optionSetLocaleComposedRec!.rFieldLocProp_Options_Code_For_SV_File!.mAttributes {
+                        let shownString:String = optionSetLocaleComposedRec!.rFieldLocProp_Options_Name_Shown!.findValue(givenCode: oslSVcp.codeString)!
+                        controlPairs.append(CodePair(oslSVcp.valueString, shownString))
+                    }
                 }
             }
         }
