@@ -8,7 +8,7 @@
 import Eureka
 import MessageUI
 import MobileCoreServices
-
+import WebKit
 
 class SupportAboutViewController: FormViewController {
     // member variables
@@ -124,50 +124,40 @@ class SupportAboutViewController: FormViewController {
                 UIApplication.shared.open(NSURL(string:"itms-apps://itunes.apple.com/app/id1447133009?action=write-review")! as URL)
         }
         section1 <<< ButtonRow() {
-            $0.tag = "onlineUserGuide"
-            $0.title = NSLocalizedString("Online User Guide", comment:"")
-            }.cellUpdate { cell, row in
-                cell.textLabel?.textAlignment = .left
-                cell.textLabel?.font = .systemFont(ofSize: 15.0)
-                cell.textLabel?.textColor = UIColor.black
-                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-            }.onCellSelection { cell, row in
-                UIApplication.shared.open(NSURL(string:"https://drive.google.com/file/d/1t8nJ_BGpoH2C5BKA3BtXuJ7tSEjMmQy8/view")! as URL)
-        }
-        section1 <<< ButtonRow() {
-            $0.tag = "onlineTutorialVideos"
-            $0.title = NSLocalizedString("Online Tutorial Videos", comment:"")
-            }.cellUpdate { cell, row in
-                cell.textLabel?.textAlignment = .left
-                cell.textLabel?.font = .systemFont(ofSize: 15.0)
-                cell.textLabel?.textColor = UIColor.black
-                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-            }.onCellSelection { cell, row in
-                UIApplication.shared.open(NSURL(string:"https://www.youtube.com/playlist?list=PL0jtp2DkiUc5dbXPTFD5C3Gq5BzBMS9WF")! as URL)
-        }
-        section1 <<< ButtonRow() {
-            $0.tag = "websiteLink"
-            $0.title = NSLocalizedString("Website", comment:"")
-            }.cellUpdate { cell, row in
-                cell.textLabel?.textAlignment = .left
-                cell.textLabel?.font = .systemFont(ofSize: 15.0)
-                cell.textLabel?.textColor = UIColor.black
-                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-            }.onCellSelection { cell, row in
-                UIApplication.shared.open(NSURL(string:"https://sites.google.com/view/econtactcollect")! as URL)
-        }
-        section1 <<< ButtonRow() {
-            $0.tag = "supportOptions"
-            $0.title = NSLocalizedString("Support Options", comment:"")
+            $0.tag = "sampleForms"
+            $0.title = NSLocalizedString("Sample Forms", comment:"")
             $0.presentationMode = .show(
-                    controllerProvider: .callback(builder: { return SupportOptionsViewController() } ),
+                controllerProvider: .callback(builder: { return SampleFormsViewController() } ),
+                onDismiss: nil)
+            }.cellUpdate { cell, row in
+                cell.textLabel?.textAlignment = .left
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.textColor = UIColor.black
+                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
+        }
+        section1 <<< ButtonRow() {
+            $0.tag = "onlineSupport"
+            $0.title = NSLocalizedString("Online Support Options", comment:"")
+            $0.presentationMode = .show(
+                controllerProvider: .callback(builder: { return OnlineSupportViewController() } ),
+                onDismiss: nil)
+            }.cellUpdate { cell, row in
+                cell.textLabel?.textAlignment = .left
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.textColor = UIColor.black
+                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
+        }
+        section1 <<< ButtonRow() {
+            $0.tag = "contactOptions"
+            $0.title = NSLocalizedString("Contact Options", comment:"")
+            $0.presentationMode = .show(
+                    controllerProvider: .callback(builder: { return ContactOptionsViewController() } ),
                     onDismiss: nil)
             }.cellUpdate { cell, row in
                 cell.textLabel?.textAlignment = .left
                 cell.textLabel?.font = .systemFont(ofSize: 15.0)
                 cell.textLabel?.textColor = UIColor.black
                 cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-            
         }
         section1 <<< ButtonRow() {
             $0.tag = "onlinePrivacyPolicy"
@@ -208,17 +198,131 @@ class SupportAboutViewController: FormViewController {
 }
 
 ///////////////////////////////////////////////////
-// class definition for SupportOptionsViewController
+// class definition for OnlineSupportViewController
 ///////////////////////////////////////////////////
 
-class SupportOptionsViewController: FormViewController, UIActivityItemSource {
+class OnlineSupportViewController: FormViewController {
+    // member variables
+    
+    // member constants and other static content
+    private let mCTAG:String = "VCSSAS"
+    
+    // outlets to screen controls
+    
+    // called when the object instance is being destroyed
+    deinit {
+        //debugPrint("\(mCTAG).deinit STARTED")
+        NotificationCenter.default.removeObserver(self, name: .APP_EmailCompleted, object: nil)
+    }
+    
+    // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
+    // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
+    override func viewDidLoad() {
+        //debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+        super.viewDidLoad()
+        
+        // build the form entirely
+        self.buildForm()
+        
+        // set overall form options
+        navigationItem.title = NSLocalizedString("Online Support", comment:"")
+        navigationOptions = RowNavigationOptions.Enabled.union(.SkipCanNotBecomeFirstResponderRow)
+        rowKeyboardSpacing = 5
+    }
+    
+    // called by the framework when the view will *re-appear* (first time, from popovers, etc)
+    // parent and all children are now available
+    override func viewWillAppear(_ animated:Bool) {
+        //debugPrint("\(self.mCTAG).viewWillAppear STARTED")
+        super.viewWillAppear(animated)
+        tableView.setEditing(true, animated: false) // this is necessary if in a ContainerView
+    }
+    
+    // called by the framework when the view has disappeared from the UI framework;
+    // remember this does NOT necessarily mean the view is being dismissed since viewDidDisappear() will be called if this VC opens another VC;
+    // need to forceably clear the form else this VC will not deinit()
+    override func viewDidDisappear(_ animated:Bool) {
+        if self.isBeingDismissed || self.isMovingFromParent ||
+            (self.navigationController?.isBeingDismissed ?? false) || (self.navigationController?.isMovingFromParent ?? false) {
+            //debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED")
+            form.removeAll()
+            tableView.reloadData()
+        } else {
+            //debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed")
+        }
+        super.viewDidDisappear(animated)
+    }
+    
+    // called by the framework when memory needs to be freed
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+    
+    // build the form
+    private func buildForm() {
+        let section1 = Section()
+        form +++ section1
+        
+        section1 <<< ButtonRow() {
+            $0.tag = "onlineFAQ"
+            $0.title = NSLocalizedString("Online FAQ", comment:"")
+            }.cellUpdate { cell, row in
+                cell.textLabel?.textAlignment = .left
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.textColor = UIColor.black
+                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
+            }.onCellSelection { cell, row in
+                UIApplication.shared.open(NSURL(string:"https://sites.google.com/view/econtactcollect/home/faq")! as URL)
+        }
+        section1 <<< ButtonRow() {
+            $0.tag = "onlineUserGuide"
+            $0.title = NSLocalizedString("Online User Guide", comment:"")
+            }.cellUpdate { cell, row in
+                cell.textLabel?.textAlignment = .left
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.textColor = UIColor.black
+                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
+            }.onCellSelection { cell, row in
+                UIApplication.shared.open(NSURL(string:"https://drive.google.com/file/d/1t8nJ_BGpoH2C5BKA3BtXuJ7tSEjMmQy8/view")! as URL)
+        }
+        section1 <<< ButtonRow() {
+            $0.tag = "onlineTutorialVideos"
+            $0.title = NSLocalizedString("Online Tutorial Videos", comment:"")
+            }.cellUpdate { cell, row in
+                cell.textLabel?.textAlignment = .left
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.textColor = UIColor.black
+                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
+            }.onCellSelection { cell, row in
+                UIApplication.shared.open(NSURL(string:"https://www.youtube.com/playlist?list=PL0jtp2DkiUc5dbXPTFD5C3Gq5BzBMS9WF")! as URL)
+        }
+        section1 <<< ButtonRow() {
+            $0.tag = "websiteLink"
+            $0.title = NSLocalizedString("Support Website", comment:"")
+            }.cellUpdate { cell, row in
+                cell.textLabel?.textAlignment = .left
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.textColor = UIColor.black
+                cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
+            }.onCellSelection { cell, row in
+                UIApplication.shared.open(NSURL(string:"https://sites.google.com/view/econtactcollect")! as URL)
+        }
+    }
+}
+
+///////////////////////////////////////////////////
+// class definition for ContactOptionsViewController
+///////////////////////////////////////////////////
+
+class ContactOptionsViewController: FormViewController, UIActivityItemSource {
     // member variables
     private var mSharedFileURL:URL? = nil
     private var mSharedFileUTI:String? = nil
     private var mSharedFileName:String? = nil
     
     // member constants and other static content
-    private let mCTAG:String = "VCSSAO"
+    private let mCTAG:String = "VCSSAC"
     
     // outlets to screen controls
     
@@ -241,7 +345,7 @@ class SupportOptionsViewController: FormViewController, UIActivityItemSource {
         self.buildForm()
         
         // set overall form options
-        navigationItem.title = NSLocalizedString("Support Options", comment:"")
+        navigationItem.title = NSLocalizedString("Contact Options", comment:"")
         navigationOptions = RowNavigationOptions.Enabled.union(.SkipCanNotBecomeFirstResponderRow)
         rowKeyboardSpacing = 5
     }
@@ -443,5 +547,171 @@ debugPrint("\(self.mCTAG).noticeEmailCompleted STARTED")
     }
 }
 
+///////////////////////////////////////////////////
+// class definition for SampleFormsViewController
+///////////////////////////////////////////////////
 
+class SampleFormsViewController: UIViewController, WKNavigationDelegate {
+    // member variables
+    private var mWebView:WKWebView!
+    
+    // member constants and other static content
+    private let mCTAG:String = "VCSSAF"
+    
+    // outlets to screen controls
+    
+    // called when the object instance is being destroyed
+    deinit {
+debugPrint("\(mCTAG).deinit STARTED")
+    }
+    
+    // called by the framework when there is no storyboard entry defined for the UI Class
+    override func loadView() {
+debugPrint("\(self.mCTAG).loadView STARTED")
+        let webConfiguration = WKWebViewConfiguration()
+        self.mWebView = WKWebView(frame: .zero, configuration: webConfiguration)
+        self.mWebView.navigationDelegate = self
+        view = self.mWebView
+    }
+    
+    // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
+    // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
+    override func viewDidLoad() {
+debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+        super.viewDidLoad()
+        
+        // set overall form options
+        navigationItem.title = NSLocalizedString("Sample Forms", comment:"")
+        
+        // load the proper page
+        let myURL = URL(string:"https://sites.google.com/view/econtactcollect/home/samples")
+        let myRequest = URLRequest(url: myURL!)
+        self.mWebView.load(myRequest)
+    }
+    
+    // called by the framework when the view will *re-appear* (first time, from popovers, etc)
+    // parent and all children are now available
+    override func viewWillAppear(_ animated:Bool) {
+debugPrint("\(self.mCTAG).viewWillAppear STARTED")
+        super.viewWillAppear(animated)
+    }
+    
+    // called by the framework when the view has disappeared from the UI framework;
+    // remember this does NOT necessarily mean the view is being dismissed since viewDidDisappear() will be called if this VC opens another VC;
+    // need to forceably clear the form else this VC will not deinit()
+    override func viewDidDisappear(_ animated:Bool) {
+        if self.isBeingDismissed || self.isMovingFromParent ||
+            (self.navigationController?.isBeingDismissed ?? false) || (self.navigationController?.isMovingFromParent ?? false) {
+debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED")
+        } else {
+debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed")
+        }
+        super.viewDidDisappear(animated)
+    }
+    
+    // called by the framework when memory needs to be freed
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+    
+    // a link was clicked; what should be done?
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        guard let url = navigationAction.request.url, let scheme = url.scheme, scheme.contains("http") else {
+            // This is not HTTP/HTTPS link - can be a local file or a mailto but we do not intend to support it
+            decisionHandler(.cancel)
+            return
+        }
 
+        // This is a HTTP/HTTPS link
+        guard let domain = url.host, domain.contains("drive.google.com") else {
+            // This is a HTTP/HTTPS link within the Support web site; allow it
+            decisionHandler(.allow)
+            return
+        }
+
+        // its a download of a sample form
+        decisionHandler(.cancel)
+
+        // perform an independent download; store it in the Documents folder; start an import
+        let downloadTask = URLSession.shared.downloadTask(with: url) { urlOrNil, responseOrNil, errorOrNil in
+            // this is the callback upon completion or failure;
+            // check for and handle errors
+            guard let fileURL = urlOrNil, let response:HTTPURLResponse = responseOrNil as? HTTPURLResponse,
+                  let contentDisp:String = response.allHeaderFields["Content-Disposition"] as? String else {
+                // download failed
+                if errorOrNil != nil {
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), errorStruct: errorOrNil!, buttonText: NSLocalizedString("Okay", comment:""))
+                    return
+                }
+                if responseOrNil != nil {
+                    if let response1:HTTPURLResponse = responseOrNil as? HTTPURLResponse {
+                        if response1.statusCode != 200 {
+                            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), message: NSLocalizedString("", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
+                            return
+                        }
+                    }
+                }
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), message: NSLocalizedString("Unknown error", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
+                return
+            }
+            
+            // download succeeded; do some more checks
+            var fileName:String? = nil
+            if contentDisp.isEmpty {
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), message: NSLocalizedString("Web site failed to provide a Content-Disposition header", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
+                return
+            }
+            let contentDispStrings:[String] = contentDisp.components(separatedBy: ";")
+            for entry:String in contentDispStrings {
+                if entry.starts(with: "filename=") {
+                    fileName = String(entry.suffix(entry.count - 9)).trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                }
+            }
+            if (fileName ?? "").isEmpty {
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), message: NSLocalizedString("Web site failed to provide the downloaded file name", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
+                return
+            }
+            
+            // download checks out; move it over to the documents folder
+            var documentsURL:URL?
+            do {
+                documentsURL = try FileManager.default.url(for: .documentDirectory,
+                                                           in: .userDomainMask,
+                                                           appropriateFor: nil,
+                                                           create: false)
+            } catch {
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                return
+            }
+            let savedURL = documentsURL!.appendingPathComponent(fileName!)
+            do {
+                try FileManager.default.removeItem(at: savedURL)
+            } catch {}
+            do {
+                try FileManager.default.moveItem(at: fileURL, to: savedURL)
+            } catch {
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                return
+            }
+                
+            // now invoke the import screen
+            let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+            let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC PopupImport") as! PopupImportViewController
+            newViewController.mCIVCdelegate = nil
+            newViewController.mFromExternal = false
+            newViewController.mFileURL = savedURL
+            newViewController.modalPresentationStyle = .custom
+            self.present(newViewController, animated: true, completion: nil)
+        }
+        downloadTask.resume()
+    }
+    
+    // handle web errors
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+    }
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+    }
+}

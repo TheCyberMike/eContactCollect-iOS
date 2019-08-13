@@ -195,6 +195,9 @@
 "Send email to Developer" = "Send email to Developer";
 "Email Error" = "Email Error";
 "Email successfully sent" = "Email successfully sent";
+"Web Error" = "Web Error";
+"Web site failed to provide a Content-Disposition header" = "Web site failed to provide a Content-Disposition header";
+"Web site failed to provide the downloaded file name" = "Web site failed to provide the downloaded file name";
 
 // AlertsMgmtViewController.swift
 "Delete Confirmation" = "Delete Confirmation";

@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		D7416EAE21F78A9D004850C6 /* ContactsReviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7416EAD21F78A9D004850C6 /* ContactsReviewViewController.swift */; };
 		D74C37B7220CC52500A5B23E /* OAuthSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D74C37A4220CB2BE00A5B23E /* OAuthSwift.framework */; };
+		D74D600722A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74D600622A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift */; };
+		D74D600B22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74D600A22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift */; };
+		D74D600D22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74D600C22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift */; };
 		D7BA6B4221EED9F400F45AFC /* Eureka.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; };
 		D7BA6B4321EED9F400F45AFC /* Eureka.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D7BA6B6021EEDA6300F45AFC /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; };
@@ -321,6 +324,9 @@
 /* Begin PBXFileReference section */
 		D7416EAD21F78A9D004850C6 /* ContactsReviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsReviewViewController.swift; sourceTree = "<group>"; };
 		D74C3790220CB2BE00A5B23E /* OAuthSwift.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = OAuthSwift.xcodeproj; path = "../SubModules/OAuthSwift-master/OAuthSwift.xcodeproj"; sourceTree = "<group>"; };
+		D74D600622A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizSendEmailDefine1ViewController.swift; sourceTree = "<group>"; };
+		D74D600A22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizSendEmailDefine6ViewController.swift; sourceTree = "<group>"; };
+		D74D600C22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizSendEmailDefine11ViewController.swift; sourceTree = "<group>"; };
 		D7BA6B3621EED9BC00F45AFC /* Eureka.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Eureka.xcodeproj; path = "../SubModules/Eureka-master/Eureka.xcodeproj"; sourceTree = "<group>"; };
 		D7BA6B4821EEDA4F00F45AFC /* SQLite.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SQLite.xcodeproj; path = "../SubModules/SQLite.swift-master/SQLite.xcodeproj"; sourceTree = "<group>"; };
 		D7BA6C0121EF901500F45AFC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
@@ -561,6 +567,9 @@
 				D9395790216175B1004E9BE9 /* WizDefinePINViewController.swift */,
 				D93957922161799E004E9BE9 /* WizDefineNicknameViewController.swift */,
 				D94399E52169A26F00FC2AD8 /* WizUsageNotesViewController.swift */,
+				D74D600622A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift */,
+				D74D600A22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift */,
+				D74D600C22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift */,
 				D94BBC1C21B1E539003B6C6B /* WizOrgDefine1ViewController.swift */,
 				D9A654C721671A0000F0CD1E /* WizOrgDefine3ViewController.swift */,
 				D9A654D12167225500F0CD1E /* WizOrgDefine6ViewController.swift */,
@@ -1074,6 +1083,7 @@
 				D92ACAD3216EC09300F8B556 /* FormEditViewController.swift in Sources */,
 				D9EA2B252187F0BF00A4FE55 /* NumberKeyboard.swift in Sources */,
 				D9EBEAF4215F4DAD00A258C8 /* OrgsMgmtViewController.swift in Sources */,
+				D74D600D22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift in Sources */,
 				D912DE7221A90297002ABF0E /* WizFormDefine11ViewController.swift in Sources */,
 				D90D6EAF2183D3A1000A90EB /* RecOrgCustomFieldLocales.swift in Sources */,
 				D92EFC2C216D7BD200C1F12A /* EntryFormViewController.swift in Sources */,
@@ -1102,6 +1112,7 @@
 				D95B1F992167CB0100099709 /* WizFormDefine1ViewController.swift in Sources */,
 				D9A654D22167225500F0CD1E /* WizOrgDefine6ViewController.swift in Sources */,
 				D9118B1121A47F8D00309857 /* WizOrgDefine11ViewController.swift in Sources */,
+				D74D600722A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift in Sources */,
 				D954DF5F215ABFC9003FD748 /* DatabaseHandler.swift in Sources */,
 				D94399EA2169DD0600FC2AD8 /* FieldHandler.swift in Sources */,
 				D9EA2B1E2187805B00A4FE55 /* WizLangNoteViewController.swift in Sources */,
@@ -1117,6 +1128,7 @@
 				D92EFC31216DB9B000C1F12A /* PopupEnterEventViewController.swift in Sources */,
 				D903B63C21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift in Sources */,
 				D7EB06122296105200D0CA02 /* PopupImportViewController.swift in Sources */,
+				D74D600B22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift in Sources */,
 				D9395791216175B1004E9BE9 /* WizDefinePINViewController.swift in Sources */,
 				D9254B3221597569006FDBF8 /* RecOrgCustomFieldDefs.swift in Sources */,
 				D9F2D2A721891BC4001507CB /* HexKeyboard.swift in Sources */,
