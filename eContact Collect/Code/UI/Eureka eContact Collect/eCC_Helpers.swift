@@ -105,6 +105,20 @@ public struct CodePair {
     }
 }
 
+extension Form {
+    /**
+     *  This method detects whether a partial tag already exists.
+     */
+    public func rowBy(tagLeading: String) -> BaseRow? {
+        for (tag,row) in rowsByTag {
+            if tag.starts(with: tagLeading) {
+                return row
+            }
+        }
+        return nil
+    }
+}
+
 extension Section /* Helpers */ {
     
     /**

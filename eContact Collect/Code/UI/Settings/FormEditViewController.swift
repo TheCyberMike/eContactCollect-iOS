@@ -1627,10 +1627,12 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
                         mvSection.multivaluedRowToInsertAt = { [weak self] index in
                             var counter:Int = 1
                             var newTag:String = ""
+                            var newTagTest:String = ""
                             repeat {
                                 newTag = "$" + NSLocalizedString("new", comment:"") + String(counter)
+                                newTagTest = "OP\t\(newTag)\t"
                                 counter = counter + 1
-                            } while self!.mWorking_FormFieldEntry!.existsOptionTag(tagValue: newTag)
+                            } while self!.form.rowBy(tagLeading: newTagTest) != nil
                             var langShownPairs:[CodePair] = []
                             for langRegionCode in self!.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported {
                                 langShownPairs.append(CodePair(langRegionCode, NSLocalizedString("New", comment:"")))
