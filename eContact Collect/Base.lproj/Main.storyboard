@@ -39,24 +39,31 @@
                                 <rect key="frame" x="0.0" y="64" width="414" height="623"/>
                                 <subviews>
                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="GIf-pA-hdq" userLabel="ContentView">
-                                        <rect key="frame" x="20" y="0.0" width="374" height="126"/>
+                                        <rect key="frame" x="20" y="0.0" width="374" height="164"/>
                                         <subviews>
-                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jst-zf-Xbx">
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jst-zf-Xbx" userLabel="button_first_time_wizard">
                                                 <rect key="frame" x="0.0" y="0.0" width="374" height="30"/>
                                                 <state key="normal" title="First Time-Wizard &gt;"/>
                                                 <connections>
                                                     <segue destination="9rW-PA-R6x" kind="show" id="NiD-SH-4ah"/>
                                                 </connections>
                                             </button>
-                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Gfj-ar-BLV">
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="sgt-G7-Za7" userLabel="button_send_email_setup_wizard">
                                                 <rect key="frame" x="0.0" y="38" width="374" height="30"/>
+                                                <state key="normal" title="Sending Email Setup Wizard &gt;"/>
+                                                <connections>
+                                                    <segue destination="hkK-Qb-EiD" kind="show" id="xNV-jY-fv8"/>
+                                                </connections>
+                                            </button>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Gfj-ar-BLV" userLabel="button_org_setup_wizard">
+                                                <rect key="frame" x="0.0" y="76" width="374" height="30"/>
                                                 <state key="normal" title="Organization Setup Wizard &gt;"/>
                                                 <connections>
                                                     <segue destination="8S3-Gq-ZBW" kind="show" id="guD-g8-8Kn"/>
                                                 </connections>
                                             </button>
-                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eTV-9X-HCE">
-                                                <rect key="frame" x="0.0" y="76" width="374" height="30"/>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eTV-9X-HCE" userLabel="button_form_setup_wizard">
+                                                <rect key="frame" x="0.0" y="114" width="374" height="30"/>
                                                 <state key="normal" title="Form Setup Wizard &gt;"/>
                                                 <connections>
                                                     <segue destination="fIf-WW-Gt4" kind="show" id="Bm4-A5-F3S"/>
@@ -65,15 +72,18 @@
                                         </subviews>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <constraints>
+                                            <constraint firstItem="sgt-G7-Za7" firstAttribute="leading" secondItem="GIf-pA-hdq" secondAttribute="leading" id="0OB-Ye-eD2"/>
                                             <constraint firstAttribute="trailing" secondItem="jst-zf-Xbx" secondAttribute="trailing" id="7L1-5b-ax9"/>
                                             <constraint firstItem="jst-zf-Xbx" firstAttribute="leading" secondItem="GIf-pA-hdq" secondAttribute="leading" id="7kJ-BC-Gqg"/>
-                                            <constraint firstItem="Gfj-ar-BLV" firstAttribute="top" secondItem="jst-zf-Xbx" secondAttribute="bottom" constant="8" id="AFX-Lf-Ob3"/>
+                                            <constraint firstAttribute="trailing" secondItem="sgt-G7-Za7" secondAttribute="trailing" id="EV7-id-mva"/>
                                             <constraint firstItem="eTV-9X-HCE" firstAttribute="leading" secondItem="GIf-pA-hdq" secondAttribute="leading" id="MuX-mE-ASc"/>
                                             <constraint firstItem="jst-zf-Xbx" firstAttribute="top" secondItem="GIf-pA-hdq" secondAttribute="top" id="NO4-AL-PDn"/>
                                             <constraint firstItem="Gfj-ar-BLV" firstAttribute="leading" secondItem="GIf-pA-hdq" secondAttribute="leading" id="OIP-Zt-VPQ"/>
                                             <constraint firstAttribute="trailing" secondItem="eTV-9X-HCE" secondAttribute="trailing" id="P9B-n6-Sl7"/>
                                             <constraint firstAttribute="trailing" secondItem="Gfj-ar-BLV" secondAttribute="trailing" id="U23-2l-dMY"/>
                                             <constraint firstAttribute="bottom" secondItem="eTV-9X-HCE" secondAttribute="bottom" constant="20" id="f4X-jA-ysO"/>
+                                            <constraint firstItem="Gfj-ar-BLV" firstAttribute="top" secondItem="sgt-G7-Za7" secondAttribute="bottom" constant="8" id="kli-gF-Rcz"/>
+                                            <constraint firstItem="sgt-G7-Za7" firstAttribute="top" secondItem="jst-zf-Xbx" secondAttribute="bottom" constant="8" id="tHd-1y-Ld4"/>
                                             <constraint firstItem="eTV-9X-HCE" firstAttribute="top" secondItem="Gfj-ar-BLV" secondAttribute="bottom" constant="8" id="wWy-wf-i1m"/>
                                         </constraints>
                                     </view>
@@ -479,7 +489,7 @@ In addition, this app uses only the device's basic security measures to store da
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="epk-av-844" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1335" y="-3474"/>
+            <point key="canvasLocation" x="1335" y="-4528"/>
         </scene>
         <!--VC WizLangNote-->
         <scene sceneID="mGH-o6-Wp9">
@@ -553,7 +563,7 @@ In addition, this app uses only the device's basic security measures to store da
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="AZC-bs-e3f" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="2035" y="-3474"/>
+            <point key="canvasLocation" x="2035" y="-4528"/>
         </scene>
         <!--VC WizDefinePIN-->
         <scene sceneID="oQh-7M-EUr">
@@ -575,7 +585,7 @@ In addition, this app uses only the device's basic security measures to store da
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="WrG-mT-uGh" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="2716" y="-3474"/>
+            <point key="canvasLocation" x="2757" y="-4528"/>
         </scene>
         <!--VC WizDefineNickname-->
         <scene sceneID="nyS-hL-fyZ">
@@ -597,7 +607,7 @@ In addition, this app uses only the device's basic security measures to store da
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="N51-yv-OJs" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="3484" y="-3474"/>
+            <point key="canvasLocation" x="3484" y="-4528"/>
         </scene>
         <!--VC WizUsageNotes-->
         <scene sceneID="PUk-lD-eR3">
@@ -664,7 +674,90 @@ In addition, this app uses only the device's basic security measures to store da
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="2Fj-ic-HNU" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="4203" y="-3474"/>
+            <point key="canvasLocation" x="4203" y="-4528"/>
+        </scene>
+        <!--VC WizSendEmailDefine1-->
+        <scene sceneID="mQ1-Wx-VUl">
+            <objects>
+                <viewController storyboardIdentifier="VC WizSendEmailDefine1" title="Email Define 1" id="hkK-Qb-EiD" userLabel="VC WizSendEmailDefine1" customClass="WizSendEmailDefine1ViewController" customModule="eContact_Collect" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="2wD-06-vRb">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="qbO-hM-lSV"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Define Email 1" id="S63-8E-Uc3">
+                        <rightBarButtonItems>
+                            <barButtonItem title="Next" id="GhB-lo-GVj">
+                                <connections>
+                                    <segue destination="eG9-Tx-DAm" kind="show" identifier="Segue Next_W_EMAIL_1_6" id="y9A-RE-0XC"/>
+                                </connections>
+                            </barButtonItem>
+                            <barButtonItem title="Cancel" id="9u6-1j-imc">
+                                <connections>
+                                    <action selector="button_cancel_pressed:" destination="hkK-Qb-EiD" id="yvo-wt-hRc"/>
+                                </connections>
+                            </barButtonItem>
+                        </rightBarButtonItems>
+                    </navigationItem>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="VOV-LT-eVD" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1335" y="-3617"/>
+        </scene>
+        <!--VC WizSendEmailDefine6-->
+        <scene sceneID="ZVf-87-pvC">
+            <objects>
+                <viewController storyboardIdentifier="VC WizSendEmailDefine6" title="Email Define 2" id="eG9-Tx-DAm" userLabel="VC WizSendEmailDefine6" customClass="WizSendEmailDefine6ViewController" customModule="eContact_Collect" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="AAN-5v-HCN">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="Gw3-Kd-slu"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Define Email 2" id="6SZ-uE-Wrh">
+                        <rightBarButtonItems>
+                            <barButtonItem title="Next" id="Cxv-eE-I2L">
+                                <connections>
+                                    <segue destination="a6q-lv-ct1" kind="show" identifier="Segue Next_W_EMAIL_6_11" id="deV-Or-lQ2"/>
+                                </connections>
+                            </barButtonItem>
+                            <barButtonItem title="Cancel" id="Tha-JV-5Px"/>
+                        </rightBarButtonItems>
+                    </navigationItem>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ch3-ck-cSe" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2070" y="-3617"/>
+        </scene>
+        <!--VC WizSendEmailDefine11-->
+        <scene sceneID="fcF-do-6U7">
+            <objects>
+                <viewController storyboardIdentifier="VC WizSendEmailDefine11" title="Email Define 3" id="a6q-lv-ct1" userLabel="VC WizSendEmailDefine11" customClass="WizSendEmailDefine11ViewController" customModule="eContact_Collect" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Sng-GJ-scH">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="snj-v9-XBx"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Define Email 3" id="sMS-Ij-Pzb">
+                        <rightBarButtonItems>
+                            <barButtonItem title="Done" id="y9Z-5F-22o">
+                                <connections>
+                                    <action selector="button_done_pressed:" destination="a6q-lv-ct1" id="XxO-Sw-G8D"/>
+                                </connections>
+                            </barButtonItem>
+                            <barButtonItem title="Cancel" id="HdC-ud-Ni2">
+                                <connections>
+                                    <action selector="button_cancel_pressed:" destination="a6q-lv-ct1" id="brg-eC-gYd"/>
+                                </connections>
+                            </barButtonItem>
+                        </rightBarButtonItems>
+                    </navigationItem>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="cIc-Lx-wdV" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2838" y="-3617"/>
         </scene>
         <!--VC WizOrgDefine1-->
         <scene sceneID="GXu-EN-JOW">
