@@ -17,6 +17,7 @@ public class FieldHandler {
     public var mAppError:APP_ERROR? = nil
     private var mFields_json:[RecJsonFieldDefs]? = nil
     private var mOptionSetLocales_json:[RecJsonOptionSetLocales]? = nil
+    public var mFormFieldClipboard:FormFieldClipboard? = nil
     
     // member constants and other static content
     public static let shared:FieldHandler = FieldHandler()
@@ -24,6 +25,20 @@ public class FieldHandler {
     internal var mThrowErrorDomain:String = NSLocalizedString("Field-Handler", comment:"")
     internal var mFILE_FIELDS_MAX_VERSION:Int = 1
     internal var mFILE_FIELDATTRIBS_MAX_VERSION:Int = 1
+    
+    public struct FormFieldClipboard {
+        public var mFrom_Org_Code_For_SV_File:String        // origin Organization
+        public var mFrom_Form_Code_For_SV_File:String       // origin Form
+        public var mFrom_FormField_Index:Int64              // the formfield index# which is unique across all Orgs and Forms
+        public var mExportString:String                     // the export string for just this formField
+        
+        init(orgCode:String, formCode:String, formFieldIndex:Int64, exportString:String) {
+            self.mFrom_Org_Code_For_SV_File = orgCode
+            self.mFrom_Form_Code_For_SV_File = formCode
+            self.mFrom_FormField_Index = formFieldIndex
+            self.mExportString = exportString
+        }
+    }
     
     // constructor;
     public init() {}
@@ -61,6 +76,24 @@ public class FieldHandler {
     // perform any shutdown that may be needed
     internal func shutdown() {
         self.mFHstatus_state = .Unknown
+    }
+    
+    // record a formfield that the end-user tagged as a "copy"
+    public func copyToClipboard(origFF:OrgFormFieldsEntry?, editedFF:OrgFormFieldsEntry?, editedSubFields:OrgFormFields?) {
+        if origFF == nil { return }     // original formField must be pre-defined
+        
+        if editedFF == nil {
+            // no editing yet done
+            self.mFormFieldClipboard = FormFieldClipboard(orgCode: origFF!.mFormFieldRec.rOrg_Code_For_SV_File,
+                                                          formCode: origFF!.mFormFieldRec.rForm_Code_For_SV_File,
+                                                          formFieldIndex: origFF!.mFormFieldRec.rFormField_Index,
+                                                          exportString: "")
+            return
+        }
+        
+        // editing has been done
+        // ???
+        
     }
     
     /////////////////////////////////////////////////////////////////////////////////////////

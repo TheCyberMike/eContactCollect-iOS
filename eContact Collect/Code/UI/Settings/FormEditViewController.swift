@@ -1349,12 +1349,15 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
         
         // define navigations buttons and capture their press
         navigationItem.title = NSLocalizedString("Edit Field", comment:"")
-        let button1 = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(FormEditFieldFormViewController.tappedDone(_:)))
-        button1.title = NSLocalizedString("Done", comment:"")
-        navigationItem.rightBarButtonItem = button1
-        let button2 = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(FormEditFieldFormViewController.tappedCancel(_:)))
-        button2.title = NSLocalizedString("Cancel", comment:"")
-        navigationItem.leftBarButtonItem = button2
+        let button1 = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(FormEditFieldFormViewController.tappedCancel(_:)))
+        button1.title = NSLocalizedString("Cancel", comment:"")
+        navigationItem.leftBarButtonItem = button1
+        let button2 = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(FormEditFieldFormViewController.tappedDone(_:)))
+        button2.possibleTitles = Set(arrayLiteral: NSLocalizedString("Done", comment:""))
+        //let button3 = UIBarButtonItem(title: NSLocalizedString("Copy", comment:""), style: UIBarButtonItem.Style.plain, target: self, action: #selector(FormEditFieldFormViewController.tappedCopy(_:)))
+        //button3.possibleTitles = Set(arrayLiteral: NSLocalizedString("Copy", comment:""))
+        //navigationItem.setRightBarButtonItems([button2, button3], animated: false)
+        navigationItem.rightBarButtonItem = button2
         
         // make a copy of the RecOrgFormFieldDefs and its internally stored RecOrgFormFieldLocales
         self.mWorking_FormFieldEntry = OrgFormFieldsEntry(existingEntry: self.mEdit_FormFieldEntry!)
@@ -1413,6 +1416,12 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
     @objc func tappedCancel(_ barButtonItem: UIBarButtonItem) {
         self.closeVC()
         self.navigationController?.popViewController(animated:true)
+    }
+    
+    // Copy button was tapped
+    @objc func tappedCopy(_ barButtonItem: UIBarButtonItem) {
+        FieldHandler.shared.copyToClipboard(origFF: self.mEdit_FormFieldEntry, editedFF: self.mWorking_FormFieldEntry,
+            editedSubFields: self.mWorking_SubfieldEntries)
     }
     
     // Done button was tapped
