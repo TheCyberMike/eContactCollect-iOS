@@ -1445,7 +1445,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
             
             // there are options and they are order-able and deletable;
             // change the mWorking_FormFieldEntry!.mFormFieldRec since it gets copied later as a whole back to the editing copy
-            // reemember the "add_option" button counts as an entry in self.mMVS_field_options
+            // remember the "add_option" button counts as an entry in self.mMVS_field_options
             if self.mMVS_field_options!.count > 1 {
                 // first re-order the option SV-File names
                 var newOptionsSVFile:FieldAttributes = FieldAttributes()
@@ -1467,7 +1467,10 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
                         let row = self.mMVS_field_options![inx]
                         if row.tag!.starts(with: "OP\t") {
                             let optionTag = row.tag!.components(separatedBy: "\t")[1]
-                            let optionShownString = self.mWorking_FormFieldEntry!.getOptionShown(forTag: optionTag, forLangRegion: workingFormFieldLocaleRec.rFormFieldLoc_LangRegionCode)
+                            var optionShownString = self.mWorking_FormFieldEntry!.getOptionShown(forTag: optionTag, forLangRegion: workingFormFieldLocaleRec.rFormFieldLoc_LangRegionCode)
+                            if optionShownString == nil {
+                                optionShownString = self.mWorking_FormFieldEntry!.getOptionSVFile(forTag: optionTag)
+                            }
                             assert(optionShownString != nil, "optionShownString == nil")
                             newOptionsShownPerLang.append(codeString: optionTag, valueString: optionShownString!)
                         }
