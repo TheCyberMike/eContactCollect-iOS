@@ -58,7 +58,7 @@ class PopupImportViewController: UIViewController {
     
     // called when the object instance is being destroyed
     deinit {
-debugPrint("\(mCTAG).deinit STARTED")
+//debugPrint("\(mCTAG).deinit STARTED")
     }
     
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
@@ -257,7 +257,7 @@ class PopupImportFormViewController: FormViewController {
     
     // called when the object instance is being destroyed
     deinit {
-debugPrint("\(mCTAG).deinit STARTED")
+//debugPrint("\(mCTAG).deinit STARTED")
     }
     
     // called by the framework after the view has been setup from Storyboard or NIB

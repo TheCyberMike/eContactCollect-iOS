@@ -132,6 +132,14 @@
 "Name shown in " = "Name shown in ";
 "Must have an Event short code if any Names shown are filled in" = "Must have an Event short code if any Names shown are filled in";
 
+// PopupDownloadViewController.swift
+"iOS Error" = "iOS Error";
+"iOS did not provide a download response" = "iOS did not provide a download response";
+"Web Error" = "Web Error";
+"Web site returned download failure code " = "Web site returned download failure code ";
+"Web site failed to provide a Content-Disposition header" = "Web site failed to provide a Content-Disposition header";
+"Web site failed to provide the downloaded file name" = "Web site failed to provide the downloaded file name";
+
 // PopupImportViewController.swift
 "Form" = "Form";
 "Sample Form" = "Sample Form";
@@ -195,9 +203,6 @@
 "Send email to Developer" = "Send email to Developer";
 "Email Error" = "Email Error";
 "Email successfully sent" = "Email successfully sent";
-"Web Error" = "Web Error";
-"Web site failed to provide a Content-Disposition header" = "Web site failed to provide a Content-Disposition header";
-"Web site failed to provide the downloaded file name" = "Web site failed to provide the downloaded file name";
 
 // AlertsMgmtViewController.swift
 "Delete Confirmation" = "Delete Confirmation";

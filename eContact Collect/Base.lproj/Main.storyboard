@@ -3444,6 +3444,91 @@ Below, please choose some typical fields you want to appear on this form.  You c
             </objects>
             <point key="canvasLocation" x="8572" y="-2"/>
         </scene>
+        <!--VC PopupDownload-->
+        <scene sceneID="ait-oU-Reg">
+            <objects>
+                <viewController storyboardIdentifier="VC PopupDownload" title="Download" id="mGR-Za-eqA" userLabel="VC PopupDownload" customClass="PopupDownloadViewController" customModule="eContact_Collect" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" opaque="NO" contentMode="scaleToFill" id="4S3-WK-qpq">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4EA-SV-Niw" userLabel="DialogView">
+                                <rect key="frame" x="20" y="120" width="374" height="290"/>
+                                <subviews>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Download" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ofT-68-hOi" userLabel="label_title">
+                                        <rect key="frame" x="146.33333333333334" y="0.0" width="81.666666666666657" height="21"/>
+                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                                        <nil key="textColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="KTL-bs-xlQ" userLabel="textview_results">
+                                        <rect key="frame" x="8" y="70" width="358" height="212"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="358" id="RDa-r9-bAd"/>
+                                            <constraint firstAttribute="height" constant="212" id="hFb-KB-fke"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                    </textView>
+                                    <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="yZx-5p-Inl" userLabel="button_cancel">
+                                        <rect key="frame" x="163" y="32" width="48" height="30"/>
+                                        <color key="backgroundColor" red="0.66799789669999998" green="0.47512125970000002" blue="0.25860109930000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <state key="normal" title="Cancel">
+                                            <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        </state>
+                                        <connections>
+                                            <action selector="button_pressed:" destination="mGR-Za-eqA" eventType="touchUpInside" id="kC5-gV-uyy"/>
+                                        </connections>
+                                    </button>
+                                    <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mHs-5s-epC" userLabel="activity_progress">
+                                        <rect key="frame" x="112" y="144" width="150" height="2"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="150" id="QVj-PG-0VQ"/>
+                                        </constraints>
+                                    </progressView>
+                                </subviews>
+                                <color key="backgroundColor" red="1" green="0.57637232540000005" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <constraints>
+                                    <constraint firstItem="mHs-5s-epC" firstAttribute="centerX" secondItem="4EA-SV-Niw" secondAttribute="centerX" id="C2P-8E-ajO"/>
+                                    <constraint firstAttribute="bottom" secondItem="KTL-bs-xlQ" secondAttribute="bottom" constant="8" id="O50-ym-pue"/>
+                                    <constraint firstItem="ofT-68-hOi" firstAttribute="top" secondItem="4EA-SV-Niw" secondAttribute="top" id="Qc1-Pd-v5t"/>
+                                    <constraint firstItem="yZx-5p-Inl" firstAttribute="top" secondItem="ofT-68-hOi" secondAttribute="bottom" constant="9" id="RW9-0E-Hzv"/>
+                                    <constraint firstItem="KTL-bs-xlQ" firstAttribute="top" secondItem="yZx-5p-Inl" secondAttribute="bottom" constant="10" id="cuI-Y5-rj3"/>
+                                    <constraint firstAttribute="trailing" secondItem="KTL-bs-xlQ" secondAttribute="trailing" constant="8" id="eZZ-vX-76o"/>
+                                    <constraint firstItem="yZx-5p-Inl" firstAttribute="centerX" secondItem="4EA-SV-Niw" secondAttribute="centerX" id="fxn-SK-MnV"/>
+                                    <constraint firstItem="KTL-bs-xlQ" firstAttribute="leading" secondItem="4EA-SV-Niw" secondAttribute="leading" constant="8" id="pc8-KX-k4S"/>
+                                    <constraint firstItem="ofT-68-hOi" firstAttribute="centerX" secondItem="4EA-SV-Niw" secondAttribute="centerX" id="peG-L3-3hh"/>
+                                    <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="290" id="qfQ-m0-Jyb"/>
+                                </constraints>
+                            </view>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" animating="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="4i8-g7-BvC" userLabel="activity_indicator">
+                                <rect key="frame" x="197" y="225" width="20" height="20"/>
+                            </activityIndicatorView>
+                        </subviews>
+                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="4i8-g7-BvC" firstAttribute="top" secondItem="yZx-5p-Inl" secondAttribute="bottom" constant="43" id="B1v-Jc-1js"/>
+                            <constraint firstItem="4i8-g7-BvC" firstAttribute="centerX" secondItem="4EA-SV-Niw" secondAttribute="centerX" id="ENl-fI-rAY"/>
+                            <constraint firstItem="4EA-SV-Niw" firstAttribute="centerX" secondItem="PAY-7w-c75" secondAttribute="centerX" id="H1Y-IP-BcK"/>
+                            <constraint firstItem="4EA-SV-Niw" firstAttribute="top" secondItem="PAY-7w-c75" secondAttribute="top" constant="100" id="PeS-RM-org"/>
+                            <constraint firstItem="KTL-bs-xlQ" firstAttribute="centerX" secondItem="PAY-7w-c75" secondAttribute="centerX" id="TPG-Km-KDY"/>
+                            <constraint firstItem="KTL-bs-xlQ" firstAttribute="top" secondItem="4i8-g7-BvC" secondAttribute="bottom" constant="-55" id="Uv2-Rg-rxm"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="PAY-7w-c75"/>
+                    </view>
+                    <connections>
+                        <outlet property="activity_indicator" destination="4i8-g7-BvC" id="84w-vq-iWb"/>
+                        <outlet property="activity_progress" destination="mHs-5s-epC" id="18l-Ar-7PL"/>
+                        <outlet property="button_cancel_okay" destination="yZx-5p-Inl" id="q9P-NQ-Typ"/>
+                        <outlet property="label_title" destination="ofT-68-hOi" id="hyl-Vo-RUn"/>
+                        <outlet property="textview_results" destination="KTL-bs-xlQ" id="IPJ-NF-MKp"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Nlf-DN-3Ks" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="9243" y="-24"/>
+        </scene>
     </scenes>
     <resources>
         <image name="Add Image" width="25" height="25"/>

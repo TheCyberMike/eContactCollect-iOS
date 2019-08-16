@@ -562,12 +562,12 @@ class SampleFormsViewController: UIViewController, WKNavigationDelegate {
     
     // called when the object instance is being destroyed
     deinit {
-debugPrint("\(mCTAG).deinit STARTED")
+//debugPrint("\(mCTAG).deinit STARTED")
     }
     
     // called by the framework when there is no storyboard entry defined for the UI Class
     override func loadView() {
-debugPrint("\(self.mCTAG).loadView STARTED")
+//debugPrint("\(self.mCTAG).loadView STARTED")
         let webConfiguration = WKWebViewConfiguration()
         self.mWebView = WKWebView(frame: .zero, configuration: webConfiguration)
         self.mWebView.navigationDelegate = self
@@ -577,7 +577,7 @@ debugPrint("\(self.mCTAG).loadView STARTED")
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
     // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
     override func viewDidLoad() {
-debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+//debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
         
         // set overall form options
@@ -592,7 +592,7 @@ debugPrint("\(self.mCTAG).viewDidLoad STARTED")
     // called by the framework when the view will *re-appear* (first time, from popovers, etc)
     // parent and all children are now available
     override func viewWillAppear(_ animated:Bool) {
-debugPrint("\(self.mCTAG).viewWillAppear STARTED")
+//debugPrint("\(self.mCTAG).viewWillAppear STARTED")
         super.viewWillAppear(animated)
     }
     
@@ -602,9 +602,9 @@ debugPrint("\(self.mCTAG).viewWillAppear STARTED")
     override func viewDidDisappear(_ animated:Bool) {
         if self.isBeingDismissed || self.isMovingFromParent ||
             (self.navigationController?.isBeingDismissed ?? false) || (self.navigationController?.isMovingFromParent ?? false) {
-debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED")
+//debugPrint("\(self.mCTAG).viewDidDisappear STARTED AND VC IS DISMISSED")
         } else {
-debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed")
+//debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed")
         }
         super.viewDidDisappear(animated)
     }
@@ -633,78 +633,21 @@ debugPrint("\(self.mCTAG).viewDidDisappear STARTED BUT VC is not being dismissed
         // its a download of a sample form
         decisionHandler(.cancel)
 
-        // perform an independent download; store it in the Documents folder; start an import
-        let downloadTask = URLSession.shared.downloadTask(with: url) { urlOrNil, responseOrNil, errorOrNil in
-            // this is the callback upon completion or failure;
-            // check for and handle errors
-            guard let fileURL = urlOrNil, let response:HTTPURLResponse = responseOrNil as? HTTPURLResponse,
-                  let contentDisp:String = response.allHeaderFields["Content-Disposition"] as? String else {
-                // download failed
-                if errorOrNil != nil {
-                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), errorStruct: errorOrNil!, buttonText: NSLocalizedString("Okay", comment:""))
-                    return
-                }
-                if responseOrNil != nil {
-                    if let response1:HTTPURLResponse = responseOrNil as? HTTPURLResponse {
-                        if response1.statusCode != 200 {
-                            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), message: NSLocalizedString("", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
-                            return
-                        }
-                    }
-                }
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), message: NSLocalizedString("Unknown error", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
-                return
-            }
-            
-            // download succeeded; do some more checks
-            var fileName:String? = nil
-            if contentDisp.isEmpty {
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), message: NSLocalizedString("Web site failed to provide a Content-Disposition header", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
-                return
-            }
-            let contentDispStrings:[String] = contentDisp.components(separatedBy: ";")
-            for entry:String in contentDispStrings {
-                if entry.starts(with: "filename=") {
-                    fileName = String(entry.suffix(entry.count - 9)).trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-                }
-            }
-            if (fileName ?? "").isEmpty {
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Web Error", comment:""), message: NSLocalizedString("Web site failed to provide the downloaded file name", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
-                return
-            }
-            
-            // download checks out; move it over to the documents folder
-            var documentsURL:URL?
-            do {
-                documentsURL = try FileManager.default.url(for: .documentDirectory,
-                                                           in: .userDomainMask,
-                                                           appropriateFor: nil,
-                                                           create: false)
-            } catch {
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
-                return
-            }
-            let savedURL = documentsURL!.appendingPathComponent(fileName!)
-            do {
-                try FileManager.default.removeItem(at: savedURL)
-            } catch {}
-            do {
-                try FileManager.default.moveItem(at: fileURL, to: savedURL)
-            } catch {
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
-                return
-            }
-                
-            // now invoke the import screen
-            let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
-            let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC PopupImport") as! PopupImportViewController
-            newViewController.mCIVCdelegate = nil
-            newViewController.mFromExternal = false
-            newViewController.mFileURL = savedURL
-            newViewController.modalPresentationStyle = .custom
-            self.present(newViewController, animated: true, completion: nil)
+        // open the new view controller to perform the download into the Documents directory
+        let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+        let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC PopupDownload") as! PopupDownloadViewController
+        newViewController.mWebURL = url
+        newViewController.mCompletionUIthread = { docURL in
+                let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+                let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC PopupImport") as! PopupImportViewController
+                newViewController.mCIVCdelegate = nil
+                newViewController.mFromExternal = false
+                newViewController.mFileURL = docURL
+                newViewController.modalPresentationStyle = .custom
+                self.present(newViewController, animated: true, completion: nil)
         }
-        downloadTask.resume()
+        newViewController.modalPresentationStyle = .custom
+        self.present(newViewController, animated: true, completion: nil)
     }
     
     // handle web errors

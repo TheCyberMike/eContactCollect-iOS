@@ -21,6 +21,7 @@
 		D7CC2AA122027DED00F39E36 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AA022027DED00F39E36 /* CFNetwork.framework */; };
 		D7CC2AA322027E0E00F39E36 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AA222027E0E00F39E36 /* Security.framework */; };
 		D7CC2ABF22027EAB00F39E36 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AB222027E4500F39E36 /* libMailCore-ios.a */; };
+		D7CEDDC7230633EF00B115B9 /* PopupDownloadViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CEDDC6230633EF00B115B9 /* PopupDownloadViewController.swift */; };
 		D7D852F221C9724200948408 /* PopupFirstTimeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */; };
 		D7D87FD621E67B7B002847DE /* ChooserLangRegionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */; };
 		D7EB06122296105200D0CA02 /* PopupImportViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7EB06112296105200D0CA02 /* PopupImportViewController.swift */; };
@@ -336,6 +337,7 @@
 		D7CC2AA222027E0E00F39E36 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../SubModules/mailcore2-master/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
 		D7CC2AC222027F4400F39E36 /* Project-Name-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Project-Name-Bridging-Header.h"; path = "Code/Project-Name-Bridging-Header.h"; sourceTree = "<group>"; };
+		D7CEDDC6230633EF00B115B9 /* PopupDownloadViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupDownloadViewController.swift; sourceTree = "<group>"; };
 		D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupFirstTimeViewController.swift; sourceTree = "<group>"; };
 		D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserLangRegionViewController.swift; sourceTree = "<group>"; };
 		D7EB06112296105200D0CA02 /* PopupImportViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupImportViewController.swift; sourceTree = "<group>"; };
@@ -533,6 +535,7 @@
 				D92EFC30216DB9B000C1F12A /* PopupEnterEventViewController.swift */,
 				D903B63B21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift */,
 				D9EA940C21B38A9E00F78543 /* PopupEnterCloneViewController.swift */,
+				D7CEDDC6230633EF00B115B9 /* PopupDownloadViewController.swift */,
 				D7EB06112296105200D0CA02 /* PopupImportViewController.swift */,
 				D9229EAB219F46C300404079 /* UIColorExtension.swift */,
 			);
@@ -1083,6 +1086,7 @@
 				D92ACAD3216EC09300F8B556 /* FormEditViewController.swift in Sources */,
 				D9EA2B252187F0BF00A4FE55 /* NumberKeyboard.swift in Sources */,
 				D9EBEAF4215F4DAD00A258C8 /* OrgsMgmtViewController.swift in Sources */,
+				D7CEDDC7230633EF00B115B9 /* PopupDownloadViewController.swift in Sources */,
 				D74D600D22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift in Sources */,
 				D912DE7221A90297002ABF0E /* WizFormDefine11ViewController.swift in Sources */,
 				D90D6EAF2183D3A1000A90EB /* RecOrgCustomFieldLocales.swift in Sources */,
