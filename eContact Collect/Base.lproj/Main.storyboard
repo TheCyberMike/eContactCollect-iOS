@@ -1837,13 +1837,21 @@ Or if the file is stored in your Files App, press the button below to import it.
                                 <action selector="button_cancel_pressed:" destination="Vkh-Vq-eme" id="dg6-OY-fi0"/>
                             </connections>
                         </barButtonItem>
-                        <barButtonItem key="rightBarButtonItem" title="Save" id="WMx-lB-keb" userLabel="button_save_org">
-                            <connections>
-                                <action selector="button_save_pressed:" destination="Vkh-Vq-eme" id="YGZ-LE-NKE"/>
-                            </connections>
-                        </barButtonItem>
+                        <rightBarButtonItems>
+                            <barButtonItem title="Save" id="WMx-lB-keb" userLabel="button_save_org">
+                                <connections>
+                                    <action selector="button_save_pressed:" destination="Vkh-Vq-eme" id="YGZ-LE-NKE"/>
+                                </connections>
+                            </barButtonItem>
+                            <barButtonItem title="Forms" id="WbR-Cg-aCK" userLabel="button_forms">
+                                <connections>
+                                    <action selector="button_forms_pressed:" destination="Vkh-Vq-eme" id="n6e-Nb-b7c"/>
+                                </connections>
+                            </barButtonItem>
+                        </rightBarButtonItems>
                     </navigationItem>
                     <connections>
+                        <outlet property="button_forms" destination="WbR-Cg-aCK" id="PID-yH-ew7"/>
                         <outlet property="navbar_item" destination="2Jh-Vc-84Y" id="kw1-Lx-ThM"/>
                     </connections>
                 </viewController>

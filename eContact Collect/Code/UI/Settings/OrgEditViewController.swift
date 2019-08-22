@@ -34,10 +34,18 @@ class OrgEditViewController: UIViewController {
     
     // outlets to screen controls
     @IBOutlet weak var navbar_item: UINavigationItem!
+    @IBOutlet weak var button_forms: UIBarButtonItem!
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
         // cancel button pressed; dismiss and return to the parent view controller
         if mOEVCdelegate != nil { mOEVCdelegate!.completed_OEVC(wasSaved:false) }
         self.navigationController?.popViewController(animated:true)
+    }
+    @IBAction func button_forms_pressed(_ sender: UIBarButtonItem) {
+        // open the Forms Mgmt view
+        let storyboard = UIStoryboard(name:"Main", bundle:nil)
+        let nextViewController:FormsMgmtViewController = storyboard.instantiateViewController(withIdentifier:"VC FormsMgmt") as! FormsMgmtViewController
+        nextViewController.mFor_orgRec = RecOrganizationDefs(existingRec: self.mEdit_orgRec!)
+        self.navigationController?.pushViewController(nextViewController, animated:true)
     }
     @IBAction func button_save_pressed(_ sender: UIBarButtonItem) {
         // save button pressed
@@ -77,6 +85,8 @@ class OrgEditViewController: UIViewController {
         // preparations if an add or a change
         if self.mAction == .Change {
             // its a change, so need to prepare to pre-load all the fields with the Org's existing definitions
+            button_forms?.isEnabled = true
+            button_forms?.title = NSLocalizedString("Forms", comment:"")
             assert(self.mEdit_orgRec != nil, "\(self.mCTAG).viewDidLoad self.mEdit_orgRec == nil")    // this is a programming error
             if self.mWorking_orgRec != nil { self.mWorking_orgRec = nil }
             self.mWorking_orgRec = RecOrganizationDefs(existingRec:mEdit_orgRec!)   // make a copy of the existing Org rec
@@ -91,6 +101,8 @@ class OrgEditViewController: UIViewController {
         }
         if self.mAction == .Add {
             // its an add
+            button_forms?.isEnabled = false
+            button_forms?.title = ""
             if self.mEdit_orgRec != nil { self.mEdit_orgRec = nil }
             if self.mWorking_orgRec == nil { self.mWorking_orgRec = RecOrganizationDefs(org_code_sv_file: "") } // make am empty Org rec
             self.navbar_item.title = NSLocalizedString("Add Org", comment:"")

@@ -297,6 +297,7 @@
 // OrgEditViewController.swift & WizOrgDefine3ViewController.swift & WizOrgDefine11ViewController.swift & WizOrgDefine16ViewController.swift & WizOrgDefine26ViewController.swift & RecOrganizationDefs.swift
 "Edit Org" = "Edit Org";
 "Add Org" = "Add Org";
+"Forms" = "Forms";
 "Contacts collected from eContact Collect" = "Contacts collected from eContact Collect";
 "Organization short name cannot be blank" = "Organization short name cannot be blank";
 "Organization short name can only contain letters, digits, space, or _ . + -" = "Organization short name can only contain letters, digits, space, or _ . + -";
