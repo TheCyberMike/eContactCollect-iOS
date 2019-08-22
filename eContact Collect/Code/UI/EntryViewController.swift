@@ -352,7 +352,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
         for formFieldEntry:OrgFormFieldsEntry in self.mEFP!.mFormFieldEntries! {
             // gather the field's various definitional records
             if !formFieldEntry.mDuringEditing_isDeleted &&  !formFieldEntry.mFormFieldRec.isMetaData() &&
-                (formFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
+                formFieldEntry.mFormFieldRec.hasSubFormFields() {
             
                 // its a collection field
                 let keyString:String = String(formFieldEntry.mFormFieldRec.rFormField_Index)
@@ -454,7 +454,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
                     }
                 } else {
                     // an entered formfield
-                    if (formFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) == 0 {
+                    if !formFieldEntry.mFormFieldRec.hasSubFormFields() {
                         // its not a container field
                         let keyString:String = String(formFieldEntry.mFormFieldRec.rFormField_Index)
                         let object = self.mEnteredDataDict![keyString]

@@ -506,7 +506,7 @@ public class RecOrgFormDefs {
             let records1:AnySequence<Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: self.rForm_Code_For_SV_File, sortedBySVFileOrder: false)
             for rowRec in records1 {
                 let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(row:rowRec)
-                if formFieldRec.rFormField_SubField_Within_FormField_Index == nil {
+                if !formFieldRec.isSubFormField() {
                     let originalIndex = formFieldRec.rFormField_Index
                     formFieldRec.rForm_Code_For_SV_File = newFormName
                     formFieldRec.rFormField_Index = -1
@@ -524,7 +524,7 @@ public class RecOrgFormDefs {
             let records2:AnySequence<Row> = try RecOrgFormFieldDefs.orgFormFieldGetAllRecs(forOrgShortName: withOrgRec.rOrg_Code_For_SV_File, forFormShortName: self.rForm_Code_For_SV_File, sortedBySVFileOrder: false)
             for rowRec in records2 {
                 let formFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(row:rowRec)
-                if formFieldRec.rFormField_SubField_Within_FormField_Index != nil {
+                if formFieldRec.isSubFormField() {
                     let originalIndex = formFieldRec.rFormField_Index
                     formFieldRec.rFormField_SubField_Within_FormField_Index = remappingFFI[formFieldRec.rFormField_SubField_Within_FormField_Index!]
                     formFieldRec.rForm_Code_For_SV_File = newFormName

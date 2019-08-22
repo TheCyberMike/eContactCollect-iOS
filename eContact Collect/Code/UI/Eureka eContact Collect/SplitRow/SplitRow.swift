@@ -72,8 +72,8 @@ open class _SplitRow<L: RowType, R: RowType>: Row<SplitRowCell<L,R>> where L: Ba
 			rowValue.left = row.value
 			self.value = rowValue
 			
-			subscribe(onChange: row)
-			subscribe(onCellHighlightChanged: row)
+            if subscribeOnChangeLeft { subscribe(onChange: row) }
+            if subscribeOnCellHighlightChangedLeft { subscribe(onCellHighlightChanged: row) }
 		}
 	}
 	public var rowLeftPercentage: CGFloat = 0.3
@@ -87,15 +87,23 @@ open class _SplitRow<L: RowType, R: RowType>: Row<SplitRowCell<L,R>> where L: Ba
 			rowValue.right = row.value
 			self.value = rowValue
 			
-			subscribe(onChange: row)
-			subscribe(onCellHighlightChanged: row)
+            if subscribeOnChangeRight { subscribe(onChange: row) }
+            if subscribeOnCellHighlightChangedRight { subscribe(onCellHighlightChanged: row) }
 		}
 	}
 	
 	public var rowRightPercentage: CGFloat{
 		return 1.0 - self.rowLeftPercentage
 	}
-	
+    
+    public var subscribeOnChangeLeft:Bool = true
+    public var subscribeOnChangeRight:Bool = true
+    public var subscribeOnCellHighlightChangedLeft:Bool = true
+    public var subscribeOnCellHighlightChangedRight:Bool = true
+    
+    public enum WhichSelected { case leftSelected, rightSelected}
+    public var whichSelected:WhichSelected = .leftSelected
+
 	required public init(tag: String?) {
 		super.init(tag: tag)
 		cellProvider = CellProvider<SplitRowCell<L,R>>()
@@ -133,6 +141,10 @@ open class _SplitRow<L: RowType, R: RowType>: Row<SplitRowCell<L,R>> where L: Ba
 			}
 		}
 	}
+    
+    open func changedSplitPercentage() {
+        cell.constraintsNeedBeUpdated()
+    }
 }
 
 public final class SplitRow<L: RowType, R: RowType>: _SplitRow<L,R>, RowType where L: BaseRow, R: BaseRow{}

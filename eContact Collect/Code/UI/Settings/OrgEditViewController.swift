@@ -794,6 +794,9 @@ public class OrgEditFormLangFields {
                             if valueString == nil { return nil }
                             return CodePair.findValue(pairs: controlPairs, givenCode: valueString!)
                         }
+                        }.cellUpdate { updCell, updRow in
+                            updCell.textLabel?.textColor = UIColor(hex6: 0x007AFF)
+                            updCell.imageView?.image = #imageLiteral(resourceName: "Add")
                         }.onPresent { _, presentVC in
                             presentVC.sectionKeyForValue = { oTitleShown in
                                 return sectionMap[oTitleShown] ?? ""

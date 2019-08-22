@@ -26,17 +26,16 @@ public class FieldHandler {
     internal var mFILE_FIELDS_MAX_VERSION:Int = 1
     internal var mFILE_FIELDATTRIBS_MAX_VERSION:Int = 1
     
+    // formField(s) clipboard
     public struct FormFieldClipboard {
         public var mFrom_Org_Code_For_SV_File:String        // origin Organization
         public var mFrom_Form_Code_For_SV_File:String       // origin Form
-        public var mFrom_FormField_Index:Int64              // the formfield index# which is unique across all Orgs and Forms
-        public var mExportString:String                     // the export string for just this formField
+        public var mFrom_FormFields:OrgFormFields           // form field(s) and subfields that were copied
         
-        init(orgCode:String, formCode:String, formFieldIndex:Int64, exportString:String) {
+        init(orgCode:String, formCode:String, formFields:OrgFormFields) {
             self.mFrom_Org_Code_For_SV_File = orgCode
             self.mFrom_Form_Code_For_SV_File = formCode
-            self.mFrom_FormField_Index = formFieldIndex
-            self.mExportString = exportString
+            self.mFrom_FormFields = formFields
         }
     }
     
@@ -79,21 +78,26 @@ public class FieldHandler {
     }
     
     // record a formfield that the end-user tagged as a "copy"
-    public func copyToClipboard(origFF:OrgFormFieldsEntry?, editedFF:OrgFormFieldsEntry?, editedSubFields:OrgFormFields?) {
-        if origFF == nil { return }     // original formField must be pre-defined
+    public func copyToClipboardOneEdited(editedFF:OrgFormFieldsEntry?, editedSubFields:OrgFormFields?) {
+        if editedFF == nil { return }
+        let copyFFs:OrgFormFields = OrgFormFields()
         
-        if editedFF == nil {
-            // no editing yet done
-            self.mFormFieldClipboard = FormFieldClipboard(orgCode: origFF!.mFormFieldRec.rOrg_Code_For_SV_File,
-                                                          formCode: origFF!.mFormFieldRec.rForm_Code_For_SV_File,
-                                                          formFieldIndex: origFF!.mFormFieldRec.rFormField_Index,
-                                                          exportString: "")
-            return
+        let copiedFF = OrgFormFieldsEntry(existingEntry: editedFF!)
+        copyFFs.appendNewDuringEditing(copiedFF)
+        
+        // are there any subfields?
+        if (editedSubFields?.count() ?? 0) > 0 {
+            // yes; copy them as well
+            for entry:OrgFormFieldsEntry in editedSubFields! {
+                let copiedSubFF = OrgFormFieldsEntry(existingEntry: entry)
+                copyFFs.appendNewSubfieldDuringEditing(copiedSubFF, primary: copiedFF)
+            }
         }
         
-        // editing has been done
-        // ???
-        
+        // remember the copied formfield and its subfields
+        self.mFormFieldClipboard = FormFieldClipboard(orgCode: editedFF!.mFormFieldRec.rOrg_Code_For_SV_File,
+                                                      formCode: editedFF!.mFormFieldRec.rForm_Code_For_SV_File,
+                                                      formFields: copyFFs)
     }
     
     /////////////////////////////////////////////////////////////////////////////////////////
@@ -336,8 +340,8 @@ public class FieldHandler {
         if fieldEntry == nil { self.flushInMemoryObjects(); return nil }
         results.appendNewDuringEditing(fieldEntry!) // auto-assigns temporary indexes within the local context of the return results
         
-        // now load for any require subfields
-        if (fieldEntry!.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
+        // now load for any required subfields
+        if fieldEntry!.mFormFieldRec.hasSubFormFields() {
             for subFieldIDCode in fieldEntry!.mFormFieldRec.rFieldProp_Contains_Field_IDCodes! {
                 let subfieldEntry:OrgFormFieldsEntry? = self.getOneMatchForEditing(forFieldIDCode: subFieldIDCode, forFormRec: forFormRec, withOrgRec: withOrgRec, forLangRegions: forLangRegions)
                 if subfieldEntry != nil {
@@ -689,11 +693,13 @@ public class FieldHandler {
         for forLangRegion in forLangRegions {
             // locate the file in the proper or best localization folder
             var jsonPath2:String? = nil
+            var defaultedToEnglish:Bool = false
             if !forLangRegion.isEmpty {
                 jsonPath2 = Bundle.main.path(forResource: "FieldLocales", ofType: "json", inDirectory: nil, forLocalization: forLangRegion)
             }
             if (jsonPath2 ?? "").isEmpty {
                 jsonPath2 = Bundle.main.path(forResource: "FieldLocales", ofType: "json")
+                defaultedToEnglish = true
             }
             if jsonPath2 == nil {
                 self.mFHstatus_state = .Missing
@@ -752,7 +758,13 @@ public class FieldHandler {
                         self.mAppError = APP_ERROR(funcName: funcName, during: "Validate record level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Item# \(itemNo) invalid: \(jsonPath2!)")
                         throw self.mAppError!
                     }
-                    jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = validationResult.language
+                    if defaultedToEnglish {
+                        if jsonFieldLocalesRec.rFieldLocProp_Col_Name_For_SV_File != nil { jsonFieldLocalesRec.rFieldLocProp_Col_Name_For_SV_File = "??" + jsonFieldLocalesRec.rFieldLocProp_Col_Name_For_SV_File! }
+                        if jsonFieldLocalesRec.rFieldLocProp_Name_Shown != nil { jsonFieldLocalesRec.rFieldLocProp_Name_Shown = "??" + jsonFieldLocalesRec.rFieldLocProp_Name_Shown! }
+                        if jsonFieldLocalesRec.rFieldLocProp_Placeholder_Shown != nil { jsonFieldLocalesRec.rFieldLocProp_Placeholder_Shown = "??" + jsonFieldLocalesRec.rFieldLocProp_Placeholder_Shown! }
+                        jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = forLangRegion
+                    } else { jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = validationResult.language }
+                    
                     
                     // now match this jsonFieldLocalesRec with an existing jsonFieldRec in self.mFields_json
                     var found:Bool = false

@@ -398,6 +398,8 @@
 "Override Org's email settings?" = "Override Org's email settings?";
 "Form's Fields and Sections in order to-be-shown" = "Form's Fields and Sections in order to-be-shown";
 "Select new field to add" = "Select new field to add";
+"Select new" = "Select new";
+"or Add & Paste" = "or Add & Paste";
 "Submit Button" = "Submit Button";
 "Advanced Settings" = "Advanced Settings";
 "Pick an option" = "Pick an option";
@@ -415,6 +417,7 @@
 "Done" = "Done";
 "Cancel" = "Cancel";
 "Save" = "Save";
+"Copy" = "Copy";
 "Index#" = "Index#";
 "Field IDCode Name" = "Field IDCode Name";
 "Field Row-Type" = "Field Row-Type";

@@ -361,7 +361,7 @@ class FormEditViewController: UIViewController {
                                 let _ = try adderFormFieldEntry.mFormFieldRec.saveNewToDB()    // this will auto-save any retained and modified RecOrgFormFieldLocales
                                                                 
                                 // also load new field definitions for any subfields; the end-user may have added or deleted subfields
-                                if (adderFormFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
+                                if adderFormFieldEntry.mFormFieldRec.hasSubFormFields() {
                                     var subcount = adderFormFieldEntry.mFormFieldRec.rFormField_Order_Shown + 1
                                     for subFormFieldEntry in self.mWorking_formFieldEntries! {
                                         if !subFormFieldEntry.mDuringEditing_isDeleted && !subFormFieldEntry.mFormFieldRec.isMetaData() {
@@ -403,7 +403,7 @@ class FormEditViewController: UIViewController {
                         }
                     } else if formFieldEntry.mFormFieldRec.isMetaData()  {
                         // meta-data entry; ignored since already handled in stage 2
-                    } else if formFieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index != nil {
+                    } else if formFieldEntry.mFormFieldRec.isSubFormField() {
                         // its a subfield of some container field; it will not be listed-on screen; ignore it for the moment
                     } else if mvs_fields == nil || mvs_fields?.count == 0 {
                         // all entry fields were deleted by the end-user, so delete this one
@@ -442,7 +442,7 @@ class FormEditViewController: UIViewController {
                             let _ = try formFieldEntry.mFormFieldRec.saveNewToDB()  // this will auto-save any retained and modified RecOrgFormFieldLocales
                             
                             // also load then new field definitions for any subfields; the end-user may have added or deleted subfields
-                            if (formFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
+                            if formFieldEntry.mFormFieldRec.hasSubFormFields() {
                                 var subcount = formFieldEntry.mFormFieldRec.rFormField_Order_Shown + 1
                                 for subFormFieldEntry in self.mWorking_formFieldEntries! {
                                     if !subFormFieldEntry.mDuringEditing_isDeleted && !subFormFieldEntry.mFormFieldRec.isMetaData() {
@@ -465,7 +465,7 @@ class FormEditViewController: UIViewController {
                             _ = try formFieldEntry.mFormFieldRec.saveChangesToDB(originalRec: formFieldEntry.mFormFieldRec)     // this will auto-save any retained and modified RecOrgFormFieldLocales
                             
                             // now deal with its subfield's if-any; the end-user may have added, deleted, or changed any of them
-                            if (formFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
+                            if formFieldEntry.mFormFieldRec.hasSubFormFields() {
                                 var subcount = formFieldEntry.mFormFieldRec.rFormField_Order_Shown + 1
                                 for subFormFieldEntry in self.mWorking_formFieldEntries! {
                                     if subFormFieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index == formFieldEntry.mFormFieldRec.rFormField_Index {
@@ -526,6 +526,7 @@ class FormEditFormViewController: FormViewController {
     private var mLang1:String = ""
     private var mLang2:String = ""
     private weak var mMVS_fields:MultivaluedSection? = nil
+    private var mMVS_fields_splitRow:SplitRow<PushRow<String>, ButtonRow>? = nil
     private weak var mSubmitButtonSection:Section? = nil
 
     // member constants and other static content
@@ -636,6 +637,7 @@ class FormEditFormViewController: FormViewController {
     public func clearVC() {
         form.removeAll()
         tableView.reloadData()
+        self.mMVS_fields_splitRow = nil
         self.mMVS_fields = nil
         self.mSubmitButtonSection = nil
         self.mFormEditVC = nil
@@ -814,7 +816,88 @@ class FormEditFormViewController: FormViewController {
                 }
         }
         
-        /*  NOTE: in order to utilize the PushRow instead of the ButtonRow, three lines in the Eureka Core's Section.swift file had to be changed;
+        // create a SplitRow to be used add the AddButtonProvider
+        self.mMVS_fields_splitRow = SplitRow<PushRow<String>, ButtonRow>() {
+            $0.tag = "split_add_button"
+            $0.subscribeOnChangeLeft = false
+            $0.subscribeOnChangeRight = false
+            $0.rowLeft = PushRow<String>() { subRow in
+                // !!! MMM use of PushRow is an extension to the Eureka code
+                // REMEMBER: CANNOT do a buildForm() from viewWillAppear() ... the form must remain intact for this to work
+                // must buildForm() from viewDidLoad() then populate field values separately
+                subRow.title = NSLocalizedString("Select new field to add", comment:"")
+                subRow.tag = "add_new_field"
+                subRow.selectorTitle = NSLocalizedString("Choose one", comment:"")
+                subRow.options = ["Field-1"]   // temporary placeholder; will be populated in .onPresent()
+                }.cellUpdate { updCell, updRow in
+                    updCell.textLabel?.textColor = UIColor(hex6: 0x007AFF)
+                    updCell.imageView?.image = #imageLiteral(resourceName: "Add")
+                }.onPresent { [weak self] sourceFVC, presentVC in
+                    // callback to tap into PushRow's _SelectorViewController such that the ListCheckRows can be configured
+                    let pRow:PushRow<String> = self!.mMVS_fields_splitRow!.rowLeft!
+                    do {
+                        let (controlPairs, sectionMap, sectionTitles) = try FieldHandler.shared.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
+                        pRow.options = controlPairs.map { $0.valueString }
+                        pRow.retainedObject = (controlPairs, sectionMap, sectionTitles)
+                        presentVC.selectableRowSetup = { listRow in
+                            listRow.cellStyle = UITableViewCell.CellStyle.subtitle
+                        }
+                        presentVC.sectionKeyForValue = { oTitleShown in
+                            return sectionMap[oTitleShown] ?? ""
+                        }
+                        presentVC.sectionHeaderTitleForKey = { sKey in
+                            return sectionTitles[sKey]
+                        }
+                        //presentVC.selectableRowCellUpdate = { cell, row in
+                        //    cell.detailTextLabel?.text = ??
+                        //}
+                    } catch {
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.SplitRow.PushRow.onPresent", errorStruct: error, extra: nil)
+                        AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                    }
+                }.onChange { [weak self] chgRow in
+                    // PushRow has returned a value selected from the PushRow's view controller;
+                    // note our context is still within the PushRow's view controller, not the original FormViewController
+                    if chgRow.value != nil {   // this must be present to prevent an infinite loop
+                        guard let tableView = chgRow.cell.formViewController()?.tableView else { return }
+                        guard let indexPath = self!.mMVS_fields_splitRow!.indexPath else { return }
+                        self!.mMVS_fields_splitRow!.whichSelected = .leftSelected
+                        DispatchQueue.main.async {
+                            // must dispatch this so the PushRow's SelectorViewController is dismissed first and the UI is back at the main FormViewController
+                            // this triggers multivaluedRowToInsertAt() below
+                            chgRow.cell.formViewController()?.tableView(tableView, commit: .insert, forRowAt: indexPath)
+                        }
+                    }
+            }
+            $0.rowRight = ButtonRow() { subRow in
+                subRow.tag = "insert_new_field"
+                subRow.title = NSLocalizedString("or Add & Paste", comment:"")
+                }.cellUpdate { updCell, updRrow in
+                    updCell.backgroundColor = UIColor.lightGray
+                    updCell.textLabel?.textColor = UIColor(hex6: 0x007AFF)
+                }.onCellSelection { [weak self] selCell, selRow in
+                    if FieldHandler.shared.mFormFieldClipboard == nil { return }
+                    if FieldHandler.shared.mFormFieldClipboard!.mFrom_FormFields.countPrimary() == 1 {
+                        // just one primary formfield was copied, so do a normal MVS insert
+                        guard let tableView = selCell.formViewController()?.tableView else { return }
+                        guard let indexPath = self!.mMVS_fields_splitRow!.indexPath else { return }
+                        self!.mMVS_fields_splitRow!.whichSelected = .rightSelected
+                        selCell.formViewController()?.tableView(tableView, commit: .insert, forRowAt: indexPath)
+                    } else {
+                        // multiple primary formfields are present, so must insert in-bulk and reload the Fields MVS
+                        // ?? !! FUTURE feature
+                    }
+            }
+            if FieldHandler.shared.mFormFieldClipboard != nil {
+                $0.rowLeftPercentage = 0.6
+                $0.rowLeft!.title = NSLocalizedString("Select new", comment:"")
+            } else {
+                $0.rowLeftPercentage = 0.99
+                $0.rowLeft!.title = NSLocalizedString("Select new field to add", comment:"")
+            }
+        }
+        
+        /*  NOTE: in order to utilize the SplitRow instead of the ButtonRow, three lines in the Eureka Core's Section.swift file had to be changed;
                   the existing functionality using the ButtonRow remains intact
             in Section.swift in class MultivaluedSection:
                 change: public var addButtonProvider: ((MultivaluedSection) -> ButtonRow) = { _ in
@@ -832,126 +915,80 @@ class FormEditFormViewController: FormViewController {
             header: NSLocalizedString("Form's Fields and Sections in order to-be-shown", comment:"")) { mvSection in
             mvSection.tag = "mvs_fields"
             mvSection.showInsertIconInAddButton = false
-            mvSection.addButtonProvider = { [weak self] section in
-                return PushRow<String>(){ row in
-                        // !!! MMM use of PushRow is an extension to the Eureka code
-                        // REMEMBER: CANNOT do a buildForm() from viewWillAppear() ... the form must remain intact for this to work
-                        // must buildForm() from viewDidLoad() then populate field values separately
-                        row.title = NSLocalizedString("Select new field to add", comment:"")
-                        row.tag = "add_new_field"
-                        row.selectorTitle = NSLocalizedString("Choose one", comment:"")
-                        row.options = ["Field-1"]   // temporary placeholder; will be populated in .onPresent()
-                    }.onPresent { [weak self] sourceFVC, presentVC in
-                        // callback to tap into PushRow's _SelectorViewController such that the ListCheckRows can be configured
-                        let row = sourceFVC.form.rowBy(tag: "add_new_field") as? PushRow<String>
-                        if row != nil {
-                            do {
-                                let (controlPairs, sectionMap, sectionTitles) = try FieldHandler.shared.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
-                                row!.options = controlPairs.map { $0.valueString }
-                                row!.retainedObject = (controlPairs, sectionMap, sectionTitles)
-                                presentVC.selectableRowSetup = { listRow in
-                                    listRow.cellStyle = UITableViewCell.CellStyle.subtitle
-                                }
-                                presentVC.sectionKeyForValue = { oTitleShown in
-                                    return sectionMap[oTitleShown] ?? ""
-                                }
-                                presentVC.sectionHeaderTitleForKey = { sKey in
-                                    return sectionTitles[sKey]
-                                }
-                                //presentVC.selectableRowCellUpdate = { cell, row in
-                                //    cell.detailTextLabel?.text = ??
-                                //}
-                            } catch {
-                                AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.PushRow.onPresent", errorStruct: error, extra: nil)
-                                AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
-                            }
-                        }
-                    }.onChange { chgRow in
-                        // PushRow has returned a value selected from the PushRow's view controller;
-                        // note our context is still within the PushRow's view controller, not the original FormViewController
-                        if chgRow.value != nil {   // this must be present to prevent an infinite loop
-                            guard let tableView = chgRow.cell.formViewController()?.tableView, let indexPath = chgRow.indexPath else { return }
-                            DispatchQueue.main.async {
-                                // must dispatch this so the PushRow's SelectorViewController is dismissed first and the UI is back at the main FormViewController
-                                // this triggers multivaluedRowToInsertAt() below
-                                chgRow.cell.formViewController()?.tableView(tableView, commit: .insert, forRowAt: indexPath)
-                            }
-                        }
-                    }
-            }  // end of addButtonProvider
+            mvSection.addButtonProvider = { section in
+                return self.mMVS_fields_splitRow! }
             mvSection.multivaluedRowToInsertAt = { [weak self] index in
-                // a new Field_IDCode was chosen by the end-user; must return a row;
-                // get the collector-name of the field from the popup then translate it back to a proper FieldIDCode
-                let fromPushRow = self!.form.rowBy(tag: "add_new_field") as! PushRow<String>
-                let fieldNameForCollector:String? = fromPushRow.value!
-                var fieldIDCode:String? = nil
-                do {
-                    let (controlPairs, _, _) = try FieldHandler.shared.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
-                    fieldIDCode = CodePair.findCode(pairs: controlPairs, givenValue: fieldNameForCollector!)
-                } catch {
-                    // some type of filesystem error occurred; should not happen
-                    AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt", errorStruct: error, extra: fieldNameForCollector)
-                    AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
-                    // cannot throw or return from here
-                }
-                
-                // build up the new OrgFormFieldsEntry and save it in the working set of FormFields; also add any subfields;
-                // sequential negative formField_index will be used as temporary placeholder's until they are saved to the database
-                var newFormFieldEntries:OrgFormFields? = nil
-                if !(fieldIDCode ?? "").isEmpty {
+                // an add or and add+paste was selected; must return a row
+                switch self!.mMVS_fields_splitRow!.whichSelected {
+                case .leftSelected:
+                    // a new Field_IDCode was chosen by the end-user;
+                    // get the collector-name of the field from the popup then translate it back to a proper FieldIDCode
+                    let fromPushRow = self!.mMVS_fields_splitRow!.rowLeft!
+                    let fieldNameForCollector:String? = fromPushRow.value!
+                    var fieldIDCode:String? = nil
                     do {
-                        newFormFieldEntries = try FieldHandler.shared.getFieldDefsAsMatchForEditing(forFieldIDCode: fieldIDCode!, forFormRec: self!.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
+                        let (controlPairs, _, _) = try FieldHandler.shared.getAllAvailFieldIDCodes(withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
+                        fieldIDCode = CodePair.findCode(pairs: controlPairs, givenValue: fieldNameForCollector!)
                     } catch {
-                        // add new field; getFieldDefsAsMatchForEditing failed and threw; should not occur
-                        AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt", errorStruct: error, extra: fieldIDCode)
+                        // some type of filesystem error occurred; should not happen
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt.left", errorStruct: error, extra: fieldNameForCollector)
                         AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                         // cannot throw or return from here
                     }
-                }
-                
-                // add the new field
-                if (newFormFieldEntries?.count() ?? 0) == 0 {
-                    // getFieldDefsAsMatchForEditing failed to find anything but didnt throw; should not occur
-                    AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt", during: "getFieldDefsAsMatchForEditing", errorMessage: "(newFormFieldEntries?.count() ?? 0) == 0", extra: fieldIDCode)
-                    AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self!.mCTAG).buildForm", domain: FieldHandler.shared.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
-                    // cannot throw or return from here
-                } else {
-                    // add the primary field and its subfield's (if any); orderShown is fully re-synced and compacted when the changes are saved
-                    var inx:Int = 0
-                    var primaryIndex:Int64 = 0
-                    var orderShown:Int = self!.mFormEditVC!.mWorking_formFieldEntries!.getNextOrderShown()
-                    var orderSVfile:Int = self!.mFormEditVC!.mWorking_formFieldEntries!.getNextOrderSVfile()
-                    for newFormFieldEntry in newFormFieldEntries! {
-                        newFormFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = self!.mFormEditVC!.mWorking_orgFormRec!.rForm_Code_For_SV_File
-                        newFormFieldEntry.mFormFieldRec.rFormField_Order_SV_File = orderSVfile
-                        newFormFieldEntry.mFormFieldRec.rFormField_Order_Shown = orderShown
-                        newFormFieldEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true   // the actual to-be-saved RecOrgFormFieldLocales are within this object
-                        
-                        newFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = self!.mFormEditVC!.mWorking_orgFormRec!.rForm_Code_For_SV_File
-                        newFormFieldEntry.mComposedFormFieldLocalesRec.rFormField_Index = newFormFieldEntry.mFormFieldRec.rFormField_Index
-                        
-                        self!.mFormEditVC!.mWorking_formFieldEntries!.appendNewDuringEditing(newFormFieldEntry)  // this auto-assigns temporary rFormField_Index
-                        
-                        if inx == 0 { primaryIndex = newFormFieldEntry.mFormFieldRec.rFormField_Index }
-                        else { newFormFieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index = primaryIndex }
-                        
-                        inx = inx + 1
-                        orderShown = orderShown + 1
-                        orderSVfile = orderSVfile + 10
+                    
+                    // load the default configuration of the selected formFields and its subfields (if any)
+                    var newFormFieldEntries:OrgFormFields? = nil
+                    if !(fieldIDCode ?? "").isEmpty {
+                        do {
+                            newFormFieldEntries = try FieldHandler.shared.getFieldDefsAsMatchForEditing(forFieldIDCode: fieldIDCode!, forFormRec: self!.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self!.mFormEditVC!.mReference_orgRec!)
+                        } catch {
+                            // add new field; getFieldDefsAsMatchForEditing failed and threw; should not occur
+                            AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt.left", errorStruct: error, extra: fieldIDCode)
+                            AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                            // cannot throw or return from here
+                        }
                     }
+                    
+                    // save the new OrgFormFieldsEntry and its subfields (if any);
+                    // sequential negative formField_index will be used as temporary placeholder's until they are saved to the database
+                    if (newFormFieldEntries?.count() ?? 0) == 0 {
+                        // getFieldDefsAsMatchForEditing failed to find anything but didnt throw; should not occur
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt.left", during: "getFieldDefsAsMatchForEditing", errorMessage: "(newFormFieldEntries?.count() ?? 0) == 0", extra: fieldIDCode)
+                        AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("App Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self!.mCTAG).buildForm", domain: FieldHandler.shared.mThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+                        // cannot throw or return from here
+                    } else {
+                        // add the primary field and its subfield's (if any); orderShown is fully re-synced and compacted when the changes are saved
+                        self!.mFormEditVC!.mWorking_formFieldEntries!.appendNewDuringEditing(fromFormFields: newFormFieldEntries!,
+                                forOrgCode: self!.mFormEditVC!.mWorking_orgFormRec!.rOrg_Code_For_SV_File,
+                                forFormCode: self!.mFormEditVC!.mWorking_orgFormRec!.rForm_Code_For_SV_File)
+                    }
+                    
+                    // create a new ButtonRow based upon the new entry
+                    var newRow:ButtonRow
+                    if (newFormFieldEntries?.count() ?? 0) == 0 {
+                        newRow = self!.makeFieldsButtonRow(forFormFieldEntry: nil)  // this means some type of error occurred earlier
+                    } else {
+                        newRow = self!.makeFieldsButtonRow(forFormFieldEntry: newFormFieldEntries![0])
+                    }
+                    
+                    fromPushRow.value = nil     // clear out the PushRow's value so this newly chosen item does not remain "selected"
+                    fromPushRow.reload()        // note this will re-trigger .onChange in the PushRow so must ignore that re-trigger else infinite loop
+                    return newRow               // self.rowsHaveBeenAdded() will get invoked after this point
+                    
+                case .rightSelected:
+                    // add and paste was chosen; by definition the clipboard has 1 and only 1 primary formfield
+                    assert(FieldHandler.shared.mFormFieldClipboard != nil, "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt.right FieldHandler.shared.mFormFieldClipboard == nil")
+                    
+                    // add the primary field and its subfield's (if any); orderShown is fully re-synced and compacted when the changes are saved
+                    self!.mFormEditVC!.mWorking_formFieldEntries!.appendNewDuringEditing(
+                        fromFormFields: FieldHandler.shared.mFormFieldClipboard!.mFrom_FormFields,
+                        forOrgCode: self!.mFormEditVC!.mWorking_orgFormRec!.rOrg_Code_For_SV_File,
+                        forFormCode: self!.mFormEditVC!.mWorking_orgFormRec!.rForm_Code_For_SV_File)
+                    
+                    // create a new ButtonRow based upon the new entry
+                    let newRow:ButtonRow = self!.makeFieldsButtonRow(forFormFieldEntry: FieldHandler.shared.mFormFieldClipboard!.mFrom_FormFields[0])
+                    return newRow               // self.rowsHaveBeenAdded() will get invoked after this point
                 }
-
-                // create a new ButtonRow based upon the new entry
-                var newRow:ButtonRow
-                if (newFormFieldEntries?.count() ?? 0) == 0 {
-                    newRow = self!.makeFieldsButtonRow(forFormFieldEntry: nil)  // this means some type of error occurred earlier
-                } else {
-                    newRow = self!.makeFieldsButtonRow(forFormFieldEntry: newFormFieldEntries![0])
-                }
-                
-                fromPushRow.value = nil     // clear out the PushRow's value so this newly chosen item does not remain "selected"
-                fromPushRow.reload()        // note this will re-trigger .onChange in the PushRow so must ignore that re-trigger else infinite loop
-                return newRow               // self.rowsHaveBeenAdded() will get invoked after this point
             }
         }
         form +++ mvs_fields
@@ -1155,6 +1192,23 @@ class FormEditFormViewController: FormViewController {
             }
         }
         
+        // adjust the add button in the formFields MVS
+        if FieldHandler.shared.mFormFieldClipboard != nil {
+            if self.mMVS_fields_splitRow!.rowLeftPercentage != 0.6 {
+                self.mMVS_fields_splitRow!.rowLeft!.title = NSLocalizedString("Select new", comment:"")
+                self.mMVS_fields_splitRow!.rowLeftPercentage = 0.6
+                self.mMVS_fields_splitRow!.changedSplitPercentage()
+                self.mMVS_fields_splitRow!.updateCell()
+            }
+        } else {
+            if self.mMVS_fields_splitRow!.rowLeftPercentage != 0.99 {
+                self.mMVS_fields_splitRow!.rowLeft!.title = NSLocalizedString("Select new field to add", comment:"")
+                self.mMVS_fields_splitRow!.rowLeftPercentage = 0.99
+                self.mMVS_fields_splitRow!.changedSplitPercentage()
+                self.mMVS_fields_splitRow!.updateCell()
+            }
+        }
+        
         // now fill in the MultivaluedSections with any pre-existing fields and therefore matching rows
         for hasSection in form.allSections {
             switch hasSection.tag {
@@ -1163,10 +1217,10 @@ class FormEditFormViewController: FormViewController {
                     let mvsSection = hasSection as! MultivaluedSection
                     if self.mFormEditVC!.mWorking_formFieldEntries != nil {
                         for formFieldEntry:OrgFormFieldsEntry in self.mFormEditVC!.mWorking_formFieldEntries! {
-                            if !formFieldEntry.mDuringEditing_isDeleted && !formFieldEntry.mFormFieldRec.isMetaData() &&  formFieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index == nil {
+                            if !formFieldEntry.mDuringEditing_isDeleted && !formFieldEntry.mFormFieldRec.isMetaData() &&  !formFieldEntry.mFormFieldRec.isSubFormField() {
 
                                 let br = self.makeFieldsButtonRow(forFormFieldEntry: formFieldEntry)
-                                let ar = form.rowBy(tag: "add_new_field")
+                                let ar = form.rowBy(tag: "split_add_button")
                                 do {
                                     try mvsSection.insert(row: br, before: ar!)
                                 } catch {
@@ -1347,6 +1401,9 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
 //debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
         
+        assert(self.mFormEditVC != nil, "\(self.mCTAG).viewDidLoad self.mFormEditVC == nil")    // this is a programming error
+        assert(self.mEdit_FormFieldEntry != nil, "\(self.mCTAG).viewDidLoad self.mEdit_FormFieldEntry == nil")    // this is a programming error
+        
         // define navigations buttons and capture their press
         navigationItem.title = NSLocalizedString("Edit Field", comment:"")
         let button1 = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(FormEditFieldFormViewController.tappedCancel(_:)))
@@ -1354,10 +1411,9 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
         navigationItem.leftBarButtonItem = button1
         let button2 = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(FormEditFieldFormViewController.tappedDone(_:)))
         button2.possibleTitles = Set(arrayLiteral: NSLocalizedString("Done", comment:""))
-        //let button3 = UIBarButtonItem(title: NSLocalizedString("Copy", comment:""), style: UIBarButtonItem.Style.plain, target: self, action: #selector(FormEditFieldFormViewController.tappedCopy(_:)))
-        //button3.possibleTitles = Set(arrayLiteral: NSLocalizedString("Copy", comment:""))
-        //navigationItem.setRightBarButtonItems([button2, button3], animated: false)
-        navigationItem.rightBarButtonItem = button2
+        let button3 = UIBarButtonItem(title: NSLocalizedString("Copy", comment:""), style: UIBarButtonItem.Style.plain, target: self, action: #selector(FormEditFieldFormViewController.tappedCopy(_:)))
+        button3.possibleTitles = Set(arrayLiteral: NSLocalizedString("Copy", comment:""))
+        navigationItem.setRightBarButtonItems([button2, button3], animated: false)
         
         // make a copy of the RecOrgFormFieldDefs and its internally stored RecOrgFormFieldLocales
         self.mWorking_FormFieldEntry = OrgFormFieldsEntry(existingEntry: self.mEdit_FormFieldEntry!)
@@ -1373,7 +1429,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
             // allow to continue processing
         }
         if (self.mWorking_SubfieldEntries?.count() ?? 0) > 0 {
-            if (self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
+            if self.mEdit_FormFieldEntry!.mFormFieldRec.hasSubFormFields() {
                 for subFieldIDCode in self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Contains_Field_IDCodes! {
                     let subEntry:OrgFormFieldsEntry? = self.mFormEditVC!.mWorking_formFieldEntries!.findSubfield(forPrimaryIndex: self.mEdit_FormFieldEntry!.mFormFieldRec.rFormField_Index, forSubFieldIDCode: subFieldIDCode)
                     if subEntry != nil {
@@ -1420,8 +1476,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
     
     // Copy button was tapped
     @objc func tappedCopy(_ barButtonItem: UIBarButtonItem) {
-        FieldHandler.shared.copyToClipboard(origFF: self.mEdit_FormFieldEntry, editedFF: self.mWorking_FormFieldEntry,
-            editedSubFields: self.mWorking_SubfieldEntries)
+        FieldHandler.shared.copyToClipboardOneEdited(editedFF: self.mWorking_FormFieldEntry, editedSubFields: self.mWorking_SubfieldEntries)
     }
     
     // Done button was tapped
@@ -1559,7 +1614,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
         }
         let section2 = Section("Field's Names")
         form +++ section2
-        if self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Row_Type != .SECTION && self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Row_Type != .LABEL && (self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) == 0 {
+        if self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Row_Type != .SECTION && self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Row_Type != .LABEL && !self.mEdit_FormFieldEntry!.mFormFieldRec.hasSubFormFields() {
             section2 <<< TextRow() {
                 $0.tag = "formfield_col_name"
                 $0.title = NSLocalizedString("SV-File Col Name", comment:"")
@@ -1634,6 +1689,9 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
                             return ButtonRow(){
                                 $0.tag = "add_new_option"
                                 $0.title = NSLocalizedString("Add New Option", comment:"")
+                                }.cellUpdate { updCell, updRow in
+                                    updCell.textLabel?.textColor = UIColor(hex6: 0x007AFF)
+                                    updCell.imageView?.image = #imageLiteral(resourceName: "Add")
                             }
                         }  // end of addButtonProvider
                         mvSection.multivaluedRowToInsertAt = { [weak self] index in
@@ -2301,7 +2359,7 @@ class FormEditFormSVFileOrderViewController: FormViewController {
             for inx in 0...svFileOrder.count - 1 {
                 let entry:OrgFormFieldsEntry = self.mFormEditVC!.mWorking_formFieldEntries![svFileOrder[inx]]
                 // all fields; except for section, label, and container fields; except for non-SV-File metadata
-                if entry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes == nil && entry.mFormFieldRec.rFormField_Order_SV_File >= 0 &&
+                if !entry.mFormFieldRec.hasSubFormFields() && entry.mFormFieldRec.rFormField_Order_SV_File >= 0 &&
                    entry.mFormFieldRec.rFieldProp_Row_Type != .SECTION && entry.mFormFieldRec.rFieldProp_Row_Type != .LABEL {
                     let br = self.makeAllFieldButtonRow(forFormFieldEntry: entry)
                     if entry.mFormFieldRec.isMetaData() { self.mMVS_metaFields!.append(br) }

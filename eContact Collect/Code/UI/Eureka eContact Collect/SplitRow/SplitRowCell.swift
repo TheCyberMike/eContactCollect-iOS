@@ -71,6 +71,26 @@ open class SplitRowCell<L: RowType, R: RowType>: Cell<SplitRowValue<L.Cell.Value
 		tableViewLeft.update()
 		tableViewRight.update()
 	}
+    
+    public func constraintsNeedBeUpdated() {
+        guard let row = self.row as? _SplitRow<L,R> else{ return }
+        
+        for aConstraint in self.contentView.constraints {
+            if aConstraint.identifier == "Eureka.SplitRow.LeftWidth" {
+                let _ = aConstraint.setMultiplier(multiplier: row.rowLeftPercentage)
+                //self.contentView.removeConstraint(aConstraint)
+                //self.contentView.addConstraint(newConstraint)
+            } else if aConstraint.identifier == "Eureka.SplitRow.RightWidth" {
+                let _ = aConstraint.setMultiplier(multiplier: row.rowRightPercentage)
+                //self.contentView.removeConstraint(aConstraint)
+                //self.contentView.addConstraint(newConstraint)
+            }
+        }
+        setNeedsLayout()
+        layoutIfNeeded()
+        tableViewLeft.reloadData()
+        tableViewRight.reloadData()
+    }
 	
 	private func setupConstraints(){
 		guard let row = self.row as? _SplitRow<L,R> else{ return }
@@ -80,8 +100,12 @@ open class SplitRowCell<L: RowType, R: RowType>: Cell<SplitRowValue<L.Cell.Value
             self.contentView.addConstraint(NSLayoutConstraint(item: tableViewRight as Any, attribute: .height, relatedBy: .greaterThanOrEqual, toItem: nil, attribute: .height, multiplier: 1.0, constant: height))
 		}
 		
-        self.contentView.addConstraint(NSLayoutConstraint(item: tableViewLeft as Any, attribute: .width, relatedBy: .equal, toItem: contentView, attribute: .width, multiplier: row.rowLeftPercentage, constant: 0.0))
-        self.contentView.addConstraint(NSLayoutConstraint(item: tableViewRight as Any, attribute: .width, relatedBy: .equal, toItem: contentView, attribute: .width, multiplier: row.rowRightPercentage, constant: 0.0))
+        let leftConstraint = NSLayoutConstraint(item: tableViewLeft as Any, attribute: .width, relatedBy: .equal, toItem: contentView, attribute: .width, multiplier: row.rowLeftPercentage, constant: 0.0)
+        leftConstraint.identifier = "Eureka.SplitRow.LeftWidth"
+        self.contentView.addConstraint(leftConstraint)
+        let rightConstraint = NSLayoutConstraint(item: tableViewRight as Any, attribute: .width, relatedBy: .equal, toItem: contentView, attribute: .width, multiplier: row.rowRightPercentage, constant: 0.0)
+        rightConstraint.identifier = "Eureka.SplitRow.RightWidth"
+        self.contentView.addConstraint(rightConstraint)
 	}
 	
 	private func rowCanBecomeFirstResponder(_ row: BaseRow?) -> Bool{

@@ -355,7 +355,7 @@ public class RecOrgFormFieldDefs {
     public var rFieldProp_IDCode:String                         // field IDCode
     public var rFieldProp_Col_Name_For_SV_File:String           // short column name for the field in the SV file
     public var rFieldProp_Row_Type:FIELD_ROW_TYPE               // FRT aka Field Row Type; the App's "handler" for each type of data
-    public var rFieldProp_Flags:String?                         // field's flags ("M"; one of "V","F"; "S")
+    public var rFieldProp_Flags:String?                         // field's flags ("M"; one of "V","F"; "S" should never appear)
     public var rFieldProp_vCard_Property:String?                // field's primary vCard code; nil if none
     public var rFieldProp_vCard_Subproperty_No:Int?             // subfield within a vCard entry with multiple comma-delimited fields
     public var rFieldProp_vCard_Property_Subtype:String?        // qualifier within a vCard entry; usually a Type=
@@ -568,8 +568,22 @@ public class RecOrgFormFieldDefs {
     
     // indicates whether this record is for metadata or entry data
     public func isMetaData() -> Bool {
-        if rFieldProp_Flags == nil { return false }
-        if rFieldProp_Flags!.contains("M") { return true }
+        if self.rFieldProp_Flags == nil { return false }
+        if self.rFieldProp_Flags!.contains("M") { return true }
+        return false
+    }
+    
+    // indicates whether this record is a subFormField or a primary FormField
+    public func isSubFormField() -> Bool {
+        if self.rFormField_SubField_Within_FormField_Index == nil { return false }
+        if self.rFormField_SubField_Within_FormField_Index! != 0 { return true }     // can be positive or negative index#
+        return false
+    }
+    
+    // indicates whether this (primary) record potentially has subFormFields
+    public func hasSubFormFields() -> Bool {
+        if self.rFieldProp_Contains_Field_IDCodes == nil { return false }
+        if self.rFieldProp_Contains_Field_IDCodes!.count > 0 { return true }
         return false
     }
     

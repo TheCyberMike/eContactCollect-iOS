@@ -1125,7 +1125,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                         throw APP_ERROR(funcName: funcString, during: "Validate \(getResult4.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
                     }
                     let newFormFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(existingRec: newFormFieldRecOpt)
-                    if newFormFieldRec.rFormField_SubField_Within_FormField_Index == nil {
+                    if !newFormFieldRec.isSubFormField() {
                         let originalIndex = newFormFieldRec.rFormField_Index
                         newFormFieldRec.rFormField_Index = -1
                         newFormFieldRec.rFormField_Index = try newFormFieldRec.saveNewToDB()
@@ -1150,7 +1150,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                         throw APP_ERROR(funcName: funcString, during: "Validate \(getResult4.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
                     }
                     let newFormFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(existingRec: newFormFieldRecOpt)
-                    if newFormFieldRec.rFormField_SubField_Within_FormField_Index != nil {
+                    if newFormFieldRec.isSubFormField() {
                         newFormFieldRec.rFormField_SubField_Within_FormField_Index = remappingFFI[newFormFieldRec.rFormField_SubField_Within_FormField_Index!]
                         let originalIndex = newFormFieldRec.rFormField_Index
                         newFormFieldRec.rFormField_Index = -1

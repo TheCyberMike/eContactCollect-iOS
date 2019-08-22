@@ -67,6 +67,13 @@ public class OrgFormFields:Sequence {
     public func count() -> Int {
         return self.mOrgFormFields.count
     }
+    
+    // return the count of primary FormField entries
+    public func countPrimary() -> Int {
+        var counter:Int = 0
+        for formField in self.mOrgFormFields { if !formField.mFormFieldRec.isSubFormField() { counter = counter + 1 } }
+        return counter
+    }
 
     // append a new OrgFormFieldsEntry
     public func appendFromDatabase(_ entry:OrgFormFieldsEntry) {
@@ -87,6 +94,74 @@ public class OrgFormFields:Sequence {
         }
         self.mOrgFormFields.append(entry)
         OrgFormFields.mNextTemporaryFFindex = OrgFormFields.mNextTemporaryFFindex - 1
+    }
+    
+    // append a new subfield OrgFormFieldsEntry with auto-temporary indexing
+    public func appendNewSubfieldDuringEditing(_ entry:OrgFormFieldsEntry, primary:OrgFormFieldsEntry) {
+        entry.mFormFieldRec.rFormField_Index = OrgFormFields.mNextTemporaryFFindex
+        entry.mComposedFormFieldLocalesRec.rFormFieldLoc_Index = OrgFormFields.mNextTemporaryFFindex
+        entry.mComposedFormFieldLocalesRec.rFormField_Index = OrgFormFields.mNextTemporaryFFindex
+
+        entry.mFormFieldRec.rFormField_SubField_Within_FormField_Index = primary.mFormFieldRec.rFormField_Index
+
+        if (entry.mFormFieldRec.mFormFieldLocalesRecs?.count ?? 0) > 0 {
+            for ffLocaleRec:RecOrgFormFieldLocales in entry.mFormFieldRec.mFormFieldLocalesRecs! {
+                ffLocaleRec.rFormFieldLoc_Index = OrgFormFields.mNextTemporaryFFindex
+                ffLocaleRec.rFormField_Index = OrgFormFields.mNextTemporaryFFindex
+            }
+        }
+        self.mOrgFormFields.append(entry)
+        OrgFormFields.mNextTemporaryFFindex = OrgFormFields.mNextTemporaryFFindex - 1
+    }
+    
+    // append a collection of fields and subfields; this is usually from a Copy during a Paste
+    public func appendNewDuringEditing(fromFormFields:OrgFormFields, forOrgCode:String, forFormCode:String) {
+        var orderShown:Int = self.getNextOrderShown()
+        var orderSVfile:Int = self.getNextOrderSVfile()
+        var subcount:Int = 0
+        
+        // step thru the primary FormFields; note meta-data FormFields will never be present
+        for newFormFieldEntry in fromFormFields {
+            if !newFormFieldEntry.mFormFieldRec.isSubFormField() {
+                newFormFieldEntry.mFormFieldRec.rOrg_Code_For_SV_File = forOrgCode
+                newFormFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = forFormCode
+                newFormFieldEntry.mFormFieldRec.rFormField_Order_SV_File = orderSVfile
+                newFormFieldEntry.mFormFieldRec.rFormField_Order_Shown = orderShown
+                newFormFieldEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true   // the actual to-be-saved RecOrgFormFieldLocales are within this object
+                
+                newFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = forOrgCode
+                newFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = forFormCode
+                
+                let originalIndex:Int64 = newFormFieldEntry.mFormFieldRec.rFormField_Index
+                self.appendNewDuringEditing(newFormFieldEntry)  // this auto-assigns temporary rFormField_Index
+                
+                subcount = orderShown + 1
+                orderShown = orderShown + 10
+                orderSVfile = orderSVfile + 1
+
+                // now handle any potential subFormFields of the current primary FormField
+                for newSubFormFieldEntry in fromFormFields {
+                    if newSubFormFieldEntry.mFormFieldRec.isSubFormField() {
+                        if newSubFormFieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index == originalIndex {
+                            // found a subfield for the current primary field
+                            newSubFormFieldEntry.mFormFieldRec.rOrg_Code_For_SV_File = forOrgCode
+                            newSubFormFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = forFormCode
+                            newSubFormFieldEntry.mFormFieldRec.rFormField_Order_SV_File = orderSVfile
+                            newSubFormFieldEntry.mFormFieldRec.rFormField_Order_Shown = subcount
+                            newSubFormFieldEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true
+                            
+                            newSubFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = forOrgCode
+                            newSubFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = forFormCode
+                            
+                            self.appendNewSubfieldDuringEditing(newSubFormFieldEntry, primary: newFormFieldEntry)  // this auto-assigns temporary rFormField_Index
+
+                            subcount = subcount + 1
+                            orderSVfile = orderSVfile + 1
+                        }
+                    }
+                }
+            }
+        }
     }
     
     // find the index of a specific FormField index#; return -1 if not found
@@ -114,7 +189,7 @@ public class OrgFormFields:Sequence {
     // find a specific subfield for a contain primary field; return nil if not found
     public func findSubfield(forPrimaryIndex:Int64, forSubFieldIDCode:String) -> OrgFormFieldsEntry? {
         for entry in self.mOrgFormFields {
-            if !entry.mDuringEditing_isDeleted && entry.mFormFieldRec.rFormField_SubField_Within_FormField_Index != nil {
+            if !entry.mDuringEditing_isDeleted && entry.mFormFieldRec.isSubFormField() {
                 if entry.mFormFieldRec.rFieldProp_IDCode == forSubFieldIDCode &&
                    entry.mFormFieldRec.rFormField_SubField_Within_FormField_Index! == forPrimaryIndex {
                     return entry
@@ -157,10 +232,10 @@ public class OrgFormFields:Sequence {
         self.mOrgFormFields[forFFEindex].mDuringEditing_isDeleted = true
         
         // also mark as deleted any of its sub-fields
-        if (self.mOrgFormFields[forFFEindex].mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
+        if self.mOrgFormFields[forFFEindex].mFormFieldRec.hasSubFormFields() {
             let ffIndex:Int64 = self.mOrgFormFields[forFFEindex].mFormFieldRec.rFormField_Index
             for entry:OrgFormFieldsEntry in self.mOrgFormFields {
-                if (entry.mFormFieldRec.rFormField_SubField_Within_FormField_Index ?? -1) >= 0 {
+                if entry.mFormFieldRec.isSubFormField() {
                     if entry.mFormFieldRec.rFormField_SubField_Within_FormField_Index == ffIndex {
 //debugPrint("\(self.mCTAG).delete for subfield FFE index \(forFFEindex)")
                         entry.mDuringEditing_isDeleted = true
@@ -240,12 +315,12 @@ public class OrgFormFields:Sequence {
         self.mOrgFormFields[newDestFFEindex].mFormFieldRec.rFormField_Order_Shown = startingShownOrder
         
         // now deal with its subfield's (if any)
-        if (self.mOrgFormFields[newDestFFEindex].mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
+        if self.mOrgFormFields[newDestFFEindex].mFormFieldRec.hasSubFormFields() {
             let ffindex:Int64 = self.mOrgFormFields[newDestFFEindex].mFormFieldRec.rFormField_Index
             var nextIndex = startingShownOrder + 1
             var inx:Int = 0
             for entry in self.mOrgFormFields {
-                if entry.mFormFieldRec.rFormField_SubField_Within_FormField_Index != nil {
+                if entry.mFormFieldRec.isSubFormField() {
                     if entry.mFormFieldRec.rFormField_SubField_Within_FormField_Index! == ffindex {
 //debugPrint("\(self.mCTAG).moveBefore reordering dest sub index \(inx) sort order \(entry.mFormFieldRec.rFormField_Order_Shown) -> \(nextIndex) is #\(entry.mFormFieldRec.rFormField_Index)")
                         entry.mFormFieldRec.rFormField_Order_Shown = nextIndex

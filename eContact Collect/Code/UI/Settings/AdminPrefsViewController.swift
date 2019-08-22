@@ -274,12 +274,13 @@ debugPrint("\(mCTAG).deinit STARTED")
                         row.presentationMode = .show(
                             controllerProvider: .callback(builder: { return AdminPrefsEmailProvidersViewController() } ),
                             onDismiss: nil)
-                        }.cellUpdate { cell, row in
-                            cell.textLabel?.textAlignment = .left
-                            //cell.textLabel?.font = .systemFont(ofSize: 15.0)
-                            cell.textLabel?.textColor = UIColor.black
-                            cell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-                            row.onCellSelection { cell, row in }    // override the default behavior of the MVS ButtonRow
+                        }.cellUpdate { updCell, updRow in
+                            updCell.textLabel?.textAlignment = .left
+                            //updCell.textLabel?.font = .systemFont(ofSize: 15.0)
+                            updCell.textLabel?.textColor = UIColor(hex6: 0x007AFF)
+                            updCell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
+                            updCell.imageView?.image = #imageLiteral(resourceName: "Add")
+                            updRow.onCellSelection { selCell, selRow in }    // override the default behavior of the MVS ButtonRow
                     }
                 }  // end of addButtonProvider
                 /*mvSection.multivaluedRowToInsertAt = { [weak self] index in

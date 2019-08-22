@@ -208,7 +208,7 @@ class EntryFormViewController: FormViewController {
                 // what kind of field was found?
                 if !formFieldEntry.mFormFieldRec.isMetaData() {
                     // entry field; prepare to emplace the row
-                    if formFieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index == nil {
+                    if !formFieldEntry.mFormFieldRec.isSubFormField() {
                         // its not a subfield either
                         counter = counter + 1
                         if counter == 1 && formFieldEntry.mFormFieldRec.rFieldProp_Row_Type != FIELD_ROW_TYPE.SECTION {
@@ -610,7 +610,7 @@ class EntryFormViewController: FormViewController {
             workPhoneComponentsShown.phoneInternationalPrefix.shown = false
             workPhoneComponentsShown.phoneNumber.shown = false
             workPhoneComponentsShown.phoneExtension.shown = false
-            if (forFormFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
+            if forFormFieldEntry.mFormFieldRec.hasSubFormFields() {
                 for subFormFieldIDCode in forFormFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes! {
                     let subFFentry:OrgFormFieldsEntry? = self.mEntryVC!.mEFP!.mFormFieldEntries!.findSubfield(forPrimaryIndex: forFormFieldEntry.mFormFieldRec.rFormField_Index, forSubFieldIDCode: subFormFieldIDCode)
                     if subFFentry != nil {
@@ -1556,7 +1556,7 @@ class EntryFormViewController: FormViewController {
                             let phoneCompRow = row as! PhoneComponentsRow
                             phoneCompRow.title = rowTitle
                             phoneCompRow.title2 = rowTitle2
-                            if (formFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
+                            if formFieldEntry.mFormFieldRec.hasSubFormFields() {
                                 for subFormFieldIDCode in formFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes! {
                                     let subFFentry:OrgFormFieldsEntry? = self.mEntryVC!.mEFP!.mFormFieldEntries!.findSubfield(forPrimaryIndex: formFieldEntry.mFormFieldRec.rFormField_Index, forSubFieldIDCode: subFormFieldIDCode)
                                     if subFFentry != nil {
