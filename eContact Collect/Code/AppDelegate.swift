@@ -35,6 +35,17 @@ extension UIView {
         return nil
     }
 }
+extension UINavigationController {
+    func findViewController(ofKind kind: AnyClass) -> UIViewController? {
+        return self.viewControllers.first(where: { $0.isKind(of: kind) })
+    }
+    func popToViewController(ofKind kind: AnyClass) -> Bool {
+        if let vc:UIViewController = self.viewControllers.first(where: { $0.isKind(of: kind) }) {
+            let _ = self.popToViewController(vc, animated: true)
+            return true
+        } else { return false }
+    }
+}
 extension UIApplication.OpenURLOptionsKey {
     public static let url:UIApplication.OpenURLOptionsKey = UIApplication.OpenURLOptionsKey(rawValue: "url")
 }

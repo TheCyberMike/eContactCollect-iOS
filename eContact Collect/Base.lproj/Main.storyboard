@@ -1450,13 +1450,14 @@ Or if the file is stored in your Files App, press the button below to import it.
                     <navigationItem key="navigationItem" title="Manage Orgs" id="38K-ID-sWx">
                         <barButtonItem key="rightBarButtonItem" systemItem="add" id="htP-Oz-DQg" userLabel="button_add_org">
                             <connections>
-                                <segue destination="Vkh-Vq-eme" kind="show" id="0ET-k4-NjI"/>
+                                <action selector="button_add_org_pressed:" destination="xr8-zx-Aeb" id="fG1-Vg-zje"/>
                             </connections>
                         </barButtonItem>
                     </navigationItem>
                     <connections>
                         <outlet property="tableView_org_list" destination="hrZ-ao-y7V" id="Mwv-cD-HPh"/>
                         <segue destination="FSi-8S-t6L" kind="show" identifier="Segue OrgMgmt_FormMgmt" id="aF8-Fv-Js7"/>
+                        <segue destination="Vkh-Vq-eme" kind="show" id="eYn-Md-TqM"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="pSZ-x0-SRr" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -1560,14 +1561,15 @@ Or if the file is stored in your Files App, press the button below to import it.
                         <viewLayoutGuide key="safeArea" id="TC9-0E-Igj"/>
                     </view>
                     <navigationItem key="navigationItem" title="Manage Forms" id="pLk-Tb-5cb">
-                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="3ia-2s-cb2">
+                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="3ia-2s-cb2" userLabel="button_add_form">
                             <connections>
-                                <segue destination="Jed-qL-8ee" kind="show" id="xne-z3-kFy"/>
+                                <action selector="button_add_form_pressed:" destination="FSi-8S-t6L" id="Nnh-5z-Xi9"/>
                             </connections>
                         </barButtonItem>
                     </navigationItem>
                     <connections>
                         <outlet property="tableview_form_list" destination="Ds9-9W-d0Q" id="GeS-vz-NLf"/>
+                        <segue destination="Jed-qL-8ee" kind="show" id="5GH-zW-z8I"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="eEj-YK-tLQ" userLabel="First Responder" sceneMemberID="firstResponder"/>

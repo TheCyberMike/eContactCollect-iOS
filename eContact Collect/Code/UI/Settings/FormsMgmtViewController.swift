@@ -21,6 +21,29 @@ class FormsMgmtViewController: UIViewController, UITableViewDataSource, UITableV
 
     // outlets to screen controls
     @IBOutlet weak var tableview_form_list: UITableView!
+    @IBAction func button_add_form_pressed(_ sender: UIBarButtonItem) {
+        // query if the end-user wants to choose a sample form or add a blank form
+        AppDelegate.showYesNoDialog(vc:self, title:NSLocalizedString("Type of Add", comment:""), message:NSLocalizedString("Do you wish to add one or more forms from the Sample Library, or just add a Blank Form?", comment:""), buttonYesText:NSLocalizedString("Samples", comment:""), buttonNoText:NSLocalizedString("Blank", comment:""), callbackAction:1, callbackString1:nil, callbackString2:nil, completion: {(vc:UIViewController, theResult:Bool, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
+            // callback from the yes/no dialog upon one of the buttons being pressed
+            if theResult {
+                // answer was Sample
+                let nextViewController:SampleFormsViewController = SampleFormsViewController()
+                nextViewController.mForOrgShortCode = self.mFor_orgRec!.rOrg_Code_For_SV_File
+                self.navigationController?.pushViewController(nextViewController, animated:true)
+            } else {
+                // answer was Blank
+                // open the Edit Form view for add
+                let storyboard = UIStoryboard(name:"Main", bundle:nil)
+                let nextViewController:FormEditViewController = storyboard.instantiateViewController(withIdentifier:"VC FormEdit") as! FormEditViewController
+                nextViewController.mFEVCdelegate = self
+                nextViewController.mAction = .Add
+                nextViewController.mReference_orgRec = RecOrganizationDefs(existingRec: self.mFor_orgRec!)
+                nextViewController.mEdit_orgFormRec = nil
+                self.navigationController?.pushViewController(nextViewController, animated:true)
+            }
+            return  // from callback
+        })
+    }
     
     // called when the object instance is being destroyed
     deinit {
@@ -98,17 +121,6 @@ class FormsMgmtViewController: UIViewController, UITableViewDataSource, UITableV
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
-    }
-    
-    // called when the Add button is pressed before the segue is handed off to the new view controller
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?)
-    {
-        if segue.destination is FormEditViewController
-        {
-            let vc = segue.destination as! FormEditViewController
-            vc.mFEVCdelegate = self
-            vc.mReference_orgRec = RecOrganizationDefs(existingRec: self.mFor_orgRec!)
-        }
     }
     
     // the add/edit Form view controller has finished;

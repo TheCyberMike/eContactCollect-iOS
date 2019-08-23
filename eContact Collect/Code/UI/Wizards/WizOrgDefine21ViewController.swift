@@ -23,7 +23,9 @@ class WizOrgDefine21ViewController: UIViewController, UIImagePickerControllerDel
     @IBOutlet weak var button_delete_logo: UIButton!
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
         self.mRootVC!.mWorking_Org_Rec = nil
-        self.navigationController?.popToRootViewController(animated: true)
+        if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
+            self.navigationController!.popToRootViewController(animated: true)
+        }
     }
     @IBAction func button_has_logo_changed(_ sender: UISwitch) {
         if sender.isOn {
@@ -64,7 +66,7 @@ class WizOrgDefine21ViewController: UIViewController, UIImagePickerControllerDel
     override func viewDidLoad() {
 //debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
-        self.mRootVC = self.navigationController!.viewControllers.first as? WizMenuViewController
+        self.mRootVC = self.navigationController!.findViewController(ofKind: WizMenuViewController.self) as? WizMenuViewController
         assert(self.mRootVC != nil, "\(self.mCTAG).viewDidLoad self.mRootVC == nil")
         assert(self.mRootVC!.mWorking_Org_Rec != nil, "\(self.mCTAG).viewDidLoad self.mRootVC!.mWorking_Org_Rec == nil")
         

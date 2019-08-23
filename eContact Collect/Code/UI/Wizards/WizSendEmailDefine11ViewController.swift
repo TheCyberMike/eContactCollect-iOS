@@ -18,7 +18,9 @@ class WizSendEmailDefine11ViewController: FormViewController {
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
         self.mRootVC!.mWorking_EmailVia = nil
         self.clearVC()
-        self.navigationController?.popToRootViewController(animated: true)
+        if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
+            self.navigationController!.popToRootViewController(animated: true)
+        }
     }
     @IBAction func button_done_pressed(_ sender: UIBarButtonItem) {
         if EmailHandler.shared.getQtyEmailOptions() == 0 {
@@ -43,7 +45,9 @@ class WizSendEmailDefine11ViewController: FormViewController {
             }
             self.mRootVC!.mWorking_EmailVia = nil
             self.clearVC()
-            self.navigationController?.popToRootViewController(animated: true)
+            if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
+                self.navigationController!.popToRootViewController(animated: true)
+            }
         }
     }
     
@@ -57,7 +61,7 @@ class WizSendEmailDefine11ViewController: FormViewController {
     override func viewDidLoad() {
 //debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
-        self.mRootVC = self.navigationController!.viewControllers.first as? WizMenuViewController
+        self.mRootVC = self.navigationController!.findViewController(ofKind: WizMenuViewController.self) as? WizMenuViewController
         assert(self.mRootVC != nil, "\(self.mCTAG).viewDidLoad self.mRootVC == nil")
         assert(self.mRootVC!.mWorking_EmailVia != nil, "\(self.mCTAG).viewDidLoad self.mRootVC!.mWorking_EmailVia == nil")
         

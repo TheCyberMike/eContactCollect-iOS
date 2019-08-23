@@ -21,7 +21,9 @@ class WizOrgDefine26ViewController: UIViewController {
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
         self.mRootVC!.mWorking_Org_Rec = nil
         self.clearVC()
-        self.navigationController?.popToRootViewController(animated: true)
+        if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
+            self.navigationController!.popToRootViewController(animated: true)
+        }
     }
     @IBAction func button_done_pressed(_ sender: UIBarButtonItem) {
         do {
@@ -32,7 +34,9 @@ class WizOrgDefine26ViewController: UIViewController {
             return
         }
         (UIApplication.shared.delegate as! AppDelegate).setCurrentOrg(toOrgRec:self.mRootVC!.mWorking_Org_Rec!)
-        self.navigationController?.popToRootViewController(animated: true)
+        if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
+            self.navigationController!.popToRootViewController(animated: true)
+        }
     }
 
     // called when the object instance is being destroyed
@@ -45,7 +49,7 @@ class WizOrgDefine26ViewController: UIViewController {
     override func viewDidLoad() {
 //debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
-        self.mRootVC = self.navigationController!.viewControllers.first as? WizMenuViewController
+        self.mRootVC = self.navigationController!.findViewController(ofKind: WizMenuViewController.self) as? WizMenuViewController
         assert(self.mRootVC != nil, "\(self.mCTAG).viewDidLoad self.mRootVC == nil")
         assert(self.mRootVC!.mWorking_Org_Rec != nil, "\(self.mCTAG).viewDidLoad self.mRootVC!.mWorking_Org_Rec == nil")
         assert(self.mRootVC!.mEFP != nil, "\(self.mCTAG).viewDidLoad self.mEFP == nil")

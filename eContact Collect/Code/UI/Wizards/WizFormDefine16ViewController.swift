@@ -20,7 +20,9 @@ class WizFormDefine16ViewController: UIViewController {
     @IBOutlet weak var switch_address: UISwitch!
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
         self.mRootVC!.mWorking_Form_Rec = nil
-        self.navigationController?.popToRootViewController(animated: true)
+        if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
+            self.navigationController!.popToRootViewController(animated: true)
+        }
     }
     @IBAction func button_done_pressed(_ sender: UIBarButtonItem) {
         self.mRootVC!.mWorking_Form_Rec!.rOrg_Code_For_SV_File = self.mRootVC!.mWorking_Org_Rec!.rOrg_Code_For_SV_File
@@ -58,7 +60,9 @@ class WizFormDefine16ViewController: UIViewController {
         }
         
         (UIApplication.shared.delegate as! AppDelegate).checkCurrentForm(withFormRec: self.mRootVC!.mWorking_Form_Rec!)
-        self.navigationController?.popToRootViewController(animated: true)
+        if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
+            self.navigationController!.popToRootViewController(animated: true)
+        }
     }
     
     // called when the object instance is being destroyed
@@ -71,7 +75,7 @@ class WizFormDefine16ViewController: UIViewController {
     override func viewDidLoad() {
 //debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
-        self.mRootVC = self.navigationController!.viewControllers.first as? WizMenuViewController
+        self.mRootVC = self.navigationController!.findViewController(ofKind: WizMenuViewController.self) as? WizMenuViewController
         assert(self.mRootVC != nil, "\(self.mCTAG).viewDidLoad self.mRootVC == nil")
         assert(self.mRootVC!.mWorking_Org_Rec != nil, "\(self.mCTAG).viewDidLoad self.mRootVC!.mWorking_Org_Rec == nil")
         assert(self.mRootVC!.mWorking_Form_Rec != nil, "\(self.mCTAG).viewDidLoad self.mRootVC!.mWorking_Form_Rec == nil")

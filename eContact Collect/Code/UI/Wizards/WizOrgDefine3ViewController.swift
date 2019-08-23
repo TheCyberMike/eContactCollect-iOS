@@ -16,7 +16,9 @@ class WizOrgDefine3ViewController: FormViewController {
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
         self.mRootVC!.mWorking_Org_Rec = nil
         self.clearVC()
-        self.navigationController?.popToRootViewController(animated: true)
+        if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
+            self.navigationController!.popToRootViewController(animated: true)
+        }
     }
     
     // called when the object instance is being destroyed
@@ -29,7 +31,7 @@ class WizOrgDefine3ViewController: FormViewController {
     override func viewDidLoad() {
 //debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
-        self.mRootVC = self.navigationController!.viewControllers.first as? WizMenuViewController
+        self.mRootVC = self.navigationController!.findViewController(ofKind: WizMenuViewController.self) as? WizMenuViewController
         assert(self.mRootVC != nil, "\(self.mCTAG).viewDidLoad self.mRootVC == nil")
         
         // create an empty Org record if it does not already exist

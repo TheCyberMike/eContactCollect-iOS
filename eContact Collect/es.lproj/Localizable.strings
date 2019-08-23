@@ -292,6 +292,10 @@
 "%info%_WizDefineNickname" = "Enter YOUR name, usually just your last name or a short nickname that the Organization can use to identify you (the Collector).  This name will be included in every contact record that you collect.";
 
 // OrgsMgmtViewController.swift
+"Type of Add" = "Type of Add";
+"Do you wish to add using the Organization Definition Wizard, or just add a Blank Organization?" = "Do you wish to add using the Organization Definition Wizard, or just add a Blank Organization?";
+"Wizard" = "Wizard";
+"Blank" = "Blank";
 "Delete Organization?" = "Delete Organization?";
 
 // OrgEditViewController.swift & WizOrgDefine3ViewController.swift & WizOrgDefine11ViewController.swift & WizOrgDefine16ViewController.swift & WizOrgDefine26ViewController.swift & RecOrganizationDefs.swift
@@ -350,6 +354,8 @@
 "%info%_WizOrgDefine26" = "You can control how the Organization title and logo are shown together, which is mostly important when your iPhone is in regular portrait orientation.  Logos that are too long or too tall will likely not show well.\n\nBy adjusting the 'Show as' control below, you can choose various options and see the end resulting title and/or logo that people will see.  You can also adjust other settings for color and font.";
 
 // FormsMgmtViewController.swift
+"Do you wish to add one or more forms from the Sample Library, or just add a Blank Form?" = "Do you wish to add one or more forms from the Sample Library, or just add a Blank Form?";
+"Samples" = "Samples";
 "Delete Form?" = "Delete Form?";
 
 // WizLangNoteViewController.swift

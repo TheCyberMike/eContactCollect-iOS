@@ -17,6 +17,30 @@ class OrgsMgmtViewController: UITableViewController, OEVC_Delegate {
     
     // outlets to screen controls
     @IBOutlet weak var tableView_org_list: UITableView!
+    @IBAction func button_add_org_pressed(_ sender: UIBarButtonItem) {
+        // query if the end-user wants to add an Org using the Wizard, or just add a blank Org
+        AppDelegate.showYesNoDialog(vc:self, title:NSLocalizedString("Type of Add", comment:""), message:NSLocalizedString("Do you wish to add using the Organization Definition Wizard, or just add a Blank Organization?", comment:""), buttonYesText:NSLocalizedString("Wizard", comment:""), buttonNoText:NSLocalizedString("Blank", comment:""), callbackAction:1, callbackString1:nil, callbackString2:nil, completion: {(vc:UIViewController, theResult:Bool, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
+            // callback from the yes/no dialog upon one of the buttons being pressed
+            if theResult {
+                // answer was Wizard
+                // open the Edit Org view for add
+                let storyboard = UIStoryboard(name:"Main", bundle:nil)
+                let nextViewController:WizMenuViewController = storyboard.instantiateViewController(withIdentifier:"VC WizMenu") as! WizMenuViewController
+                nextViewController.mRunWizard = .ORGANIZATION
+                self.navigationController?.pushViewController(nextViewController, animated:true)
+            } else {
+                // answer was Blank
+                // open the Edit Org view for add
+                let storyboard = UIStoryboard(name:"Main", bundle:nil)
+                let nextViewController:OrgEditViewController = storyboard.instantiateViewController(withIdentifier:"VC OrgEdit") as! OrgEditViewController
+                nextViewController.mOEVCdelegate = self
+                nextViewController.mAction = .Add
+                nextViewController.mEdit_orgRec = nil
+                self.navigationController?.pushViewController(nextViewController, animated:true)
+            }
+            return  // from callback
+        })
+    }
     
     // called when the object instance is being destroyed
     deinit {
@@ -69,16 +93,6 @@ class OrgsMgmtViewController: UITableViewController, OEVC_Delegate {
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
-    }
-    
-    // called when the Add button is pressed before the segue is handed off to the new view controller
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?)
-    {
-        if segue.destination is OrgEditViewController
-        {
-            let vc = segue.destination as! OrgEditViewController
-            vc.mOEVCdelegate = self
-        }
     }
     
     // the add/edit Organization view controller has finished;

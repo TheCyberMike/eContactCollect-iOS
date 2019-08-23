@@ -9,7 +9,11 @@ import UIKit
 import SQLite
 
 class WizMenuViewController: UIViewController, C1stVC_Delegate {
+    // caller pre-set member variables
+    public var mRunWizard:Wizards = .NONE
+    
     // member variables
+    private var mWizardAlreadyInvoked:Bool = false
     public var mEFP:EntryFormProvisioner? = nil
     public var mWorking_Org_Rec:RecOrganizationDefs? = nil {
         didSet {
@@ -34,6 +38,7 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
     
     // member constants and other static content
     private let mCTAG:String = "VCW0"
+    public enum Wizards { case NONE, ORGANIZATION, FORM, SENDINGEMAIL }
 
     // outlets to screen controls
 
@@ -64,8 +69,41 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
         
         self.mWorking_Org_Rec = nil     // clear out any previously created Org definition
         self.mWorking_Form_Rec = nil     // clear out any previously created Form definition
+        let storyboard = UIStoryboard(name:"Main", bundle:nil)
         
-        self.checkFirstTime()
+        switch self.mRunWizard {
+        case .NONE:
+            self.checkFirstTime()
+            break
+            
+        case .ORGANIZATION:
+            if self.mWizardAlreadyInvoked { self.navigationController?.popViewController(animated:true) }
+            else {
+                let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizOrgDefine3")
+                self.mWizardAlreadyInvoked = true
+                self.navigationController?.pushViewController(nextViewController, animated:true)
+            }
+            break
+            
+        case .FORM:
+            if self.mWizardAlreadyInvoked { self.navigationController?.popViewController(animated:true) }
+            else {
+                let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizFormDefine1")
+                self.mWizardAlreadyInvoked = true
+                self.navigationController?.pushViewController(nextViewController, animated:true)
+            }
+            break
+            
+        case .SENDINGEMAIL:
+            if self.mWizardAlreadyInvoked { self.navigationController?.popViewController(animated:true) }
+            else {
+                let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizSendEmailDefine1")
+                self.mWizardAlreadyInvoked = true
+                self.navigationController?.pushViewController(nextViewController, animated:true)
+            }
+            break
+        }
+        
     }
     
     // called by the framework when the view will disappear from the UI framework;

@@ -552,6 +552,9 @@ debugPrint("\(self.mCTAG).noticeEmailCompleted STARTED")
 ///////////////////////////////////////////////////
 
 class SampleFormsViewController: UIViewController, WKNavigationDelegate {
+    // caller pre-set member variables
+    public var mForOrgShortCode:String? = nil   // target Org code (optional)
+    
     // member variables
     private var mWebView:WKWebView!
     
@@ -640,6 +643,7 @@ class SampleFormsViewController: UIViewController, WKNavigationDelegate {
         newViewController.mCompletionUIthread = { docURL in
                 let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
                 let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC PopupImport") as! PopupImportViewController
+                newViewController.mForOrgShortCode = self.mForOrgShortCode
                 newViewController.mCIVCdelegate = nil
                 newViewController.mFromExternal = false
                 newViewController.mFileURL = docURL

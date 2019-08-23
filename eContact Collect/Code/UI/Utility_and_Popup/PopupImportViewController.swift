@@ -20,6 +20,7 @@ class PopupImportViewController: UIViewController {
     public var mCIVCdelegate:CIVC_Delegate? = nil   // optional callback
     public var mFromExternal:Bool = false           // external file open?
     public var mFileURL:URL? = nil                  // file URL to be opened
+    public var mForOrgShortCode:String? = nil       // target Org Code (optional)
     
     // member variables
     internal var mFormOnly:Bool = false
@@ -331,7 +332,13 @@ class PopupImportFormViewController: FormViewController {
             // Form-Only
             let section2 = Section(NSLocalizedString("Into Organization", comment:""))
             form +++ section2
-            if self.mParentVC!.mOrgShortNames.count == 1 {      // case of mOrgShortNames.count == 0 already covered in pre-import errors
+            if !(self.mParentVC!.mForOrgShortCode ?? "").isEmpty {
+                self.mParentVC!.mStoreAsOrgName = self.mParentVC!.mForOrgShortCode
+                section2 <<< LabelRow() {
+                    $0.tag = "orgName"
+                    $0.title = self.mParentVC!.mForOrgShortCode
+                }
+            } else if self.mParentVC!.mOrgShortNames.count == 1 {      // case of mOrgShortNames.count == 0 already covered in pre-import errors
                 self.mParentVC!.mStoreAsOrgName = self.mParentVC!.mOrgShortNames[0]
                 section2 <<< LabelRow() {
                     $0.tag = "orgName"
