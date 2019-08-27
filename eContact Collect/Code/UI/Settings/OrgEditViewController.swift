@@ -35,11 +35,36 @@ class OrgEditViewController: UIViewController {
     // outlets to screen controls
     @IBOutlet weak var navbar_item: UINavigationItem!
     @IBOutlet weak var button_forms: UIBarButtonItem!
+    
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
-        // cancel button pressed; dismiss and return to the parent view controller
-        if mOEVCdelegate != nil { mOEVCdelegate!.completed_OEVC(wasSaved:false) }
-        self.navigationController?.popViewController(animated:true)
+        // cancel button pressed;
+        // first finalize the LangRegion settings to what is shown on the Form so as to detect changes
+        do {
+            try self.mOrgEditFormVC!.finalizeLangRegions()
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).saveRecordToDB", errorStruct: error, extra: nil)
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+        }
+        
+        // has anything changed?
+        if self.mWorking_orgRec!.hasChanged(existingEntry: self.mEdit_orgRec!) {
+            // yes, warn the end-user
+            AppDelegate.showYesNoDialog(vc:self, title:NSLocalizedString("Cancel Confirmation", comment:""), message:NSLocalizedString("If you Cancel you will lose your changes; are you sure?", comment:""), buttonYesText:NSLocalizedString("Yes, Cancel", comment:""), buttonNoText:NSLocalizedString("No", comment:""), callbackAction:1, callbackString1:nil, callbackString2:nil, completion: {(vc:UIViewController, theResult:Bool, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
+                // callback from the yes/no dialog upon one of the buttons being pressed
+                if theResult {
+                    // answer was Yes, Cancel
+                    if self.mOEVCdelegate != nil { self.mOEVCdelegate!.completed_OEVC(wasSaved:false) }
+                    self.navigationController?.popViewController(animated:true)
+                }
+                return  // from callback
+            })
+        } else {
+            // nothing has changed; just do an immediate cancel
+            if self.mOEVCdelegate != nil { self.mOEVCdelegate!.completed_OEVC(wasSaved:false) }
+            self.navigationController?.popViewController(animated:true)
+        }
     }
+    
     @IBAction func button_forms_pressed(_ sender: UIBarButtonItem) {
         // open the Forms Mgmt view
         let storyboard = UIStoryboard(name:"Main", bundle:nil)
@@ -47,6 +72,7 @@ class OrgEditViewController: UIViewController {
         nextViewController.mFor_orgRec = RecOrganizationDefs(existingRec: self.mEdit_orgRec!)
         self.navigationController?.pushViewController(nextViewController, animated:true)
     }
+    
     @IBAction func button_save_pressed(_ sender: UIBarButtonItem) {
         // save button pressed
         let msg:String = self.validateEntries()
@@ -91,9 +117,10 @@ class OrgEditViewController: UIViewController {
             if self.mWorking_orgRec != nil { self.mWorking_orgRec = nil }
             self.mWorking_orgRec = RecOrganizationDefs(existingRec:mEdit_orgRec!)   // make a copy of the existing Org rec
             do {
-                try self.mWorking_orgRec!.loadLangRecs(method: "\(self.mCTAG).viewDidLoad")
+                try self.mEdit_orgRec!.loadLangRecs(method: "\(self.mCTAG).viewDidLoad.change.1")
+                try self.mWorking_orgRec!.loadLangRecs(method: "\(self.mCTAG).viewDidLoad.change.2")
             } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", errorStruct: error, extra: nil)
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad.change", errorStruct: error, extra: nil)
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
                 self.mAction = .Add // auto-force to an Add
             }
@@ -104,7 +131,16 @@ class OrgEditViewController: UIViewController {
             button_forms?.isEnabled = false
             button_forms?.title = ""
             if self.mEdit_orgRec != nil { self.mEdit_orgRec = nil }
-            if self.mWorking_orgRec == nil { self.mWorking_orgRec = RecOrganizationDefs(org_code_sv_file: "") } // make am empty Org rec
+            if self.mWorking_orgRec == nil {
+                self.mWorking_orgRec = RecOrganizationDefs(org_code_sv_file: "")    // make am empty Org rec
+                do {
+                    try self.mWorking_orgRec!.loadLangRecs(method: "\(self.mCTAG).viewDidLoad.add")
+                } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad.add", errorStruct: error, extra: nil)
+                    AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                }
+            }
+            self.mEdit_orgRec = RecOrganizationDefs(existingRec: self.mWorking_orgRec!)     // make a deep copy
             self.navbar_item.title = NSLocalizedString("Add Org", comment:"")
             self.mWorking_orgRec!.rOrg_Email_Subject = NSLocalizedString("Contacts collected from eContact Collect", comment:"do not translate the portion: eContact Collect")
         }
@@ -961,7 +997,6 @@ public class OrgEditFormLangFields {
     public func finalizeLangRegions() throws {
         do {
             var foundSVFileRec:Bool = false
-            self.mOrgRec!.mOrg_Lang_Recs_are_changed = true
             if !self.mSupportingMultLangs {
                 // only the SV-File language is desired
                 if self.mOrgRec!.mOrg_Lang_Recs != nil {
@@ -969,9 +1004,15 @@ public class OrgEditFormLangFields {
                     for langRec in self.mOrgRec!.mOrg_Lang_Recs! {
                         if langRec.rOrgLang_LangRegionCode == self.mOrgRec!.rOrg_LangRegionCode_SV_File {
                             foundSVFileRec = true
-                            langRec.mDuringEditing_isDeleted = false
+                            if langRec.mDuringEditing_isDeleted {
+                                langRec.mDuringEditing_isDeleted = false
+                                self.mOrgRec!.mOrg_Lang_Recs_are_changed = true
+                            }
                         } else {
-                            langRec.mDuringEditing_isDeleted = true
+                            if !langRec.mDuringEditing_isDeleted {
+                                langRec.mDuringEditing_isDeleted = true
+                                self.mOrgRec!.mOrg_Lang_Recs_are_changed = true
+                            }
                         }
                         inx = inx + 1
                     }
@@ -985,48 +1026,62 @@ public class OrgEditFormLangFields {
                 // multiple shown languages are desired; do a safety finalization of those records;
                 // first pre-mark ALL the records temporarily as deleted
                 for orgLangRec in self.mOrgRec!.mOrg_Lang_Recs! {
-                    orgLangRec.mDuringEditing_isDeleted = true
+                    orgLangRec.mDuringEditing_isMarked = true
                 }
                 
                 // now unmark as deleted all those that ARE showing as rows in the multi-valued section; rebuild rOrg_LangRegionCodes_Supported in order shown
-                self.mOrgRec!.rOrg_LangRegionCodes_Supported = []
+                var lrCodes_Supported:[String] = []
                 if self.mMVS_langs!.count > 0 {
                     for inx in 0...self.mMVS_langs!.count - 1 {
                         let rowTag = self.mMVS_langs![inx].tag!
                         if rowTag.starts(with: "LC,") {
                             let components = rowTag.components(separatedBy: ",")
                             if components[1] == self.mOrgRec!.rOrg_LangRegionCode_SV_File { foundSVFileRec = true }
-                            let orgLanRec = self.mOrgRec!.getLangRec(forLangRegion: components[1], includingDeleted: true)
-                            if orgLanRec != nil {
+                            let orgLangRec:RecOrganizationLangs? = self.mOrgRec!.getLangRec(forLangRegion: components[1], includingDeleted: true)
+                            if orgLangRec != nil {
+                                orgLangRec!.mDuringEditing_isMarked = false
                                 self.mOrgRec!.markUndeletedLangRec(forLangRegion: components[1])
                             } else {
                                 _ = try self.mOrgRec!.addNewFinalLangRec(forLangRegion: components[1])
                             }
+                            lrCodes_Supported.append(components[1])
                         }
                     }
                 }
                 
                 // the SV-File's language record must exist; ensure it is undeleted or create it if missing
                 if !foundSVFileRec {
-                    let orgLanRec = self.mOrgRec!.getLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File, includingDeleted: true)
-                    if orgLanRec != nil {
+                    let orgLangRec = self.mOrgRec!.getLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File, includingDeleted: true)
+                    if orgLangRec != nil {
+                        orgLangRec!.mDuringEditing_isMarked = false
                         self.mOrgRec!.markUndeletedLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File)
                     } else {
                         _ = try self.mOrgRec!.addNewFinalLangRec(forLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File)
                     }
+                    lrCodes_Supported.append(self.mOrgRec!.rOrg_LangRegionCode_SV_File)
                 }
+                self.mOrgRec!.rOrg_LangRegionCodes_Supported = lrCodes_Supported
             }
         } catch var appError as APP_ERROR {
             appError.prependCallStack(funcName: "\(self.mCTAG).finalizeLangRegions")
             throw appError
         } catch { throw error }
         
-        // now finalize any partial language records;
+        // now finalize any partial language records or remaining marked records;
         // going to ignore these throws as the partials can be used as-is
         for orgLangRec in self.mOrgRec!.mOrg_Lang_Recs! {
-            if !orgLangRec.mDuringEditing_isDeleted && orgLangRec.mDuringEditing_isPartial {
+            if orgLangRec.mDuringEditing_isMarked {
+                // the record has a remaining mark; so it must be deleted
+                if !orgLangRec.mDuringEditing_isDeleted {
+                    orgLangRec.mDuringEditing_isDeleted = true
+                    self.mOrgRec!.mOrg_Lang_Recs_are_changed = true
+                }
+                
+            } else if !orgLangRec.mDuringEditing_isDeleted && orgLangRec.mDuringEditing_isPartial {
+                // it is a non-deleted partial record
                 do {
                     try orgLangRec.finalizePartial(svFileLangRegion: self.mOrgRec!.rOrg_LangRegionCode_SV_File)
+                    self.mOrgRec!.mOrg_Lang_Recs_are_changed = true
                 } catch {
                     AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).finalizeLangRegions", errorStruct: error, extra: nil)
                     // only post the error; do not show to end-user nor throw

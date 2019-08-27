@@ -247,7 +247,7 @@ public class RecOrganizationDefs {
         }
     }
     
-    // create a duplicate of an existing record
+    // create a duplicate of an existing record, including duplicates of all internally stored RecOrganizationLangs records
     init(existingRec:RecOrganizationDefs) {
         self.rOrg_Code_For_SV_File = existingRec.rOrg_Code_For_SV_File
         self.rOrg_LangRegionCodes_Supported = existingRec.rOrg_LangRegionCodes_Supported
@@ -261,8 +261,14 @@ public class RecOrganizationDefs {
         self.rOrg_Email_Subject = existingRec.rOrg_Email_Subject
         self.rOrg_Visuals = existingRec.rOrg_Visuals
         
-        self.mOrg_Lang_Recs_are_changed = false
-        self.mOrg_Lang_Recs = existingRec.mOrg_Lang_Recs
+        // do a deep copy of all the internally stored RecOrgFormFieldLocales records
+        self.mOrg_Lang_Recs_are_changed = existingRec.mOrg_Lang_Recs_are_changed
+        if existingRec.mOrg_Lang_Recs != nil {
+            self.mOrg_Lang_Recs = []
+            for lRec:RecOrganizationLangs in existingRec.mOrg_Lang_Recs! {
+                self.mOrg_Lang_Recs!.append(RecOrganizationLangs(existingRec: lRec))
+            }
+        } else { self.mOrg_Lang_Recs = nil }
     }
     
     // import an optionals record into the mainline record
@@ -336,6 +342,61 @@ public class RecOrganizationDefs {
         
         self.mOrg_Lang_Recs_are_changed = false
         self.mOrg_Lang_Recs = nil
+    }
+    
+    // has the record changed in any manner?
+    public func hasChanged(existingEntry:RecOrganizationDefs) -> Bool {
+        if self.rOrg_Code_For_SV_File != existingEntry.rOrg_Code_For_SV_File { return true }
+        if self.rOrg_LangRegionCode_SV_File != existingEntry.rOrg_LangRegionCode_SV_File { return true }
+        if self.rOrg_Title_Mode != existingEntry.rOrg_Title_Mode { return true }
+        if self.rOrg_Visuals.encode() != existingEntry.rOrg_Visuals.encode() { return true }
+        
+        if self.rOrg_Email_Via != existingEntry.rOrg_Email_Via { return true }
+        if (self.rOrg_Email_Via ?? "$nil") != (existingEntry.rOrg_Email_Via ?? "$nil") { return true }
+        if self.rOrg_Email_To != existingEntry.rOrg_Email_To { return true }
+        if (self.rOrg_Email_To ?? "$nil") != (existingEntry.rOrg_Email_To ?? "$nil") { return true }
+        if self.rOrg_Email_CC != existingEntry.rOrg_Email_CC { return true }
+        if (self.rOrg_Email_CC ?? "$nil") != (existingEntry.rOrg_Email_CC ?? "$nil") { return true }
+        if self.rOrg_Email_Subject != existingEntry.rOrg_Email_Subject { return true }
+        if (self.rOrg_Email_Subject ?? "$nil") != (existingEntry.rOrg_Email_Subject ?? "$nil") { return true }
+        
+        if self.rOrg_Event_Code_For_SV_File != existingEntry.rOrg_Event_Code_For_SV_File { return true }
+        if (self.rOrg_Event_Code_For_SV_File ?? "$nil") != (existingEntry.rOrg_Event_Code_For_SV_File ?? "$nil") { return true }
+        if self.rOrg_Logo_Image_PNG_Blob != existingEntry.rOrg_Logo_Image_PNG_Blob { return true }
+        if (self.rOrg_Logo_Image_PNG_Blob ?? Data(base64Encoded: "$nil")) != (existingEntry.rOrg_Logo_Image_PNG_Blob ?? Data(base64Encoded: "$nil")) { return true }
+        
+        if self.rOrg_LangRegionCodes_Supported.count != existingEntry.rOrg_LangRegionCodes_Supported.count { return true }
+        for inx:Int in 0...self.rOrg_LangRegionCodes_Supported.count - 1 {
+            if self.rOrg_LangRegionCodes_Supported[inx] != existingEntry.rOrg_LangRegionCodes_Supported[inx] { return true }
+        }
+
+        // also check all internally stored language records
+        if self.mOrg_Lang_Recs_are_changed != existingEntry.mOrg_Lang_Recs_are_changed { return true }
+        if (self.mOrg_Lang_Recs == nil && existingEntry.mOrg_Lang_Recs != nil) ||
+           (self.mOrg_Lang_Recs != nil && existingEntry.mOrg_Lang_Recs == nil) { return true }
+        if self.mOrg_Lang_Recs != nil {
+            for lRecSelf:RecOrganizationLangs in self.mOrg_Lang_Recs! {
+                var found:Bool = false
+                for lRecExist:RecOrganizationLangs in existingEntry.mOrg_Lang_Recs! {
+                    if lRecSelf.rOrgLang_LangRegionCode == lRecExist.rOrgLang_LangRegionCode {
+                        found = true
+                        if lRecSelf.hasChanged(existingEntry: lRecExist) { return true }
+                    }
+                }
+                if !found { return true }
+            }
+            for lRecExist:RecOrganizationLangs in existingEntry.mOrg_Lang_Recs! {
+                var found:Bool = false
+                for lRecSelf:RecOrganizationLangs in self.mOrg_Lang_Recs! {
+                    if lRecExist.rOrgLang_LangRegionCode == lRecSelf.rOrgLang_LangRegionCode {
+                        found = true
+                        if lRecExist.hasChanged(existingEntry: lRecSelf) { return true }
+                    }
+                }
+                if !found { return true }
+            }
+        }
+        return false
     }
     
     // create an array of setters usable for database Insert or Update; will return nil if the record is incomplete and therefore not eligible to be stored

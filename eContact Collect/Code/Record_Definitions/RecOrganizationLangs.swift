@@ -92,6 +92,7 @@ public class RecOrganizationLangs {
     // member variables
     public var mDuringEditing_isPartial:Bool = false    // during Editing, the record is marked as placeholder added
     public var mDuringEditing_isDeleted:Bool = false    // during Editing, the record is marked as deleted
+    public var mDuringEditing_isMarked:Bool = false     // during Editing, the record is marked; DO NOT TEST FOR hasChanged!
     
     // member constants and other static content
     private static let mCTAG:String = "ROL"
@@ -151,6 +152,18 @@ public class RecOrganizationLangs {
         self.rOrgLang_Event_Title_Shown = nil
     }
     
+    // constructor creates a duplicate of an existing record
+    init(existingRec:RecOrganizationLangs) {
+        self.rOrg_Code_For_SV_File = existingRec.rOrg_Code_For_SV_File
+        self.rOrgLang_LangRegionCode = existingRec.rOrgLang_LangRegionCode
+        self.rOrgLang_Lang_Title_EN = existingRec.rOrgLang_Lang_Title_EN
+        self.rOrgLang_Lang_Title_Shown = existingRec.rOrgLang_Lang_Title_Shown
+        self.rOrgLang_Lang_Title_SVFile = existingRec.rOrgLang_Lang_Title_SVFile
+        self.rOrgLang_Lang_Image_PNG_Blob = existingRec.rOrgLang_Lang_Image_PNG_Blob
+        self.rOrgLang_Org_Title_Shown = existingRec.rOrgLang_Org_Title_Shown
+        self.rOrgLang_Event_Title_Shown = existingRec.rOrgLang_Event_Title_Shown
+    }
+    
     // import an optionals record into the mainline record
     // throws upon missing required fields; caller is responsible to error.log
     init(existingRec:RecOrganizationLangs_Optionals) throws {
@@ -187,6 +200,28 @@ public class RecOrganizationLangs {
             let appError = APP_ERROR(funcName: "\(RecOrganizationLangs.mCTAG).init(Row)", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: nil, developerInfo: RecOrganizationLangs.TABLE_NAME)
             throw appError
         }
+    }
+    
+    // has the record changed in any manner?
+    public func hasChanged(existingEntry:RecOrganizationLangs) -> Bool {
+        if self.rOrg_Code_For_SV_File != existingEntry.rOrg_Code_For_SV_File { return true }
+        if self.rOrgLang_LangRegionCode != existingEntry.rOrgLang_LangRegionCode { return true }
+        if self.rOrgLang_Lang_Title_EN != existingEntry.rOrgLang_Lang_Title_EN { return true }
+        if self.rOrgLang_Lang_Title_SVFile != existingEntry.rOrgLang_Lang_Title_SVFile { return true }
+        if self.rOrgLang_Lang_Title_Shown != existingEntry.rOrgLang_Lang_Title_Shown { return true }
+
+        if self.rOrgLang_Org_Title_Shown != existingEntry.rOrgLang_Org_Title_Shown { return true }
+        if (self.rOrgLang_Org_Title_Shown ?? "$nil") != (existingEntry.rOrgLang_Org_Title_Shown ?? "$nil") { return true }
+        if self.rOrgLang_Event_Title_Shown != existingEntry.rOrgLang_Event_Title_Shown { return true }
+        if (self.rOrgLang_Event_Title_Shown ?? "$nil") != (existingEntry.rOrgLang_Event_Title_Shown ?? "$nil") { return true }
+        
+        if self.rOrgLang_Lang_Image_PNG_Blob != existingEntry.rOrgLang_Lang_Image_PNG_Blob { return true }
+        if (self.rOrgLang_Lang_Image_PNG_Blob ?? Data(base64Encoded: "$nil")) != (existingEntry.rOrgLang_Lang_Image_PNG_Blob ?? Data(base64Encoded: "$nil")) { return true }
+        
+        // DO NOT TEST self.mDuringEditing_isMarked
+        if self.mDuringEditing_isPartial != existingEntry.mDuringEditing_isPartial { return true }
+        if self.mDuringEditing_isDeleted != existingEntry.mDuringEditing_isDeleted { return true }        
+        return false
     }
     
     // create an array of setters usable for database Insert or Update; will return nil if the record is incomplete and therefore not eligible to be stored

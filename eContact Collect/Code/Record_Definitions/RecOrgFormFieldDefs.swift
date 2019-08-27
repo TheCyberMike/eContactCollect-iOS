@@ -495,7 +495,6 @@ public class RecOrgFormFieldDefs {
                 self.mFormFieldLocalesRecs!.append(RecOrgFormFieldLocales(existingRec: lRec))
             }
         } else { self.mFormFieldLocalesRecs = nil }
-        self.mFormFieldLocalesRecs = existingRec.mFormFieldLocalesRecs
     }
     
     // import an optionals record into the mainline record
@@ -584,6 +583,80 @@ public class RecOrgFormFieldDefs {
     public func hasSubFormFields() -> Bool {
         if self.rFieldProp_Contains_Field_IDCodes == nil { return false }
         if self.rFieldProp_Contains_Field_IDCodes!.count > 0 { return true }
+        return false
+    }
+    
+    // has the record changed in any manner?
+    public func hasChanged(existingEntry:RecOrgFormFieldDefs) -> Bool {
+        if self.rFormField_Index != existingEntry.rFormField_Index { return true }
+        if self.rOrg_Code_For_SV_File != existingEntry.rOrg_Code_For_SV_File { return true }
+        if self.rForm_Code_For_SV_File != existingEntry.rForm_Code_For_SV_File { return true }
+        if self.rFormField_Order_Shown != existingEntry.rFormField_Order_Shown { return true }
+        if self.rFormField_Order_SV_File != existingEntry.rFormField_Order_SV_File { return true }
+        if self.rFormField_SubField_Within_FormField_Index != existingEntry.rFormField_SubField_Within_FormField_Index { return true }
+        if (self.rFormField_SubField_Within_FormField_Index ?? 0) != (existingEntry.rFormField_SubField_Within_FormField_Index ?? 0) { return true }
+        
+        if self.rFieldProp_IDCode != existingEntry.rFieldProp_IDCode { return true }
+        if self.rFieldProp_Col_Name_For_SV_File != existingEntry.rFieldProp_Col_Name_For_SV_File { return true }
+        if self.rFieldProp_Row_Type != existingEntry.rFieldProp_Row_Type { return true }
+        
+        if self.rFieldProp_Flags != existingEntry.rFieldProp_Flags { return true }
+        if (self.rFieldProp_Flags ?? "$nil") != (existingEntry.rFieldProp_Flags ?? "$nil") { return true }
+        if self.rFieldProp_vCard_Property != existingEntry.rFieldProp_vCard_Property { return true }
+        if (self.rFieldProp_vCard_Property ?? "$nil") != (existingEntry.rFieldProp_vCard_Property ?? "$nil") { return true }
+        if self.rFieldProp_vCard_Subproperty_No != existingEntry.rFieldProp_vCard_Subproperty_No { return true }
+        if (self.rFieldProp_vCard_Subproperty_No ?? 0) != (existingEntry.rFieldProp_vCard_Subproperty_No ?? 0) { return true }
+        if self.rFieldProp_vCard_Property_Subtype != existingEntry.rFieldProp_vCard_Property_Subtype { return true }
+        if (self.rFieldProp_vCard_Property_Subtype ?? "$nil") != (existingEntry.rFieldProp_vCard_Property_Subtype ?? "$nil") { return true }
+
+        if (self.rFieldProp_Contains_Field_IDCodes == nil && existingEntry.rFieldProp_Contains_Field_IDCodes != nil) ||
+            (self.rFieldProp_Contains_Field_IDCodes != nil && existingEntry.rFieldProp_Contains_Field_IDCodes == nil) { return true }
+        if self.rFieldProp_Contains_Field_IDCodes != nil {
+            for codeStr in self.rFieldProp_Contains_Field_IDCodes! {
+                if !existingEntry.rFieldProp_Contains_Field_IDCodes!.contains(codeStr) { return true }
+            }
+            for codeStr in existingEntry.rFieldProp_Contains_Field_IDCodes! {
+                if !self.rFieldProp_Contains_Field_IDCodes!.contains(codeStr) { return true }
+            }
+        }
+        
+        if (self.rFieldProp_Options_Code_For_SV_File == nil && existingEntry.rFieldProp_Options_Code_For_SV_File != nil) ||
+            (self.rFieldProp_Options_Code_For_SV_File != nil && existingEntry.rFieldProp_Options_Code_For_SV_File == nil) { return true }
+        if self.rFieldProp_Options_Code_For_SV_File != nil {
+            if self.rFieldProp_Options_Code_For_SV_File!.pack() != existingEntry.rFieldProp_Options_Code_For_SV_File!.pack() { return true }
+        }
+        
+        if (self.rFieldProp_Metadatas_Code_For_SV_File == nil && existingEntry.rFieldProp_Metadatas_Code_For_SV_File != nil) ||
+            (self.rFieldProp_Metadatas_Code_For_SV_File != nil && existingEntry.rFieldProp_Metadatas_Code_For_SV_File == nil) { return true }
+        if self.rFieldProp_Metadatas_Code_For_SV_File != nil {
+            if self.rFieldProp_Metadatas_Code_For_SV_File!.pack() != existingEntry.rFieldProp_Metadatas_Code_For_SV_File!.pack() { return true }
+        }
+        
+        // also check any stored locale records
+        if (self.mFormFieldLocalesRecs == nil && existingEntry.mFormFieldLocalesRecs != nil) ||
+            (self.mFormFieldLocalesRecs != nil && existingEntry.mFormFieldLocalesRecs == nil) { return true }
+        if self.mFormFieldLocalesRecs != nil {
+            for lRecSelf:RecOrgFormFieldLocales in self.mFormFieldLocalesRecs! {
+                var found:Bool = false
+                for lRecExist:RecOrgFormFieldLocales in existingEntry.mFormFieldLocalesRecs! {
+                    if lRecSelf.rFormFieldLoc_LangRegionCode == lRecExist.rFormFieldLoc_LangRegionCode  {
+                        found = true
+                        if lRecSelf.hasChanged(existingEntry: lRecExist) { return true }
+                    }
+                }
+                if !found { return true }
+            }
+            for lRecExist:RecOrgFormFieldLocales in existingEntry.mFormFieldLocalesRecs! {
+                var found:Bool = false
+                for lRecSelf:RecOrgFormFieldLocales in self.mFormFieldLocalesRecs! {
+                    if lRecExist.rFormFieldLoc_LangRegionCode == lRecSelf.rFormFieldLoc_LangRegionCode {
+                        found = true
+                        if lRecExist.hasChanged(existingEntry: lRecSelf) { return true }
+                    }
+                }
+                if !found { return true }
+            }
+        }
         return false
     }
     
@@ -734,7 +807,7 @@ public class RecOrgFormFieldDefs {
         
         let rowID = try DatabaseHandler.shared.insertRec(method:"\(RecOrgFormFieldDefs.mCTAG).saveNewToDB", table:Table(RecOrgFormFieldDefs.TABLE_NAME), cv:setters, orReplace:false, noAlert:false)
         self.rFormField_Index = rowID
-        if self.mFormFieldLocalesRecs_are_changed { try self.addLocaleRecs() }
+        try self.addLocaleRecs()
         return rowID
     }
     
@@ -822,7 +895,7 @@ public class RecOrgFormFieldDefs {
         return qty
     }
     
-    // add/update all stored RecOrgFormFieldLocales records
+    // add all stored RecOrgFormFieldLocales records (will update them if they already exist)
     private func addLocaleRecs() throws {
         try updateLocaleRecs()
     }

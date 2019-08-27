@@ -330,6 +330,9 @@
 "Show as:" = "Show as:";
 "Organization Title(s)" = "Organization Title(s)";
 "Org Title for " = "Org Title for ";
+"Cancel Confirmation" = "Cancel Confirmation";
+"If you Cancel you will lose your changes; are you sure?" = "If you Cancel you will lose your changes; are you sure?";
+"Yes, Cancel" = "Yes, Cancel";
 
 // WizOrgDefine3ViewController.swift
 "Organization Identity" = "Organization Identity";
@@ -400,6 +403,7 @@
 "XML file, rows Attrib/Value Pairs" = "XML file, rows Attrib/Value Pairs";
 "Must choose one language" = "Must choose one language";
 "Must choose two languages" = "Must choose two languages";
+"Must have at least one Form Field" = "Must have at least one Form Field";
 "Form's Settings" = "Form's Settings";
 "Short Form Code" = "Short Form Code";
 "Override Org's email settings?" = "Override Org's email settings?";

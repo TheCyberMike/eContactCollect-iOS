@@ -147,7 +147,7 @@ public class RecOrgFormDefs {
     public var rOrg_Code_For_SV_File:String                     // org's short code name; shown only to Collector; primary key
     public var rForm_Code_For_SV_File:String                    // form's short code name; shown only to Collector; primary key
     public var rForm_SV_File_Type:FORMFIELD_SV_FILE_TYPE = .TEXT_TAB_DELIMITED_WITH_HEADERS       // SV-File type
-    public var rForm_Lingual_LangRegions:[String]?              // show the form as MonoLingual or BiLingual if specified
+    public var rForm_Lingual_LangRegions:[String]?              // show the form as MonoLingual or BiLingual if specified, will only be 1 or 2 entries or nil
     public var rForm_XML_Collection_Tag:String = "contacts"     // tag used for the collection of records
     public var rForm_XML_Record_Tag:String = "contact"          // tag used for each record
     public var rForm_Override_Email_Via:String?                 // override email Via; see EmailHandler.swift; ??FUTURE; DBver 2
@@ -286,6 +286,38 @@ public class RecOrgFormDefs {
         let value6:String? = row[Expression<String?>(RecOrgFormDefs.COLUMN_FORM_LINGUAL_LANGREGIONS)]
         if value6 != nil { self.rForm_Lingual_LangRegions = value6!.components(separatedBy:",") }
         else { self.rForm_Lingual_LangRegions = nil }
+    }
+    
+    // has the record changed in any manner?
+    public func hasChanged(existingEntry:RecOrgFormDefs) -> Bool {
+        if self.rOrg_Code_For_SV_File != existingEntry.rOrg_Code_For_SV_File { return true }
+        if self.rForm_Code_For_SV_File != existingEntry.rForm_Code_For_SV_File { return true }
+        if self.rForm_SV_File_Type != existingEntry.rForm_SV_File_Type { return true }
+        if self.rForm_XML_Collection_Tag != existingEntry.rForm_XML_Collection_Tag { return true }
+        if self.rForm_XML_Record_Tag != existingEntry.rForm_XML_Record_Tag { return true }
+        if self.rForm_Visuals.encode() != existingEntry.rForm_Visuals.encode() { return true }
+        
+        if self.rForm_Override_Email_Via != existingEntry.rForm_Override_Email_Via { return true }
+        if (self.rForm_Override_Email_Via ?? "$nil") != (existingEntry.rForm_Override_Email_Via ?? "$nil") { return true }
+        if self.rForm_Override_Email_To != existingEntry.rForm_Override_Email_To { return true }
+        if (self.rForm_Override_Email_To ?? "$nil") != (existingEntry.rForm_Override_Email_To ?? "$nil") { return true }
+        if self.rForm_Override_Email_CC != existingEntry.rForm_Override_Email_CC { return true }
+        if (self.rForm_Override_Email_CC ?? "$nil") != (existingEntry.rForm_Override_Email_CC ?? "$nil") { return true }
+        if self.rForm_Override_Email_Subject != existingEntry.rForm_Override_Email_Subject { return true }
+        if (self.rForm_Override_Email_Subject ?? "$nil") != (existingEntry.rForm_Override_Email_Subject ?? "$nil") { return true }
+        
+        if (self.rForm_Lingual_LangRegions == nil && existingEntry.rForm_Lingual_LangRegions != nil) ||
+           (self.rForm_Lingual_LangRegions != nil && existingEntry.rForm_Lingual_LangRegions == nil) { return true }
+        if self.rForm_Lingual_LangRegions != nil {
+            if self.rForm_Lingual_LangRegions!.count != existingEntry.rForm_Lingual_LangRegions!.count { return true }
+            if self.rForm_Lingual_LangRegions!.count == 2 {
+                if self.rForm_Lingual_LangRegions![0] != existingEntry.rForm_Lingual_LangRegions![0] { return true }
+                if self.rForm_Lingual_LangRegions![1] != existingEntry.rForm_Lingual_LangRegions![1] { return true }
+            } else {
+                if self.rForm_Lingual_LangRegions![0] != existingEntry.rForm_Lingual_LangRegions![0] { return true }
+            }
+        }
+        return false
     }
     
     // create an array of setters usable for database Insert or Update; will return nil if the record is incomplete and therefore not eligible to be stored

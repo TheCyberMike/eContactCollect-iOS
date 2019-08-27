@@ -23,6 +23,7 @@ class FormEditViewController: UIViewController {
 
     // member variables
     internal var mLocalEFP:EntryFormProvisioner? = nil                  // local EFP to drive the local OrgTitle View
+    internal var mEdit_formFieldEntries:OrgFormFields? = nil            // original FormField Records
     internal var mWorking_orgFormRec:RecOrgFormDefs? = nil              // edited FormRecord
     internal var mWorking_formFieldEntries:OrgFormFields? = nil         // edited FormField Records
     
@@ -35,6 +36,7 @@ class FormEditViewController: UIViewController {
 
     // outlets to screen controls
     @IBOutlet weak var navbar_item: UINavigationItem!
+    
     @IBAction func button_preview_pressed(_ sender: UIBarButtonItem) {
         let storyboard = UIStoryboard(name:"Main", bundle:nil)
         let nextViewController:EntryViewController = storyboard.instantiateViewController(withIdentifier:"VC Entry") as! EntryViewController
@@ -43,11 +45,38 @@ class FormEditViewController: UIViewController {
         nextViewController.title = NSLocalizedString("PREVIEW MODE", comment:"")
         self.navigationController?.pushViewController(nextViewController, animated:true)
     }
+    
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
         // cancel button pressed; dismiss and return to the parent view controller
-        if mFEVCdelegate != nil { mFEVCdelegate!.completed_FEVC(wasSaved:false) }
-        self.navigationController?.popViewController(animated:true)
+        var hasChanges:Bool = false
+        if self.mWorking_orgFormRec!.hasChanged(existingEntry: self.mEdit_orgFormRec!) {
+            hasChanges = true
+        } else if self.mWorking_formFieldEntries != nil {
+            if self.mAction == .Add {
+                if self.mWorking_formFieldEntries!.count() > 1 { hasChanges = true }
+            }
+            if self.mEdit_formFieldEntries != nil {
+                if self.mWorking_formFieldEntries!.hasChanged(existingEntry: self.mEdit_formFieldEntries!) {
+                    hasChanges = true
+                }
+            }
+        }
+        if hasChanges {
+            AppDelegate.showYesNoDialog(vc:self, title:NSLocalizedString("Cancel Confirmation", comment:""), message:NSLocalizedString("If you Cancel you will lose your changes; are you sure?", comment:""), buttonYesText:NSLocalizedString("Yes, Cancel", comment:""), buttonNoText:NSLocalizedString("No", comment:""), callbackAction:1, callbackString1:nil, callbackString2:nil, completion: {(vc:UIViewController, theResult:Bool, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
+                // callback from the yes/no dialog upon one of the buttons being pressed
+                if theResult {
+                    // answer was Yes, Cancel
+                    if self.mFEVCdelegate != nil { self.mFEVCdelegate!.completed_FEVC(wasSaved:false) }
+                    self.navigationController?.popViewController(animated:true)
+                }
+                return  // from callback
+            })
+        } else {
+            if self.mFEVCdelegate != nil { self.mFEVCdelegate!.completed_FEVC(wasSaved:false) }
+            self.navigationController?.popViewController(animated:true)
+        }
     }
+    
     @IBAction func button_save_pressed(_ sender: UIBarButtonItem) {
         let msg:String = self.validateEntries()
         if (msg != "") {
@@ -94,7 +123,8 @@ class FormEditViewController: UIViewController {
 
             // gather the combined field information for this form in Shown order
             do {
-                self.mWorking_formFieldEntries = try FieldHandler.shared.getOrgFormFields(forEFP: self.mLocalEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false, forEditing:true)
+                self.mEdit_formFieldEntries = try FieldHandler.shared.getOrgFormFields(forEFP: self.mLocalEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false, forEditing: true)
+                self.mWorking_formFieldEntries = try FieldHandler.shared.getOrgFormFields(forEFP: self.mLocalEFP!, forceLangRegion: nil, includeOptionSets: true, metaDataOnly: false, sortedBySVFileOrder: false, forEditing: true)
                 self.mLocalEFP!.mFormFieldEntries = self.mWorking_formFieldEntries
             } catch {
                 AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", errorStruct: error, extra: nil)
@@ -104,10 +134,13 @@ class FormEditViewController: UIViewController {
         }
         if self.mAction == .Add {
             // its an add
+            if self.mEdit_formFieldEntries != nil { self.mEdit_formFieldEntries = nil }
             if self.mEdit_orgFormRec != nil { self.mEdit_orgFormRec = nil }
             if self.mWorking_orgFormRec != nil { self.mWorking_orgFormRec = nil }
-            self.mWorking_orgFormRec = RecOrgFormDefs(org_code_sv_file: self.mReference_orgRec!.rOrg_Code_For_SV_File, form_code_sv_file: "")  // make am empty Form rec
+            self.mEdit_orgFormRec = RecOrgFormDefs(org_code_sv_file: self.mReference_orgRec!.rOrg_Code_For_SV_File, form_code_sv_file: "")  // make an empty Form rec
+            self.mWorking_orgFormRec = RecOrgFormDefs(existingRec: self.mEdit_orgFormRec!)
             self.navbar_item.title = NSLocalizedString("Add Form", comment:"")
+            self.mEdit_orgFormRec!.rForm_Override_Email_Subject = NSLocalizedString("Contacts collected from eContact Collect", comment:"do not translate the portion: eContact Collect")
             self.mWorking_orgFormRec!.rForm_Override_Email_Subject = NSLocalizedString("Contacts collected from eContact Collect", comment:"do not translate the portion: eContact Collect")
             self.mLocalEFP = EntryFormProvisioner(forOrgRec: self.mReference_orgRec!, forFormRec: self.mWorking_orgFormRec!)
             self.mLocalEFP!.mPreviewMode = true
@@ -118,6 +151,7 @@ class FormEditViewController: UIViewController {
                 let submitButtonEntries:OrgFormFields? = try FieldHandler.shared.getFieldDefsAsMatchForEditing(forFieldIDCode: FIELD_IDCODE_METADATA.SUBMIT_BUTTON.rawValue, forFormRec: self.mWorking_orgFormRec!, withOrgRec: self.mReference_orgRec!)
                 if (submitButtonEntries?.count() ?? 0) > 0 {
                     self.mWorking_formFieldEntries!.appendNewDuringEditing(submitButtonEntries![0])
+                    self.mEdit_formFieldEntries = OrgFormFields(existing: self.mWorking_formFieldEntries!)
                     self.mLocalEFP!.mFormFieldEntries = self.mWorking_formFieldEntries!
                 } else {
                     AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", during: "getFieldDefsAsMatchForEditing", errorMessage: "(submitButtonEntries?.count() ?? 0) == 0", extra: FIELD_IDCODE_METADATA.SUBMIT_BUTTON.rawValue)
@@ -629,6 +663,11 @@ class FormEditFormViewController: FormViewController {
             if self.mFormEditVC!.mWorking_orgFormRec!.rForm_Lingual_LangRegions![0].isEmpty { return NSLocalizedString("Must choose two languages", comment:"") }
             if self.mFormEditVC!.mWorking_orgFormRec!.rForm_Lingual_LangRegions![1].isEmpty { return NSLocalizedString("Must choose two languages", comment:"") }
         }
+        
+        if self.mMVS_fields!.count <= 1 {
+            return NSLocalizedString("Must have at least one Form Field", comment:"")
+        }
+
         self.mFormEditVC!.mLocalEFP!.reassess()
         return ""
     }
@@ -1252,10 +1291,22 @@ class FormEditFormViewController: FormViewController {
                         let vc = FormEditFieldFormViewController()
                         vc.mFormEditVC = self!.mFormEditVC
                         vc.mEdit_FormFieldEntry = (row!.retainedObject as! OrgFormFieldsEntry)
+                        vc.mEdit_FormFieldEntry!.includeSubFormFields(from: self!.mFormEditVC!.mWorking_formFieldEntries!)
                         return vc
                     }),
-                    onDismiss: { [weak row] vc in
-                        row!.updateCell()
+                    onDismiss: { [weak self, weak row] vc in
+                        let feffVC:FormEditFieldFormViewController = vc as! FormEditFieldFormViewController
+                        if feffVC.onDismissCallback_reason == .DONE {
+                            feffVC.mWorking_FormFieldEntry!.save(into: self!.mFormEditVC!.mWorking_formFieldEntries!)
+                            row!.retainedObject = feffVC.mWorking_FormFieldEntry!
+                            row!.updateCell()
+                        } else {
+                            let formFieldEntry:OrgFormFieldsEntry = (row!.retainedObject as! OrgFormFieldsEntry)
+                            if formFieldEntry.mDuringEditing_SubFormFields != nil {
+                                formFieldEntry.mDuringEditing_SubFormFields!.removeAll()
+                                formFieldEntry.mDuringEditing_SubFormFields = nil
+                            }
+                        }
                     })
                 }.cellUpdate { cell, row in
                     // create and show the second line of text in the row
@@ -1372,22 +1423,23 @@ class FormEditFormViewController: FormViewController {
 // note: RowControllerType is required for callback to reach ButtonRow's onDismiss
 class FormEditFieldFormViewController: FormViewController, RowControllerType {
     // caller pre-set member variables
-    public weak var mFormEditVC:FormEditViewController? = nil
-    public weak var mEdit_FormFieldEntry:OrgFormFieldsEntry? = nil
+    public weak var mFormEditVC:FormEditViewController? = nil       // pointer to the parent
+    public weak var mEdit_FormFieldEntry:OrgFormFieldsEntry? = nil  // pointer to the existing stored FormFieldEntry in the parent VC
 
     /// A closure to be called when the controller disappears.
+    public var onDismissCallback_reason: OnDismissCallback_Reason = .CANCEL
     public var onDismissCallback: ((UIViewController) -> ())?
     
     // member variables
+    public var mWorking_FormFieldEntry:OrgFormFieldsEntry? = nil
     private var mMovesInProcess:Int = 0
     private weak var mMVS_field_options:MultivaluedSection? = nil
     private weak var mMVS_field_metas:MultivaluedSection? = nil
     private weak var mMVS_field_subfields:MultivaluedSection? = nil
-    private var mWorking_FormFieldEntry:OrgFormFieldsEntry? = nil
-    private var mWorking_SubfieldEntries:OrgFormFields? = nil
     
     // member constants and other static content
     private let mCTAG:String = "VCSFEFF"
+    public enum OnDismissCallback_Reason { case CANCEL, DONE }
 
     // outlets to screen controls
     
@@ -1415,36 +1467,35 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
         button3.possibleTitles = Set(arrayLiteral: NSLocalizedString("Copy", comment:""))
         navigationItem.setRightBarButtonItems([button2, button3], animated: false)
         
-        // make a copy of the RecOrgFormFieldDefs and its internally stored RecOrgFormFieldLocales
+        // make a copy of the RecOrgFormFieldDefs and its internally stored RecOrgFormFieldLocales and subfields
         self.mWorking_FormFieldEntry = OrgFormFieldsEntry(existingEntry: self.mEdit_FormFieldEntry!)
         
-        // now build and blend subfield entries only if the primary field supports them;
-        // all the auto-indexing in the default fields is only local to this working array, not the master working set of fields;
-        // however they will be pre-autolinked to the index# of the editing form field (regardless of whether it has a database or temporary index#)
+        // get a list of all allowed subFormFields for the primary FormField (if any)
+        var default_subfields:OrgFormFields?
         do {
-            self.mWorking_SubfieldEntries = try FieldHandler.shared.getAllowedSubfieldEntriesForEditing(forPrimaryFormFieldRec: self.mEdit_FormFieldEntry!.mFormFieldRec, forFormRec: self.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self.mFormEditVC!.mReference_orgRec!)
+            default_subfields = try FieldHandler.shared.getAllowedSubfieldEntriesForEditing(forPrimaryFormFieldRec: self.mEdit_FormFieldEntry!.mFormFieldRec, forFormRec: self.mFormEditVC!.mWorking_orgFormRec!, withOrgRec: self.mFormEditVC!.mReference_orgRec!)
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewDidLoad", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Filesystem Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             // allow to continue processing
         }
-        if (self.mWorking_SubfieldEntries?.count() ?? 0) > 0 {
-            if self.mEdit_FormFieldEntry!.mFormFieldRec.hasSubFormFields() {
-                for subFieldIDCode in self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Contains_Field_IDCodes! {
-                    let subEntry:OrgFormFieldsEntry? = self.mFormEditVC!.mWorking_formFieldEntries!.findSubfield(forPrimaryIndex: self.mEdit_FormFieldEntry!.mFormFieldRec.rFormField_Index, forSubFieldIDCode: subFieldIDCode)
-                    if subEntry != nil {
-                        let wInx:Int = self.mWorking_SubfieldEntries!.findIndex(ofFieldIDCode: subEntry!.mFormFieldRec.rFieldProp_IDCode)
-                        if wInx >= 0 {
-                            let workEntry:OrgFormFieldsEntry = self.mWorking_SubfieldEntries![wInx]
-                            workEntry.mFormFieldRec = subEntry!.mFormFieldRec
-                            workEntry.mComposedFormFieldLocalesRec =  subEntry!.mComposedFormFieldLocalesRec
-                            workEntry.mDuringEditing_isChosen = true
-                            workEntry.mDuringEditing_isDefault = false
-                        }
-                    }
+        
+        // now append in any missing subFormField entries (if any);
+        // the .getAllowedSubfieldEntriesForEditing already assigned temporary FF index#s to each entry
+        if (default_subfields?.count() ?? 0) > 0 {
+            for subfieldEntry in default_subfields! {
+                if !self.mWorking_FormFieldEntry!.hasSubFormField(ofFieldIDCode: subfieldEntry.mFormFieldRec.rFieldProp_IDCode) {
+                    subfieldEntry.mDuringEditing_isDefault = true
+                    subfieldEntry.mDuringEditing_isDeleted = true
+                    subfieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index = self.mWorking_FormFieldEntry!.mFormFieldRec.rFormField_Index
+                    if self.mEdit_FormFieldEntry!.mDuringEditing_SubFormFields == nil { self.mEdit_FormFieldEntry!.mDuringEditing_SubFormFields = [] }
+                    if self.mWorking_FormFieldEntry!.mDuringEditing_SubFormFields == nil { self.mWorking_FormFieldEntry!.mDuringEditing_SubFormFields = [] }
+                    self.mEdit_FormFieldEntry!.mDuringEditing_SubFormFields!.append(subfieldEntry)
+                    self.mWorking_FormFieldEntry!.mDuringEditing_SubFormFields!.append(OrgFormFieldsEntry(existingEntry: subfieldEntry))    // must be a deep copy
                 }
             }
         }
+        default_subfields = nil // free up memory
         
         // build the form entirely
         self.buildForm()
@@ -1470,13 +1521,28 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
     
     // Cancel button was tapped
     @objc func tappedCancel(_ barButtonItem: UIBarButtonItem) {
-        self.closeVC()
-        self.navigationController?.popViewController(animated:true)
+        self.reorderOptions()   // first re-order the options (if any and if needed)
+        if self.mWorking_FormFieldEntry!.hasChanged(existingEntry: self.mEdit_FormFieldEntry!) {
+            AppDelegate.showYesNoDialog(vc:self, title:NSLocalizedString("Cancel Confirmation", comment:""), message:NSLocalizedString("If you Cancel you will lose your changes; are you sure?", comment:""), buttonYesText:NSLocalizedString("Yes, Cancel", comment:""), buttonNoText:NSLocalizedString("No", comment:""), callbackAction:1, callbackString1:nil, callbackString2:nil, completion: {(vc:UIViewController, theResult:Bool, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
+                // callback from the yes/no dialog upon one of the buttons being pressed
+                if theResult {
+                    // answer was Yes, Cancel
+                    self.onDismissCallback?(self)
+                    self.closeVC()
+                    self.navigationController?.popViewController(animated:true)
+                }
+                return  // from callback
+            })
+        } else {
+            self.onDismissCallback?(self)
+            self.closeVC()
+            self.navigationController?.popViewController(animated:true)
+        }
     }
     
     // Copy button was tapped
     @objc func tappedCopy(_ barButtonItem: UIBarButtonItem) {
-        FieldHandler.shared.copyToClipboardOneEdited(editedFF: self.mWorking_FormFieldEntry, editedSubFields: self.mWorking_SubfieldEntries)
+        FieldHandler.shared.copyToClipboardOneEdited(editedFF: self.mWorking_FormFieldEntry)
     }
     
     // Done button was tapped
@@ -1492,87 +1558,12 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
             return
         }
         
-        // if there are option attributes, they may need re-ordering to the order shown;
-        // warning some options may be insert meta-data
-        if self.mMVS_field_options != nil,
-           self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Flags != nil,
-           self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Flags!.contains("V") {
-            
-            // there are options and they are order-able and deletable;
-            // change the mWorking_FormFieldEntry!.mFormFieldRec since it gets copied later as a whole back to the editing copy
-            // remember the "add_option" button counts as an entry in self.mMVS_field_options
-            if self.mMVS_field_options!.count > 1 {
-                // first re-order the option SV-File names
-                var newOptionsSVFile:FieldAttributes = FieldAttributes()
-                for inx in 0...self.mMVS_field_options!.endIndex - 1 {
-                    let row = self.mMVS_field_options![inx]
-                    if row.tag!.starts(with: "OP\t") {
-                        let optionTag = row.tag!.components(separatedBy: "\t")[1]
-                        let optionSVFileString = self.mWorking_FormFieldEntry!.getOptionSVFile(forTag: optionTag)
-                        assert(optionSVFileString != nil, "optionSVFileString == nil")
-                        newOptionsSVFile.append(codeString: optionTag, valueString: optionSVFileString!)
-                    }
-                }
-                self.mWorking_FormFieldEntry!.mFormFieldRec.rFieldProp_Options_Code_For_SV_File = newOptionsSVFile
-                
-                // now reorder the option shown names per their language
-                for workingFormFieldLocaleRec in self.mWorking_FormFieldEntry!.mFormFieldRec.mFormFieldLocalesRecs! {
-                    var newOptionsShownPerLang:FieldAttributes = FieldAttributes()
-                    for inx in 0...self.mMVS_field_options!.endIndex - 1 {
-                        let row = self.mMVS_field_options![inx]
-                        if row.tag!.starts(with: "OP\t") {
-                            let optionTag = row.tag!.components(separatedBy: "\t")[1]
-                            var optionShownString = self.mWorking_FormFieldEntry!.getOptionShown(forTag: optionTag, forLangRegion: workingFormFieldLocaleRec.rFormFieldLoc_LangRegionCode)
-                            if optionShownString == nil {
-                                optionShownString = self.mWorking_FormFieldEntry!.getOptionSVFile(forTag: optionTag)
-                            }
-                            assert(optionShownString != nil, "optionShownString == nil")
-                            newOptionsShownPerLang.append(codeString: optionTag, valueString: optionShownString!)
-                        }
-                    }
-                    workingFormFieldLocaleRec.rFieldLocProp_Options_Name_Shown = newOptionsShownPerLang
-                }
-            }
-        }
+        // re-order the options (if any and if needed)
+        self.reorderOptions()
 
-        // copy all the changes back into the "Being Edited" FormFieldEntry
-        self.mEdit_FormFieldEntry!.mFormFieldRec = self.mWorking_FormFieldEntry!.mFormFieldRec  // this copies all the internal RecOrgFormFieldLocales
-        self.mEdit_FormFieldEntry!.mComposedFormFieldLocalesRec = self.mWorking_FormFieldEntry!.mComposedFormFieldLocalesRec
-        if (self.mWorking_SubfieldEntries?.count() ?? 0) > 0 {
-            var newIDcodes:[String] = []
-            for workEntry:OrgFormFieldsEntry in self.mWorking_SubfieldEntries! {
-                if workEntry.mDuringEditing_isChosen {
-                    // entry is desired, and should be undeleted or added if not present
-                    newIDcodes.append(workEntry.mFormFieldRec.rFieldProp_IDCode)
-                    if !workEntry.mDuringEditing_isDefault {
-                        // existing; ensure is undeleted
-                        let sInx:Int = self.mFormEditVC!.mWorking_formFieldEntries!.findIndex(ofFormFieldIndex: workEntry.mFormFieldRec.rFormField_Index)
-                        if sInx >= 0 {
-                            let subEntry:OrgFormFieldsEntry = self.mFormEditVC!.mWorking_formFieldEntries![sInx]
-                            subEntry.mDuringEditing_isDeleted = false
-                        }
-                    } else {
-                        // default; add it to the master working list; the various sort orders have already been set properly against the primary field's
-                        workEntry.mDuringEditing_isDefault = false
-                        workEntry.mDuringEditing_isDeleted = false
-                        workEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true
-                        workEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index = self.mEdit_FormFieldEntry!.mFormFieldRec.rFormField_Index
-                        self.mFormEditVC!.mWorking_formFieldEntries!.appendNewDuringEditing(workEntry)  // temporary indexing will be auto-assigned
-                    }
-                } else {
-                    // entry is not needed and should be removed or marked for deletion if present
-                    if !workEntry.mDuringEditing_isDefault {
-                        let sInx:Int = self.mFormEditVC!.mWorking_formFieldEntries!.findIndex(ofFormFieldIndex: workEntry.mFormFieldRec.rFormField_Index)
-                        if sInx >= 0 {
-                            let subEntry:OrgFormFieldsEntry = self.mFormEditVC!.mWorking_formFieldEntries![sInx]
-                            subEntry.mDuringEditing_isDeleted = true
-                        }
-                    }
-                }
-            }
-            self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Contains_Field_IDCodes! = newIDcodes
-        }
-        
+        // all validation were passed; if any changes were made invoke the parent VC to merge the changes back into its working set;
+        // then dismiss this VC
+        if self.mWorking_FormFieldEntry!.hasChanged(existingEntry: self.mEdit_FormFieldEntry!) { self.onDismissCallback_reason = .DONE }
         self.onDismissCallback?(self)
         self.closeVC()
         self.navigationController?.popViewController(animated:true)
@@ -1581,7 +1572,6 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
     // close out the form and any stored arrays that are not needed but should not hog memory if the NavController keeps this VC in-memory
     private func closeVC() {
         self.mWorking_FormFieldEntry = nil
-        self.mWorking_SubfieldEntries = nil
         self.mMVS_field_options = nil
         self.mMVS_field_metas = nil
         self.mMVS_field_subfields = nil
@@ -1626,7 +1616,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
                         cell.titleLabel?.textColor = .red
                     }
                 }.onChange { [weak self] chgRow in
-                    if !(chgRow.value ?? "").isEmpty {
+                    if chgRow.isValid && !(chgRow.value ?? "").isEmpty {
                         self!.mWorking_FormFieldEntry!.mFormFieldRec.rFieldProp_Col_Name_For_SV_File = chgRow.value!
                     }
             }
@@ -1746,8 +1736,8 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
             }
         }
         
-        // subfields for those fields that have them
-        if (self.mWorking_SubfieldEntries?.count() ?? 0) > 0 {
+        // subFormFields for those fields that have them
+        if (self.mWorking_FormFieldEntry!.mDuringEditing_SubFormFields?.count ?? 0) > 0 {
             let mvs_field_subfields = MultivaluedSection(multivaluedOptions: .None,
                 header: NSLocalizedString("Field's Subfields", comment:"")) { mvSection in
                     mvSection.tag = "mvs_field_subfields"
@@ -1755,8 +1745,8 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
             }
             form +++ mvs_field_subfields
             self.mMVS_field_subfields = mvs_field_subfields
-            for entry:OrgFormFieldsEntry in self.mWorking_SubfieldEntries! {
-                let br = self.makeSubfieldButtonRow(forFormFieldEntry: entry)
+            for subEntry:OrgFormFieldsEntry in self.mWorking_FormFieldEntry!.mDuringEditing_SubFormFields! {
+                let br = self.makeSubfieldButtonRow(forSubFormFieldEntry: subEntry)
                 self.mMVS_field_subfields!.append(br)
             }
         }
@@ -1780,29 +1770,33 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
                     let tagComponents = row!.tag!.components(separatedBy: "\t")
                     let vc = FormEditAttributeFormViewController()
                     vc.mFormEditVC = self!.mFormEditVC
-                    vc.mEdit_FormFieldEntry = self!.mWorking_FormFieldEntry
-                    vc.mEdit_isMetadata = false
-                    if tagComponents.count == 4 { vc.mEdit_Tag = tagComponents[1] }
-                    else { vc.mEdit_Tag = forTag }
+                    vc.mFormFieldEntry = self!.mWorking_FormFieldEntry!
+                    var tag:String
+                    if tagComponents.count == 4 { tag = tagComponents[1] }
+                    else { tag = forTag }
+                    vc.mEdit_FormFieldEntryTag = OrgFormFieldsEntryTag(formField: self!.mWorking_FormFieldEntry!, tag: tag, isMetadata: false)
                     return vc
                 }),
                 onDismiss: { [weak self, weak row] vc in
                     let feafVC:FormEditAttributeFormViewController = vc as! FormEditAttributeFormViewController
-                    let newTag = feafVC.mEdit_Tag!
-                    var newSVcode = self!.mWorking_FormFieldEntry!.getOptionSVFile(forTag: newTag)
-                    var newShownName = self!.mWorking_FormFieldEntry!.getOptionShown(forTag: newTag, forLangRegion: self!.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported[0])
-                    if newTag.starts(with: "***") {
-                        if newSVcode == newTag { newSVcode = nil }
-                        if newShownName == newTag { newShownName = nil }
+                    if feafVC.onDismissCallback_reason == .DONE {
+                        feafVC.mWorking_FormFieldEntryTag!.save(into:self!.mWorking_FormFieldEntry!, was: feafVC.mEdit_FormFieldEntryTag!)
+                        let newTag = feafVC.mWorking_FormFieldEntryTag!.mTag
+                        var newSVcode = self!.mWorking_FormFieldEntry!.getOptionSVFile(forTag: newTag)
+                        var newShownName = self!.mWorking_FormFieldEntry!.getOptionShown(forTag: newTag, forLangRegion: self!.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported[0])
+                        if newTag.starts(with: "***") {
+                            if newSVcode == newTag { newSVcode = nil }
+                            if newShownName == newTag { newShownName = nil }
+                        }
+                        row!.tag = "OP\t\(newTag)\t\((newSVcode ?? ""))\t\((newShownName ?? ""))"
+                        row!.title = "(\(newTag)) " + (newSVcode ?? "")
+                        row!.updateCell()
                     }
-                    row!.tag = "OP\t\(newTag)\t\((newSVcode ?? ""))\t\((newShownName ?? ""))"
-                    row!.title = "(\(newTag)) " + (newSVcode ?? "")
-                    row!.updateCell()
             })
-            }.cellUpdate { cell, row in
-                let tagComponents = row.tag!.components(separatedBy: "\t")
+            }.cellUpdate { updCell, updRow in
+                let tagComponents = updRow.tag!.components(separatedBy: "\t")
                 if tagComponents.count == 4 {
-                    cell.detailTextLabel?.text = tagComponents[3]
+                    updCell.detailTextLabel?.text = tagComponents[3]
                 }
         }
     }
@@ -1823,40 +1817,44 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
                     let tagComponents = row!.tag!.components(separatedBy: "\t")
                     let vc = FormEditAttributeFormViewController()
                     vc.mFormEditVC = self!.mFormEditVC
-                    vc.mEdit_FormFieldEntry = self!.mWorking_FormFieldEntry
-                    vc.mEdit_isMetadata = true
-                    if tagComponents.count == 4 { vc.mEdit_Tag = tagComponents[1] }
-                    else { vc.mEdit_Tag = forTag }
+                    vc.mFormFieldEntry = self!.mWorking_FormFieldEntry!
+                    var tag:String
+                    if tagComponents.count == 4 { tag = tagComponents[1] }
+                    else { tag = forTag }
+                    vc.mEdit_FormFieldEntryTag = OrgFormFieldsEntryTag(formField: self!.mWorking_FormFieldEntry!, tag: tag, isMetadata: true)
                     return vc
                 }),
                 onDismiss: { [weak self, weak row] vc in
                     let feafVC:FormEditAttributeFormViewController = vc as! FormEditAttributeFormViewController
-                    let newTag = feafVC.mEdit_Tag!
-                    var newSVcode = self!.mWorking_FormFieldEntry!.getMetadataSVFile(forTag: newTag)
-                    var newShownName = self!.mWorking_FormFieldEntry!.getMetadataShown(forTag: newTag, forLangRegion: self!.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported[0])
-                    if newSVcode == newTag { newSVcode = nil }
-                    if newShownName == newTag { newShownName = nil }
-                    row!.tag = "MT\t\(newTag)\t\((newSVcode ?? ""))\t\((newShownName ?? ""))"
-                    row!.title = "(\(newTag)) " + (newSVcode ?? "")
-                    row!.updateCell()
+                    if feafVC.onDismissCallback_reason == .DONE {
+                        feafVC.mWorking_FormFieldEntryTag!.save(into:self!.mWorking_FormFieldEntry!, was: feafVC.mEdit_FormFieldEntryTag!)
+                        let newTag = feafVC.mWorking_FormFieldEntryTag!.mTag
+                        var newSVcode = self!.mWorking_FormFieldEntry!.getMetadataSVFile(forTag: newTag)
+                        var newShownName = self!.mWorking_FormFieldEntry!.getMetadataShown(forTag: newTag, forLangRegion: self!.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported[0])
+                        if newSVcode == newTag { newSVcode = nil }
+                        if newShownName == newTag { newShownName = nil }
+                        row!.tag = "MT\t\(newTag)\t\((newSVcode ?? ""))\t\((newShownName ?? ""))"
+                        row!.title = "(\(newTag)) " + (newSVcode ?? "")
+                        row!.updateCell()
+                    }
             })
-            }.cellUpdate { cell, row in
-                let tagComponents = row.tag!.components(separatedBy: "\t")
+            }.cellUpdate { updCell, updRow in
+                let tagComponents = updRow.tag!.components(separatedBy: "\t")
                 if tagComponents.count == 4 {
-                    cell.detailTextLabel?.text = tagComponents[3]
+                    updCell.detailTextLabel?.text = tagComponents[3]
                 }
         }
     }
         
     // create the pretty complex button row needed for existing and new FormField records
-    private func makeSubfieldButtonRow(forFormFieldEntry:OrgFormFieldsEntry) -> CheckButtonRow {
+    private func makeSubfieldButtonRow(forSubFormFieldEntry:OrgFormFieldsEntry) -> CheckButtonRow {
         return CheckButtonRow() { row in
-            row.tag = "SF,\(forFormFieldEntry.mFormFieldRec.rFieldProp_IDCode)"
+            row.tag = "SF,\(forSubFormFieldEntry.mFormFieldRec.rFieldProp_IDCode)"
             row.cellStyle = UITableViewCell.CellStyle.subtitle
-            row.title = "#\(forFormFieldEntry.mFormFieldRec.rFormField_Index) \(forFormFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Name_For_Collector!)"
-            row.retainedObject = forFormFieldEntry
-            row.checkBoxChanged = { cell, row in
-                forFormFieldEntry.mDuringEditing_isChosen = cell.checkBox!.isSelected
+            row.title = "#\(forSubFormFieldEntry.mFormFieldRec.rFormField_Index) \(forSubFormFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Name_For_Collector!)"
+            row.retainedObject = forSubFormFieldEntry
+            row.checkBoxChanged = { chgCell, chgRow in
+                (chgRow.retainedObject as! OrgFormFieldsEntry).mDuringEditing_isChosen = chgCell.checkBox!.isSelected
             }
             row.presentationMode = .show(
                 // selecting the ButtonRow invokes FormEditFieldFormViewController with callback so the row's content can be refreshed
@@ -1866,21 +1864,72 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
                     vc.mEdit_FormFieldEntry = (row!.retainedObject as! OrgFormFieldsEntry)
                     return vc
                 }),
-                onDismiss: { [weak row] vc in
-                    row!.updateCell()
+                onDismiss: { [weak self, weak row] vc in
+                    let feffVC:FormEditFieldFormViewController = vc as! FormEditFieldFormViewController
+                    if feffVC.onDismissCallback_reason == .DONE {
+                        feffVC.mWorking_FormFieldEntry!.saveSubFormField(into:self!.mWorking_FormFieldEntry!)
+                        row!.retainedObject = feffVC.mWorking_FormFieldEntry!
+                        row!.updateCell()
+                    }
             })
-            }.cellUpdate { cell, row in
-                if row.retainedObject != nil {
-                    let formFieldEntry = (row.retainedObject as! OrgFormFieldsEntry)
-                    if formFieldEntry.mDuringEditing_isChosen { cell.checkBox?.isSelected = true }
-                    else { cell.checkBox?.isSelected = false }
+            }.cellUpdate { updCell, updRow in
+                if updRow.retainedObject != nil {
+                    let formFieldEntry = (updRow.retainedObject as! OrgFormFieldsEntry)
+                    if formFieldEntry.mDuringEditing_isChosen { updCell.checkBox?.isSelected = true }
+                    else { updCell.checkBox?.isSelected = false }
                     // create and show the second line of text in the row
-                    cell.detailTextLabel?.text = "\"\(formFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Name_Shown!)\", col=\(formFieldEntry.mFormFieldRec.rFieldProp_Col_Name_For_SV_File)"
+                    updCell.detailTextLabel?.text = "\"\(formFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Name_Shown!)\", col=\(formFieldEntry.mFormFieldRec.rFieldProp_Col_Name_For_SV_File)"
                 }
         }
     }
     
-    // make the LabelRow associated with the $$$,***,### attributes not deletable
+    // re-order the options (metadata does not need re-ordering)
+    private func reorderOptions() {
+        // if there are option attributes, they may need re-ordering to the order shown;
+        // warning some options may be in-option meta-data
+        if self.mMVS_field_options != nil,
+            self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Flags != nil,
+            self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Flags!.contains("V") {
+            
+            // there are options and they are order-able and deletable;
+            // change the mWorking_FormFieldEntry!.mFormFieldRec since it gets copied later as a whole back to the editing copy
+            // remember the "add_option" button counts as an entry in self.mMVS_field_options
+            if self.mMVS_field_options!.count > 1 {
+                // first re-order the option SV-File names
+                var newOptionsSVFile:FieldAttributes = FieldAttributes()
+                for inx in 0...self.mMVS_field_options!.endIndex - 1 {
+                    let row = self.mMVS_field_options![inx]
+                    if row.tag!.starts(with: "OP\t") {
+                        let optionTag = row.tag!.components(separatedBy: "\t")[1]
+                        let optionSVFileString = self.mWorking_FormFieldEntry!.getOptionSVFile(forTag: optionTag)
+                        assert(optionSVFileString != nil, "optionSVFileString == nil")
+                        newOptionsSVFile.append(codeString: optionTag, valueString: optionSVFileString!)
+                    }
+                }
+                self.mWorking_FormFieldEntry!.mFormFieldRec.rFieldProp_Options_Code_For_SV_File = newOptionsSVFile
+                
+                // now reorder the option shown names per their language
+                for workingFormFieldLocaleRec in self.mWorking_FormFieldEntry!.mFormFieldRec.mFormFieldLocalesRecs! {
+                    var newOptionsShownPerLang:FieldAttributes = FieldAttributes()
+                    for inx in 0...self.mMVS_field_options!.endIndex - 1 {
+                        let row = self.mMVS_field_options![inx]
+                        if row.tag!.starts(with: "OP\t") {
+                            let optionTag = row.tag!.components(separatedBy: "\t")[1]
+                            var optionShownString = self.mWorking_FormFieldEntry!.getOptionShown(forTag: optionTag, forLangRegion: workingFormFieldLocaleRec.rFormFieldLoc_LangRegionCode)
+                            if optionShownString == nil {
+                                optionShownString = self.mWorking_FormFieldEntry!.getOptionSVFile(forTag: optionTag)
+                            }
+                            assert(optionShownString != nil, "optionShownString == nil")
+                            newOptionsShownPerLang.append(codeString: optionTag, valueString: optionShownString!)
+                        }
+                    }
+                    workingFormFieldLocaleRec.rFieldLocProp_Options_Name_Shown = newOptionsShownPerLang
+                }
+            }
+        }
+    }
+    
+    // make specific rows in the MVS not editable associated with the $$$,***,### attributes
     override open func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
         let superStyle = super.tableView(tableView, editingStyleForRowAt: indexPath)
         
@@ -1963,29 +2012,35 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
 class FormEditAttributeFormViewController: FormViewController, RowControllerType {
     // caller pre-set member variables
     public weak var mFormEditVC:FormEditViewController? = nil
-    public weak var mEdit_FormFieldEntry:OrgFormFieldsEntry? = nil
-    public var mEdit_Tag:String? = nil
-    public var mEdit_isMetadata:Bool = false
+    public weak var mFormFieldEntry:OrgFormFieldsEntry? = nil
+    public var mEdit_FormFieldEntryTag:OrgFormFieldsEntryTag? = nil     // strong reference; this is held locally and not in the parent VC
 
-    /// A closure to be called when the controller disappears.
+    /// A closure to be called when the controller disappears
+    public var onDismissCallback_reason: OnDismissCallback_Reason = .CANCEL
     public var onDismissCallback: ((UIViewController) -> ())?
     
     // member variables
+    public var mWorking_FormFieldEntryTag:OrgFormFieldsEntryTag? = nil
 
     // member constants and other static content
     private let mCTAG:String = "VCSFEAF"
+    public enum OnDismissCallback_Reason { case CANCEL, DONE }
     
     // outlets to screen controls
     
     // called when the object instance is being destroyed
     deinit {
-//debugPrint("\(mCTAG).deinit STARTED")
+debugPrint("\(mCTAG).deinit STARTED")
     }
     
     // called by the framework after the view has been setup from Storyboard or NIB
     override func viewDidLoad() {
-//debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
+        
+        assert(self.mFormEditVC != nil, "self.mFormEditVC == nil") // programming error
+        assert(self.mFormFieldEntry != nil, "self.mFormFieldEntry == nil") // programming error
+        assert(self.mEdit_FormFieldEntryTag != nil, "self.mEdit_FormFieldEntryTag == nil") // programming error
         
         // define navigations buttons and capture their press
         navigationItem.title = NSLocalizedString("Edit Attribute", comment:"")
@@ -1997,6 +2052,7 @@ class FormEditAttributeFormViewController: FormViewController, RowControllerType
         navigationItem.leftBarButtonItem = button2
         
         // build the form entirely
+        self.mWorking_FormFieldEntryTag = OrgFormFieldsEntryTag(existingEntry: self.mEdit_FormFieldEntryTag!)
         self.buildForm()
         
         // set overall form options
@@ -2020,8 +2076,22 @@ class FormEditAttributeFormViewController: FormViewController, RowControllerType
     
     // Cancel button was tapped
     @objc func tappedCancel(_ barButtonItem: UIBarButtonItem) {
-        self.closeVC()
-        self.navigationController?.popViewController(animated:true)
+        if self.mWorking_FormFieldEntryTag!.hasChanged(existingEntry: self.mEdit_FormFieldEntryTag!) {
+            AppDelegate.showYesNoDialog(vc:self, title:NSLocalizedString("Cancel Confirmation", comment:""), message:NSLocalizedString("If you Cancel you will lose your changes; are you sure?", comment:""), buttonYesText:NSLocalizedString("Yes, Cancel", comment:""), buttonNoText:NSLocalizedString("No", comment:""), callbackAction:1, callbackString1:nil, callbackString2:nil, completion: {(vc:UIViewController, theResult:Bool, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
+                // callback from the yes/no dialog upon one of the buttons being pressed
+                if theResult {
+                    // answer was Yes, Cancel
+                    self.onDismissCallback?(self)
+                    self.closeVC()
+                    self.navigationController?.popViewController(animated:true)
+                }
+                return  // from callback
+            })
+        } else {
+            self.onDismissCallback?(self)
+            self.closeVC()
+            self.navigationController?.popViewController(animated:true)
+        }
     }
     
     // Done button was tapped
@@ -2036,77 +2106,53 @@ class FormEditAttributeFormViewController: FormViewController, RowControllerType
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: message, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
+        
         let rowTag = form.rowBy(tag: "attribute_code") as? TextRow
         if rowTag != nil {
             if (rowTag!.value ?? "").isEmpty {
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("Short Sync Tag must not be blank", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
                 return
-            } else if rowTag!.value! != self.mEdit_Tag {
-                if self.mEdit_isMetadata {
-                    if self.mEdit_FormFieldEntry!.existsMetadataTag(tagValue: rowTag!.value!) {
+            } else if rowTag!.value! != self.mWorking_FormFieldEntryTag!.mTag {
+                if self.mEdit_FormFieldEntryTag!.mIsMetadata {
+                    if self.mFormFieldEntry!.existsMetadataTag(tagValue: rowTag!.value!) {
                         AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("The changed Short Sync Tag duplicates an existing one", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
                         return
                     }
                 } else {
-                    if self.mEdit_FormFieldEntry!.existsOptionTag(tagValue: rowTag!.value!) {
+                    if self.mFormFieldEntry!.existsOptionTag(tagValue: rowTag!.value!) {
                         AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("The changed Short Sync Tag duplicates an existing one", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
                         return
                     }
                 }
+                self.mWorking_FormFieldEntryTag!.mTag = rowTag!.value!
             }
         }
+        
         let rowColumn = form.rowBy(tag: "attribute_column") as? TextRow
         if rowColumn != nil {
             if (rowColumn!.value ?? "").isEmpty {
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("Code for SV_File must not be blank", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
                 return
+            } else {
+                self.mWorking_FormFieldEntryTag!.mCodeForSVFile = rowColumn!.value!
             }
         }
+        
         for langRegionCode in self.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported {
             let rowShown = form.rowBy(tag: "attribute_shown_\(langRegionCode)") as? TextRow
             if rowShown != nil {
                 if (rowShown!.value ?? "").isEmpty {
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("Phrases Shown must not be blank", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
                     return
+                } else {
+                    self.mWorking_FormFieldEntryTag!.mPhraseShownByLang[langRegionCode] = rowShown!.value!
                 }
             }
         }
         
-        // all validation were passed
-        if rowTag != nil, rowTag!.value! != self.mEdit_Tag, !self.mEdit_isMetadata {
-            // the tag is not metadata, allowed to be changed, and indeed its value was changed; could be an add, change, or delete
-            // first delete the original attribute by its tag; this will remove it from all languages too
-            var useSVFileName:String? = self.mEdit_FormFieldEntry!.getOptionSVFile(forTag: self.mEdit_Tag!)
-            self.mEdit_FormFieldEntry!.removeOption(tagValue: self.mEdit_Tag!)
-            
-            // now add the new attribute with its new tag and names in its various languages
-            if rowColumn != nil { useSVFileName = rowColumn!.value! }
-            var langShownPairs:[CodePair] = []
-            for langRegionCode in self.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported {
-                let rowShown = form.rowBy(tag: "attribute_shown_\(langRegionCode)") as? TextRow
-                if rowShown != nil, rowShown!.value != nil {
-                    langShownPairs.append(CodePair(langRegionCode, rowShown!.value!))
-                }
-            }
-            self.mEdit_FormFieldEntry!.addOption(tagValue: rowTag!.value!, SVfileValue: useSVFileName ?? "?", langShownPairs: langShownPairs)
-            self.mEdit_Tag = rowTag!.value!
-        } else {
-            // the tag cannot be changed; only the column name and the shown names can be changed
-            if rowColumn != nil {
-                // column name is changable and is guarenteed to have a non-empty value
-                if self.mEdit_isMetadata { self.mEdit_FormFieldEntry!.setMetadataSVFile(value: rowColumn!.value!, forTag: self.mEdit_Tag!) }
-                else { self.mEdit_FormFieldEntry!.setOptionSVFile(value: rowColumn!.value!, forTag: self.mEdit_Tag!) }
-            }
-            // pull in all the possible shown names
-            for langRegionCode in self.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported {
-                let rowShown = form.rowBy(tag: "attribute_shown_\(langRegionCode)") as? TextRow
-                if rowShown != nil, rowShown!.value != nil {
-                    if self.mEdit_isMetadata { self.mEdit_FormFieldEntry!.setMetadataShown(value: rowShown!.value!, forTag: self.mEdit_Tag!, forLangRegion: langRegionCode) }
-                    else { self.mEdit_FormFieldEntry!.setOptionShown(value: rowShown!.value!, forTag: self.mEdit_Tag!, forLangRegion: langRegionCode) }
-                }
-            }
-        }
-        
+        // all validation were passed; if any changes were made invoke the parent VC to merge the changes back into its working set;
+        // then dismiss this VC
+        if self.mWorking_FormFieldEntryTag!.hasChanged(existingEntry: self.mEdit_FormFieldEntryTag!) { self.onDismissCallback_reason = .DONE }
         self.onDismissCallback?(self)
         self.closeVC()
         self.navigationController?.popViewController(animated:true)
@@ -2114,8 +2160,11 @@ class FormEditAttributeFormViewController: FormViewController, RowControllerType
     
     // close out the form and any stored arrays that are not needed but should not hog memory if the NavController keeps this VC in-memory
     private func closeVC() {
-        self.mEdit_FormFieldEntry = nil
-        self.mEdit_Tag = nil
+        self.mWorking_FormFieldEntryTag!.clear()
+        self.mEdit_FormFieldEntryTag!.clear()
+        self.mWorking_FormFieldEntryTag = nil
+        self.mEdit_FormFieldEntryTag = nil
+        self.mFormFieldEntry = nil
         form.removeAll()
         tableView.reloadData()
         self.mFormEditVC = nil
@@ -2130,99 +2179,119 @@ class FormEditAttributeFormViewController: FormViewController, RowControllerType
         section1 <<< LabelRow() {
             $0.tag = "formfield_index"
             $0.title = NSLocalizedString("Index#", comment:"")
-            $0.value = String(self.mEdit_FormFieldEntry!.mFormFieldRec.rFormField_Index)
+            $0.value = String(self.mFormFieldEntry!.mFormFieldRec.rFormField_Index)
         }
         
         section1 <<< LabelRow() {
             $0.tag = "formfield_idcode_name"
             $0.title = NSLocalizedString("Field IDCode Name", comment:"")
-            $0.value = self.mEdit_FormFieldEntry!.mComposedFormFieldLocalesRec.rFieldLocProp_Name_For_Collector!
+            $0.value = self.mFormFieldEntry!.mComposedFormFieldLocalesRec.rFieldLocProp_Name_For_Collector!
         }
         
         section1 <<< LabelRow() {
             $0.tag = "formfield_frt"
             $0.title = NSLocalizedString("Field Row-Type", comment:"")
-            $0.value = FIELD_ROW_TYPE.getFieldRowTypeString(fromType:self.mEdit_FormFieldEntry!.mFormFieldRec.rFieldProp_Row_Type)
+            $0.value = FIELD_ROW_TYPE.getFieldRowTypeString(fromType: self.mFormFieldEntry!.mFormFieldRec.rFieldProp_Row_Type)
         }
         
         var section2:Section
-        if self.mEdit_isMetadata { section2 = Section(NSLocalizedString("MetaData's Identity and Names", comment:"")) }
+        if self.mEdit_FormFieldEntryTag!.mIsMetadata { section2 = Section(NSLocalizedString("MetaData's Identity and Names", comment:"")) }
         else { section2 = Section(NSLocalizedString("Option's Identity and Names", comment:"")) }
         form +++ section2
-        if (self.mEdit_Tag?.starts(with: "$$$") ?? false) == true || (self.mEdit_Tag?.starts(with: "***") ?? false) == true ||
-           (self.mEdit_Tag?.starts(with: "###") ?? false) == true || self.mEdit_isMetadata {
+        
+        if self.mEdit_FormFieldEntryTag!.mIsMetadata ||
+           self.mEdit_FormFieldEntryTag!.mTag.starts(with: "$$$") ||
+           self.mEdit_FormFieldEntryTag!.mTag.starts(with: "***") ||
+           self.mEdit_FormFieldEntryTag!.mTag.starts(with: "###") {
             section2 <<< LabelRow() {
                 $0.tag = "attribute_code"
                 $0.title = NSLocalizedString("Short Sync Tag", comment:"")
-                $0.value = self.mEdit_Tag
+                $0.value = self.mEdit_FormFieldEntryTag!.mTag
             }
         } else {
             section2 <<< TextRow() {
                 $0.tag = "attribute_code"
                 $0.title = NSLocalizedString("Short Sync Tag", comment:"")
-                $0.value = self.mEdit_Tag
+                $0.value = self.mEdit_FormFieldEntryTag!.mTag
                 $0.add(rule: RuleRequired())
                 $0.validationOptions = .validatesOnChange
-                }.cellUpdate {cell, row in
+                }.cellUpdate { cell, row in
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
+                    }
+                }.onChange { [weak self] chgRow in
+                    if chgRow.isValid && !(chgRow.value ?? "").isEmpty {
+                        self!.mWorking_FormFieldEntryTag!.mTag = chgRow.value!
                     }
             }
         }
         
-        var columnName:String?
-        if self.mEdit_isMetadata { columnName = self.mEdit_FormFieldEntry!.getMetadataSVFile(forTag: self.mEdit_Tag!) }
-        else { columnName = self.mEdit_FormFieldEntry!.getOptionSVFile(forTag: self.mEdit_Tag!) }
-        if (self.mEdit_Tag?.starts(with: "***") ?? false) == true {
+        if self.mEdit_FormFieldEntryTag!.mTag.starts(with: "***") {
             // *** metadata or *** option-insert has no changable SV-File content
-        } else if (self.mEdit_Tag?.starts(with: "$$$") ?? false) == true && self.mEdit_Tag == columnName {
+        } else if self.mEdit_FormFieldEntryTag!.mTag.starts(with: "$$$") &&
+                  self.mEdit_FormFieldEntryTag!.mTag == self.mEdit_FormFieldEntryTag!.mCodeForSVFile {
             // $$$ options with duplicated SV-File name also has no changable SV-File content
         } else {
             section2 <<< TextRow() {
                 $0.tag = "attribute_column"
-                if (self.mEdit_Tag?.starts(with: "###") ?? false) == true { $0.title = NSLocalizedString("Code", comment:"") }
+                if self.mEdit_FormFieldEntryTag!.mTag.starts(with: "###") { $0.title = NSLocalizedString("Code", comment:"") }
                 else { $0.title = NSLocalizedString("Code for the SV-File", comment:"") }
-                $0.value = columnName
+                $0.value = self.mEdit_FormFieldEntryTag!.mCodeForSVFile
                 $0.add(rule: RuleRequired())
                 $0.validationOptions = .validatesOnChange
                 }.cellUpdate {cell, row in
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
                     }
+                }.onChange { [weak self] chgRow in
+                    if chgRow.isValid && !(chgRow.value ?? "").isEmpty {
+                        self!.mWorking_FormFieldEntryTag!.mCodeForSVFile = chgRow.value!
+                    }
             }
         }
         
-        if (self.mEdit_Tag?.starts(with: "###") ?? false) == true {
+        if self.mEdit_FormFieldEntryTag!.mTag.starts(with: "###") {
             // ### meta-data has no changable shown content
-        } else if !self.mEdit_isMetadata && (self.mEdit_Tag?.starts(with: "***") ?? false) == true {
+        } else if !self.mEdit_FormFieldEntryTag!.mIsMetadata &&
+                  self.mEdit_FormFieldEntryTag!.mTag.starts(with: "***") {
             // *** option-insert has no changable shown content
         } else if self.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported.count > 1 {
-            for langRegionCode in self.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported {
+            for langRegionCode:String in self.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported {
                 section2 <<< TextRow() {
                     $0.tag = "attribute_shown_\(langRegionCode)"
                     $0.title = NSLocalizedString("Phrase Shown for ", comment:"") + AppDelegate.makeFullDescription(forLangRegion: langRegionCode)
-                    if self.mEdit_isMetadata { $0.value = self.mEdit_FormFieldEntry!.getMetadataShown(forTag: self.mEdit_Tag!, forLangRegion: langRegionCode) }
-                    else { $0.value = self.mEdit_FormFieldEntry!.getOptionShown(forTag: self.mEdit_Tag!, forLangRegion: langRegionCode) }
+                    $0.value = self.mEdit_FormFieldEntryTag!.mPhraseShownByLang[langRegionCode]
                     $0.add(rule: RuleRequired())
                     $0.validationOptions = .validatesOnChange
+                    $0.retainedObject = langRegionCode
                     }.cellUpdate {cell, row in
                         if !row.isValid {
                             cell.titleLabel?.textColor = .red
                         }
+                    }.onChange { [weak self] chgRow in
+                        if chgRow.isValid && !(chgRow.value ?? "").isEmpty {
+                            let lrcode:String = chgRow.retainedObject as! String
+                            self!.mWorking_FormFieldEntryTag!.mPhraseShownByLang[lrcode] = chgRow.value!
+                        }
                 }
             }
         } else {
-            let langRegionCode = self.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported[0]
+            let langRegionCode:String = self.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported[0]
             section2 <<< TextRow() {
                 $0.tag = "attribute_shown_\(langRegionCode)"
                 $0.title = NSLocalizedString("Phrase Shown", comment:"")
-                if self.mEdit_isMetadata { $0.value = self.mEdit_FormFieldEntry!.getMetadataShown(forTag: self.mEdit_Tag!, forLangRegion: langRegionCode) }
-                else { $0.value = self.mEdit_FormFieldEntry!.getOptionShown(forTag: self.mEdit_Tag!, forLangRegion: langRegionCode) }
+                $0.value = self.mEdit_FormFieldEntryTag!.mPhraseShownByLang[langRegionCode]
                 $0.add(rule: RuleRequired())
                 $0.validationOptions = .validatesOnChange
+                $0.retainedObject = langRegionCode
                 }.cellUpdate {cell, row in
                     if !row.isValid {
                         cell.titleLabel?.textColor = .red
+                    }
+                }.onChange { [weak self] chgRow in
+                    if chgRow.isValid && !(chgRow.value ?? "").isEmpty {
+                        let lrcode:String = chgRow.retainedObject as! String
+                        self!.mWorking_FormFieldEntryTag!.mPhraseShownByLang[lrcode] = chgRow.value!
                     }
             }
         }

@@ -436,6 +436,35 @@ public class RecOrgFormFieldLocales {
         if (value2 ?? "").isEmpty { self.rFieldLocProp_Metadatas_Name_Shown = nil }
         else { self.rFieldLocProp_Metadatas_Name_Shown = FieldAttributes(duos: value2!.components(separatedBy:",")) }
     }
+    
+    // has the record changed in any manner?
+    public func hasChanged(existingEntry:RecOrgFormFieldLocales) -> Bool {
+        if self.rFormFieldLoc_Index != existingEntry.rFormFieldLoc_Index { return true }
+        if self.rOrg_Code_For_SV_File != existingEntry.rOrg_Code_For_SV_File { return true }
+        if self.rForm_Code_For_SV_File != existingEntry.rForm_Code_For_SV_File { return true }
+        if self.rFormField_Index != existingEntry.rFormField_Index { return true }
+        if self.rFormFieldLoc_LangRegionCode != existingEntry.rFormFieldLoc_LangRegionCode { return true }
+        if self.rFieldLocProp_Name_For_Collector != existingEntry.rFieldLocProp_Name_For_Collector { return true }
+        if self.mDuringEditing_isDeleted != existingEntry.mDuringEditing_isDeleted { return true }
+
+        if self.rFieldLocProp_Name_Shown != existingEntry.rFieldLocProp_Name_Shown { return true }
+        if (self.rFieldLocProp_Name_Shown ?? "$nil") != (existingEntry.rFieldLocProp_Name_Shown ?? "$nil") { return true }
+        if self.rFieldLocProp_Placeholder_Shown != existingEntry.rFieldLocProp_Placeholder_Shown { return true }
+        if (self.rFieldLocProp_Placeholder_Shown ?? "$nil") != (existingEntry.rFieldLocProp_Placeholder_Shown ?? "$nil") { return true }
+        
+        if (self.rFieldLocProp_Options_Name_Shown == nil && existingEntry.rFieldLocProp_Options_Name_Shown != nil) ||
+            (self.rFieldLocProp_Options_Name_Shown != nil && existingEntry.rFieldLocProp_Options_Name_Shown == nil) { return true }
+        if self.rFieldLocProp_Options_Name_Shown != nil {
+            if self.rFieldLocProp_Options_Name_Shown!.pack() != existingEntry.rFieldLocProp_Options_Name_Shown!.pack() { return true }
+        }
+        
+        if (self.rFieldLocProp_Metadatas_Name_Shown == nil && existingEntry.rFieldLocProp_Metadatas_Name_Shown != nil) ||
+            (self.rFieldLocProp_Metadatas_Name_Shown != nil && existingEntry.rFieldLocProp_Metadatas_Name_Shown == nil) { return true }
+        if self.rFieldLocProp_Metadatas_Name_Shown != nil {
+            if self.rFieldLocProp_Metadatas_Name_Shown!.pack() != existingEntry.rFieldLocProp_Metadatas_Name_Shown!.pack() { return true }
+        }
+        return false
+    }
         
     // create an array of setters usable for database Insert or Update; will return nil if the record is incomplete and therefore not eligible to be stored
     // use 'exceptKey' for Update operations to ensure the key fields cannot be changed

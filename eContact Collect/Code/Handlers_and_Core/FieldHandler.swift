@@ -78,7 +78,7 @@ public class FieldHandler {
     }
     
     // record a formfield that the end-user tagged as a "copy"
-    public func copyToClipboardOneEdited(editedFF:OrgFormFieldsEntry?, editedSubFields:OrgFormFields?) {
+    public func copyToClipboardOneEdited(editedFF:OrgFormFieldsEntry?) {
         if editedFF == nil { return }
         let copyFFs:OrgFormFields = OrgFormFields()
         
@@ -86,10 +86,10 @@ public class FieldHandler {
         copyFFs.appendNewDuringEditing(copiedFF)
         
         // are there any subfields?
-        if (editedSubFields?.count() ?? 0) > 0 {
-            // yes; copy them as well
-            for entry:OrgFormFieldsEntry in editedSubFields! {
-                let copiedSubFF = OrgFormFieldsEntry(existingEntry: entry)
+        if (editedFF!.mDuringEditing_SubFormFields?.count ?? 0) > 0 {
+            // yes; copy them as well as full entries
+            for sFFentry:OrgFormFieldsEntry in editedFF!.mDuringEditing_SubFormFields! {
+                let copiedSubFF = OrgFormFieldsEntry(existingEntry: sFFentry)
                 copyFFs.appendNewSubfieldDuringEditing(copiedSubFF, primary: copiedFF)
             }
         }
