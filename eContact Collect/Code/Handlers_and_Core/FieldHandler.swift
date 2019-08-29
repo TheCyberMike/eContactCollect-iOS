@@ -109,10 +109,8 @@ public class FieldHandler {
     // throws other filesystem errors and file validation errors
     public func getLangInfo(forLangRegion:String, noSubstitution:Bool=false) throws -> RecJsonLangDefs? {
         let funcName:String = "\(self.mCTAG).getLangInfo"
-        var jsonPath:String? = Bundle.main.path(forResource: "FieldLocales", ofType: "json", inDirectory: nil, forLocalization: forLangRegion)
-        if (jsonPath ?? "").isEmpty {
-            jsonPath = Bundle.main.path(forResource: "FieldLocales", ofType: "json")
-        }
+        var jsonPath:String? = nil
+        (jsonPath, _) = self.locateLocaleFile(named: "FieldLocales", ofType: "json", forLangRegion: forLangRegion)
         if jsonPath == nil {
             self.mFHstatus_state = .Missing
             self.mAppError = APP_ERROR(funcName: funcName, during: "Bundle.main.path", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Missing: FieldLocales.json")
@@ -557,6 +555,37 @@ public class FieldHandler {
         return forLangRegions
     }
     
+    // find a localized file as-named; can be in various places and defaults to english
+    // returns:  (filePath:String?, defaultedToEnglish:Bool)
+    public func locateLocaleFile(named: String, ofType: String, forLangRegion: String) -> (String?, Bool) {
+        var jsonPath:String? = nil
+        var defaultedToEnglish:Bool = false
+        
+        if !forLangRegion.isEmpty {
+            // look first in one of the iOS Localization folders
+            jsonPath = Bundle.main.path(forResource: named, ofType: ofType, inDirectory: nil, forLocalization: forLangRegion)
+            if (jsonPath ?? "").isEmpty {
+                // now try the base directory with localization part of the filename
+                jsonPath = Bundle.main.path(forResource: named + "_" + forLangRegion, ofType: ofType)
+            }
+            if (jsonPath ?? "").isEmpty {
+                // now try the base directory with localization part of the filename
+                jsonPath = Bundle.main.path(forResource: named + "_" + AppDelegate.getLangOnly(fromLangRegion: forLangRegion), ofType: ofType)
+            }
+        }
+        
+        // language-specific file not found; now switch to english which should ALWAYS be present
+        if (jsonPath ?? "").isEmpty {
+            // load the english version; look first in one of the iOS Localization folders
+            jsonPath = Bundle.main.path(forResource: named, ofType: ofType, inDirectory: nil, forLocalization: "en")
+            if (jsonPath ?? "").isEmpty {
+                // now try the base directory with localization part of the filename
+                jsonPath = Bundle.main.path(forResource: named + "_en", ofType: ofType)
+            }
+            defaultedToEnglish = true
+        }
+        return (jsonPath, defaultedToEnglish)
+    }
     
     // validate all the files during App startup; do not keep the loaded data in-memory;
     // all errors will be posted but not shown
@@ -694,19 +723,13 @@ public class FieldHandler {
             // locate the file in the proper or best localization folder
             var jsonPath2:String? = nil
             var defaultedToEnglish:Bool = false
-            if !forLangRegion.isEmpty {
-                jsonPath2 = Bundle.main.path(forResource: "FieldLocales", ofType: "json", inDirectory: nil, forLocalization: forLangRegion)
-            }
-            if (jsonPath2 ?? "").isEmpty {
-                jsonPath2 = Bundle.main.path(forResource: "FieldLocales", ofType: "json")
-                defaultedToEnglish = true
-            }
+            (jsonPath2, defaultedToEnglish) = self.locateLocaleFile(named: "FieldLocales", ofType: "json", forLangRegion: forLangRegion)
             if jsonPath2 == nil {
                 self.mFHstatus_state = .Missing
                 self.mAppError = APP_ERROR(funcName: funcName, during: "Bundle.main.path", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Missing: FieldLocales.json")
                 throw self.mAppError!
             }
-//debugPrint("\(self.mCTAG).loadFiles.FieldLocales PATH=\(jsonPath2!)")
+debugPrint("\(self.mCTAG).loadFiles.FieldLocales LR=\(forLangRegion) PATH=\(jsonPath2!)")
             // read the file, parse the JSON, and validate the file's JSON headers
             let jsonContents2 = FileManager.default.contents(atPath: jsonPath2!)   // obtain the data in JSON format
             if jsonContents2 == nil {
@@ -805,19 +828,14 @@ public class FieldHandler {
         // locate the file in the proper or best localization folder
         let funcName:String = "\(self.mCTAG).loadOptionSetLocalesDefaults"
         var jsonPath3:String? = nil
-        if !forLangRegion.isEmpty {
-            jsonPath3 = Bundle.main.path(forResource: "OptionSetLocales", ofType: "json", inDirectory: nil, forLocalization: forLangRegion)
-        }
-        if (jsonPath3 ?? "").isEmpty {
-            jsonPath3 = Bundle.main.path(forResource: "OptionSetLocales", ofType: "json")
-        }
+        (jsonPath3, _) = self.locateLocaleFile(named: "OptionSetLocales", ofType: "json", forLangRegion: forLangRegion)
         self.mOptionSetLocales_json = []
         if jsonPath3 == nil {
             self.mFHstatus_state = .Missing
             self.mAppError = APP_ERROR(funcName: funcName, during: "Bundle.main.path", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Missing: OptionSetLocales.json")
             throw self.mAppError!
         }
-//debugPrint("\(self.mCTAG).loadFiles.FieldsLocale PATH=\(jsonPath3!)")
+debugPrint("\(self.mCTAG).loadFiles.FieldsLocale LR=\(forLangRegion) PATH=\(jsonPath3!)")
         let jsonContents3 = FileManager.default.contents(atPath: jsonPath3!)   // obtain the data in JSON format
         if jsonContents3 == nil {
             self.mFHstatus_state = .Errors

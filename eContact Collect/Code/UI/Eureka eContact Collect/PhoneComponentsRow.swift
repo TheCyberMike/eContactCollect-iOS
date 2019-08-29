@@ -34,8 +34,8 @@ public struct PhoneComponentsShown {
     public struct PhoneNumber {
         public var shown:Bool = true
         public var tag:String? = "Phone"
-        public var placeholder:String? = "(###)###-####"
-        public var formatter:Formatter? = PhoneFormatter_US()
+        public var placeholder:String? = PhoneFormatter_NANP.placeholder
+        public var formatter:Formatter? = PhoneFormatter_NANP()
     }
     public struct PhoneExtension {
         public var shown:Bool = true
@@ -745,8 +745,9 @@ public class PhoneInternationalPrefixFormatter: Formatter {
     }
 }
 
-// custom phone formatter for US phones
-public class PhoneFormatter_US: Formatter {
+// custom phone formatter for US phones and others in the N. America Numbering Plan (including Canada; U.S. Protectorates; various Caribbean nations, states, territories)
+public class PhoneFormatter_NANP: Formatter {
+    public static var placeholder:String = "(###)###-####"
     
     /// Returns a InputString:String from the given FormattedString:String
     /// - Parameter obj: Pointer to FormattedString object
@@ -817,7 +818,7 @@ public class PhoneFormatter_US: Formatter {
 
 // example Eureka Rule struct for validating a set of [key:value] pairs using information from within the Row
 // validates the PhoneComponentsRow
-public struct RulePhoneComponents_US<T: Equatable>: RuleTypeExt {
+public struct RulePhoneComponents_NANP<T: Equatable>: RuleTypeExt {
     
     public init(id: String? = nil) {
         self.id = id
@@ -839,7 +840,7 @@ public struct RulePhoneComponents_US<T: Equatable>: RuleTypeExt {
                 let valueString:String? = pair.value as? String
                 if !(valueString ?? "").isEmpty {
                     if pair.key == phoneRow._phoneComponentsShown.phoneNumber.tag {
-                        let valid = RulePhone_US<String>.testIsValid(phoneString: valueString!)
+                        let valid = RulePhone_NANP<String>.testIsValid(phoneString: valueString!)
                         if !valid {
                             errors = errors + comma + NSLocalizedString("Phone number is invalid", comment:"")
                             comma = ", "

@@ -595,7 +595,7 @@ public class OrgFormFieldsEntry {
     public func includeSubFormFields(from: OrgFormFields) {
         for entry in from {
             if entry.mFormFieldRec.rFormField_SubField_Within_FormField_Index == self.mFormFieldRec.rFormField_Index {
-debugPrint("\(self.mCTAG).includeSubFormFields SubFormField from master list: \(entry.mFormFieldRec.rFormField_Index) \(entry.mFormFieldRec.rFieldProp_IDCode)")
+//debugPrint("\(self.mCTAG).includeSubFormFields SubFormField from master list: \(entry.mFormFieldRec.rFormField_Index) \(entry.mFormFieldRec.rFieldProp_IDCode)")
                 if entry.mDuringEditing_isDeleted { entry.mDuringEditing_isChosen = false }
                 else { entry.mDuringEditing_isChosen = true }
                 if self.mDuringEditing_SubFormFields == nil { self.mDuringEditing_SubFormFields = [] }
@@ -607,7 +607,7 @@ debugPrint("\(self.mCTAG).includeSubFormFields SubFormField from master list: \(
     // save the primary form field back into its source list of form fields; includes saving any stored subFormFields;
     // note that at this stage, form fields are marked as deleted rather than being removed from the OrgFormFields
     public func save(into:OrgFormFields) {
-debugPrint("\(self.mCTAG).save STARTED")
+//debugPrint("\(self.mCTAG).save STARTED")
         // first correct the .rFieldProp_Contains_Field_IDCodes if there are any subFormFields
         if (self.mDuringEditing_SubFormFields?.count ?? 0) > 0 {
             self.mFormFieldRec.rFieldProp_Contains_Field_IDCodes = []
@@ -654,7 +654,7 @@ debugPrint("\(self.mCTAG).save STARTED")
     
     // save the subFormField back into its source list of subFormFields
     public func saveSubFormField(into:OrgFormFieldsEntry) {
-debugPrint("\(self.mCTAG).saveSubFormField STARTED")
+//debugPrint("\(self.mCTAG).saveSubFormField STARTED")
         if self.mDuringEditing_isChosen { self.mDuringEditing_isDeleted = false }
         else {self.mDuringEditing_isDeleted = true }    // even if deleted, save any changes made by end-user to the not-chosen entry
 
@@ -877,7 +877,7 @@ public class OrgFormFieldsEntryTag {
     
     // deallocation of the class object is occuring
     deinit {
-debugPrint("\(self.mCTAG).deinit STARTED")
+//debugPrint("\(self.mCTAG).deinit STARTED")
     }
     
     // clear out an entry to ensure we get a complete deinit()
@@ -888,7 +888,7 @@ debugPrint("\(self.mCTAG).deinit STARTED")
 
     // performs a deep duplication of a OrgFormFieldsEntryTag; the weak reference to mFormFieldRec is just shallow copied
     init(existingEntry:OrgFormFieldsEntryTag) {
-debugPrint("\(self.mCTAG).init STARTED")
+//debugPrint("\(self.mCTAG).init STARTED")
         self.mTag = String(existingEntry.mTag)
         self.mCodeForSVFile = String(existingEntry.mCodeForSVFile)
         self.mIsMetadata = existingEntry.mIsMetadata
@@ -916,7 +916,7 @@ debugPrint("\(self.mCTAG).init STARTED")
     
     // save the tag back into its source Form Field
     public func save(into:OrgFormFieldsEntry, was:OrgFormFieldsEntryTag) {
-debugPrint("\(self.mCTAG).save STARTED")
+//debugPrint("\(self.mCTAG).save STARTED")
         if was.mTag == self.mTag || self.mIsMetadata {
             // tag did not change or it is metadata, so just update the CodeSVFile and the per-language phrases
             if self.mIsMetadata { into.setMetadataSVFile(value: self.mCodeForSVFile, forTag: self.mTag) }

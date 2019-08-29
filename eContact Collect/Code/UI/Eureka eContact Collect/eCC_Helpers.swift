@@ -167,7 +167,7 @@ extension Section /* Helpers */ {
     
 }
 
-public struct RulePhone_US<T: Equatable>: RuleType {
+public struct RulePhone_NANP<T: Equatable>: RuleType {
     
     public init(id: String? = nil) {
         self.id = id
@@ -178,7 +178,7 @@ public struct RulePhone_US<T: Equatable>: RuleType {
     
     public func isValid(value: T?) -> ValidationError? {
         if let valueString = value as? String {
-            let valid = RulePhone_US.testIsValid(phoneString: valueString)
+            let valid = RulePhone_NANP.testIsValid(phoneString: valueString)
             if !valid { return validationError }
         }
         return nil

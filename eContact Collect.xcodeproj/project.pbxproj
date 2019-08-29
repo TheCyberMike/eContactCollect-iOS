@@ -12,6 +12,10 @@
 		D74D600722A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74D600622A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift */; };
 		D74D600B22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74D600A22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift */; };
 		D74D600D22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74D600C22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift */; };
+		D7576B34230F2DB500F1DEEC /* FieldLocales_en.json in Resources */ = {isa = PBXBuildFile; fileRef = D7576B33230F2DB500F1DEEC /* FieldLocales_en.json */; };
+		D7576B4B230F2E1D00F1DEEC /* FieldLocales_es.json in Resources */ = {isa = PBXBuildFile; fileRef = D7576B4A230F2E1D00F1DEEC /* FieldLocales_es.json */; };
+		D7576B4D230F2EFC00F1DEEC /* OptionSetLocales_en.json in Resources */ = {isa = PBXBuildFile; fileRef = D7576B4C230F2EFC00F1DEEC /* OptionSetLocales_en.json */; };
+		D7576B4F230F2F1700F1DEEC /* OptionSetLocales_es.json in Resources */ = {isa = PBXBuildFile; fileRef = D7576B4E230F2F1700F1DEEC /* OptionSetLocales_es.json */; };
 		D7BA6B4221EED9F400F45AFC /* Eureka.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; };
 		D7BA6B4321EED9F400F45AFC /* Eureka.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D7BA6B6021EEDA6300F45AFC /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; };
@@ -72,10 +76,8 @@
 		D954DF6C215AC17C003FD748 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = D954DF69215AC17C003FD748 /* Localizable.strings */; };
 		D95B1F912167BFE700099709 /* ChooserOrgViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D95B1F902167BFE700099709 /* ChooserOrgViewController.swift */; };
 		D95B1F992167CB0100099709 /* WizFormDefine1ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D95B1F982167CB0100099709 /* WizFormDefine1ViewController.swift */; };
-		D97853AE21955AB90066F88F /* OptionSetLocales.json in Resources */ = {isa = PBXBuildFile; fileRef = D97853A521955AB90066F88F /* OptionSetLocales.json */; };
 		D97853B121955CFE0066F88F /* RecJsonOptionSetLocales.swift in Sources */ = {isa = PBXBuildFile; fileRef = D97853B021955CFE0066F88F /* RecJsonOptionSetLocales.swift */; };
 		D97853B32197A74C0066F88F /* FieldDefs.json in Resources */ = {isa = PBXBuildFile; fileRef = D97853B22197A74C0066F88F /* FieldDefs.json */; };
-		D97853B62197A7660066F88F /* FieldLocales.json in Resources */ = {isa = PBXBuildFile; fileRef = D97853B42197A7660066F88F /* FieldLocales.json */; };
 		D9A043D1215BD34E008BE46F /* RecAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9A043D0215BD34E008BE46F /* RecAlert.swift */; };
 		D9A043DB215C3B3F008BE46F /* AdminPINViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9A043D9215C3B3F008BE46F /* AdminPINViewController.swift */; };
 		D9A043DC215C3B3F008BE46F /* EntryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9A043DA215C3B3F008BE46F /* EntryViewController.swift */; };
@@ -328,6 +330,10 @@
 		D74D600622A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizSendEmailDefine1ViewController.swift; sourceTree = "<group>"; };
 		D74D600A22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizSendEmailDefine6ViewController.swift; sourceTree = "<group>"; };
 		D74D600C22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizSendEmailDefine11ViewController.swift; sourceTree = "<group>"; };
+		D7576B33230F2DB500F1DEEC /* FieldLocales_en.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = FieldLocales_en.json; sourceTree = "<group>"; };
+		D7576B4A230F2E1D00F1DEEC /* FieldLocales_es.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = FieldLocales_es.json; sourceTree = "<group>"; };
+		D7576B4C230F2EFC00F1DEEC /* OptionSetLocales_en.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = OptionSetLocales_en.json; sourceTree = "<group>"; };
+		D7576B4E230F2F1700F1DEEC /* OptionSetLocales_es.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = OptionSetLocales_es.json; sourceTree = "<group>"; };
 		D7BA6B3621EED9BC00F45AFC /* Eureka.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Eureka.xcodeproj; path = "../SubModules/Eureka-master/Eureka.xcodeproj"; sourceTree = "<group>"; };
 		D7BA6B4821EEDA4F00F45AFC /* SQLite.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SQLite.xcodeproj; path = "../SubModules/SQLite.swift-master/SQLite.xcodeproj"; sourceTree = "<group>"; };
 		D7BA6C0121EF901500F45AFC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
@@ -395,10 +401,8 @@
 		D95B1F902167BFE700099709 /* ChooserOrgViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserOrgViewController.swift; sourceTree = "<group>"; };
 		D95B1F982167CB0100099709 /* WizFormDefine1ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizFormDefine1ViewController.swift; sourceTree = "<group>"; };
 		D95F520821C1CBE800F1EE10 /* ToDo.rtf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.rtf; path = ToDo.rtf; sourceTree = "<group>"; };
-		D97853A621955AB90066F88F /* en */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = en; path = "eContact Collect/en.lproj/OptionSetLocales.json"; sourceTree = SOURCE_ROOT; };
 		D97853B021955CFE0066F88F /* RecJsonOptionSetLocales.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecJsonOptionSetLocales.swift; sourceTree = "<group>"; };
 		D97853B22197A74C0066F88F /* FieldDefs.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = FieldDefs.json; sourceTree = "<group>"; };
-		D97853B52197A7660066F88F /* en */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = en; path = "eContact Collect/en.lproj/FieldLocales.json"; sourceTree = SOURCE_ROOT; };
 		D97ED56F2156E20C000D5647 /* eContact Collect.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "eContact Collect.entitlements"; sourceTree = "<group>"; };
 		D9A043D0215BD34E008BE46F /* RecAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecAlert.swift; sourceTree = "<group>"; };
 		D9A043D9215C3B3F008BE46F /* AdminPINViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AdminPINViewController.swift; sourceTree = "<group>"; };
@@ -542,20 +546,22 @@
 			path = Utility_and_Popup;
 			sourceTree = "<group>";
 		};
-		D90D6EA521827633000A90EB /* Assets-NonLocalized */ = {
+		D90D6EA521827633000A90EB /* Asset_Files */ = {
 			isa = PBXGroup;
 			children = (
 				D97853B22197A74C0066F88F /* FieldDefs.json */,
+				D7576B33230F2DB500F1DEEC /* FieldLocales_en.json */,
+				D7576B4A230F2E1D00F1DEEC /* FieldLocales_es.json */,
+				D7576B4C230F2EFC00F1DEEC /* OptionSetLocales_en.json */,
+				D7576B4E230F2F1700F1DEEC /* OptionSetLocales_es.json */,
 			);
-			path = "Assets-NonLocalized";
+			path = Asset_Files;
 			sourceTree = "<group>";
 		};
 		D9254B1521595BCC006FDBF8 /* Internationalization */ = {
 			isa = PBXGroup;
 			children = (
 				D954DF69215AC17C003FD748 /* Localizable.strings */,
-				D97853B42197A7660066F88F /* FieldLocales.json */,
-				D97853A521955AB90066F88F /* OptionSetLocales.json */,
 			);
 			name = Internationalization;
 			path = Code;
@@ -633,7 +639,7 @@
 			isa = PBXGroup;
 			children = (
 				D7BA6C0121EF901500F45AFC /* README.md */,
-				D90D6EA521827633000A90EB /* Assets-NonLocalized */,
+				D90D6EA521827633000A90EB /* Asset_Files */,
 				D9254B1521595BCC006FDBF8 /* Internationalization */,
 				D9A043D8215C3ABC008BE46F /* UI */,
 				D71FF33921D464AC00C4A370 /* Handlers_and_Core */,
@@ -1049,14 +1055,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				D94CFCFD2155A6E0009CE207 /* LaunchScreen.storyboard in Resources */,
-				D97853AE21955AB90066F88F /* OptionSetLocales.json in Resources */,
 				D94CFCFA2155A6E0009CE207 /* Assets.xcassets in Resources */,
-				D97853B62197A7660066F88F /* FieldLocales.json in Resources */,
+				D7576B4B230F2E1D00F1DEEC /* FieldLocales_es.json in Resources */,
 				D9EA2B232187DB1C00A4FE55 /* NumberKeyboard.xib in Resources */,
+				D7576B4D230F2EFC00F1DEEC /* OptionSetLocales_en.json in Resources */,
 				D97853B32197A74C0066F88F /* FieldDefs.json in Resources */,
 				D954DF6C215AC17C003FD748 /* Localizable.strings in Resources */,
 				D9F2D2A521891BAC001507CB /* HexKeyboard.xib in Resources */,
+				D7576B4F230F2F1700F1DEEC /* OptionSetLocales_es.json in Resources */,
 				D94CFCF82155A6D8009CE207 /* Main.storyboard in Resources */,
+				D7576B34230F2DB500F1DEEC /* FieldLocales_en.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1226,22 +1234,6 @@
 			);
 			name = Localizable.strings;
 			sourceTree = SOURCE_ROOT;
-		};
-		D97853A521955AB90066F88F /* OptionSetLocales.json */ = {
-			isa = PBXVariantGroup;
-			children = (
-				D97853A621955AB90066F88F /* en */,
-			);
-			name = OptionSetLocales.json;
-			sourceTree = "<group>";
-		};
-		D97853B42197A7660066F88F /* FieldLocales.json */ = {
-			isa = PBXVariantGroup;
-			children = (
-				D97853B52197A7660066F88F /* en */,
-			);
-			name = FieldLocales.json;
-			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
 

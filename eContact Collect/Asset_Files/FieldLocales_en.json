@@ -24,7 +24,7 @@
             "fieldLocales_packed":{
                 "tableName":"FieldLocales_packed",
                 "items":[
-                    {"fieldprop_idcode":"FC_$ButtonSubmit","fieldlocprop_name_for_collector":"$Collected-Button-Submit","fieldprop_name_sv_file":"Submit","fieldlocprop_name_shown":"Submit"},
+                {"fieldprop_idcode":"FC_$ButtonSubmit","fieldlocprop_name_for_collector":"$Collected-Button-Submit","fieldprop_name_sv_file":"Submit","fieldlocprop_name_shown":"Submit"},
                     {"fieldprop_idcode":"FC_$NameFull","fieldlocprop_name_for_collector":"$Name-Full","fieldprop_name_sv_file":"$Name-Full",
                         "fieldlocprop_name_shown":"$$$"},
                     {"fieldprop_idcode":"FC_$CollectDate","fieldlocprop_name_for_collector":"$Collected-Date","fieldprop_name_sv_file":"$Date",
@@ -79,7 +79,7 @@
                     {"fieldprop_idcode":"XX_Social","fieldlocprop_name_for_collector":"Email and Social Media"},
                     {"fieldprop_idcode":"FC_EmailUse","fieldlocprop_name_for_collector":"Email-Use","fieldprop_name_sv_file":"EmailUse",
                         "fieldlocprop_name_shown":"Email for",
-                        "fieldlocprop_options":"$w:work:Work,$h:home:Home,$s:school:School,$o:org:Organization/Work",
+                        "fieldlocprop_options":"$w:work:Work,$h:home:Home,$s:school:School,$o:org:Organization,$?:other:Other",
                         "fieldlocprop_metadatas":"***TopTitle:***TopTitle:Pick one"},
                     {"fieldprop_idcode":"FC_Email","fieldlocprop_name_for_collector":"Email","fieldprop_name_sv_file":"Email",
                         "fieldlocprop_name_shown":"Email","fieldlocprop_placeholder_shown":"*@*.*"},
@@ -96,7 +96,7 @@
                     {"fieldprop_idcode":"XX_Phones","fieldlocprop_name_for_collector":"Telephone related"},
                     {"fieldprop_idcode":"FC_PhUse","fieldlocprop_name_for_collector":"Phone-Use","fieldprop_name_sv_file":"PhoneUse",
                         "fieldlocprop_name_shown":"Phone for",
-                        "fieldlocprop_options":"$w:work:Work,$h:home:Home,$s:school:School,$o:org:Organization/Work",
+                        "fieldlocprop_options":"$w:work:Work,$h:home:Home,$s:school:School,$o:org:Organization",
                         "fieldlocprop_metadatas":"***TopTitle:***TopTitle:Pick one"},
                     {"fieldprop_idcode":"FC_PhFull","fieldlocprop_name_for_collector":"Phone-Full","fieldprop_name_sv_file":"$PhoneComponents",
                         "fieldlocprop_name_shown":"Phone#"},
@@ -124,7 +124,7 @@
                     {"fieldprop_idcode":"XX_Addresses","fieldlocprop_name_for_collector":"Address related"},
                     {"fieldprop_idcode":"FC_AddrUse","fieldlocprop_name_for_collector":"Address-Use","fieldprop_name_sv_file":"AddressUse",
                         "fieldlocprop_name_shown":"Address for",
-                        "fieldlocprop_options":"$w:work:Work,$h:home:Home,$s:school:School,$o:org:Organization/Work",
+                        "fieldlocprop_options":"$w:work:Work,$h:home:Home,$s:school:School,$o:org:Organization",
                         "fieldlocprop_metadatas":"***TopTitle:***TopTitle:Pick one"},
                     {"fieldprop_idcode":"FC_AddrAll","fieldlocprop_name_for_collector":"Address-All","fieldprop_name_sv_file":"$AddressComponents",
                         "fieldlocprop_name_shown":"Address"},
@@ -157,7 +157,7 @@
                         "fieldlocprop_metadatas":"***TopTitle:***TopTitle:Pick one"},
                     {"fieldprop_idcode":"FC_Gender","fieldlocprop_name_for_collector":"Gender","fieldprop_name_sv_file":"Gender",
                         "fieldlocprop_name_shown":"Gender",
-                        "fieldlocprop_options":"$-:-:Not disclosed,$m:M:Male,$f:F:Female,$tm:TM:Trans-male,$tf:TF:Trans-female,$nb:NB:Non-binary,$nbf:NBF:Fluid non-binary,$gn:GN:Gender neutral,$o:O:Other",
+                        "fieldlocprop_options":"$-:-:Not disclosed,$m:M:Male,$f:F:Female,$tm:TM:Trans-male,$tf:TF:Trans-female,$nb:NB:Non-binary,$gn:GN:Gender neutral,$o:O:Other",
                         "fieldlocprop_metadatas":"***TopTitle:***TopTitle:Pick one"},
                     {"fieldprop_idcode":"FC_Pronouns","fieldlocprop_name_for_collector":"Pronouns","fieldprop_name_sv_file":"Pronouns",
                         "fieldlocprop_name_shown":"Pronouns",
@@ -273,3 +273,4 @@
         }
     }
 }
+

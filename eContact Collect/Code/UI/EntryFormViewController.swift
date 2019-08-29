@@ -653,7 +653,18 @@ class EntryFormViewController: FormViewController {
                 if !rowTitle2.isEmpty { $0.title2 = rowTitle2 }
                 $0.tag = rowTag
                 $0.phoneComponentsShown = workPhoneComponentsShown
-                $0.add(rule: RulePhoneComponents_US())
+                if let metaPairs = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry),
+                    let formatCode:String = CodePair.findValue(pairs: metaPairs, givenCode: "###Format") {
+                    switch formatCode {
+                    case "-":
+                        break   // no rule checking
+                    default:
+                        // includes "NANP", "US", "CA"
+                        $0.add(rule: RulePhoneComponents_NANP())
+                    }
+                } else {
+                    $0.add(rule: RulePhoneComponents_NANP())
+                }
                 $0.validationOptions = .validatesOnChangeAfterBlurred
             }
             break
@@ -675,19 +686,44 @@ class EntryFormViewController: FormViewController {
                 if !rowTitle2.isEmpty { $0.title2 = rowTitle2 }
                 $0.tag = rowTag
                 $0.phoneComponentsShown = workPhoneComponentsShown
-                $0.add(rule: RulePhoneComponents_US())
+                if let metaPairs = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry),
+                   let formatCode:String = CodePair.findValue(pairs: metaPairs, givenCode: "###Format") {
+                    switch formatCode {
+                    case "-":
+                        break   // no rule checking
+                    default:
+                        // includes "NANP", "US", "CA"
+                        $0.add(rule: RulePhoneComponents_NANP())
+                    }
+                } else {
+                    $0.add(rule: RulePhoneComponents_NANP())
+                }
                 $0.validationOptions = .validatesOnChangeAfterBlurred
             }
             break
             
         case FIELD_ROW_TYPE.PHONE_3:
-            // standard US phone number
+            // formattable phone#; defaults to standard US phone number
             self.mCurrentSection! <<< PhoneRow(){
                 $0.title = rowTitle
                 $0.tag = rowTag
-                $0.placeholder = rowPlaceholder
-                $0.formatter = PhoneFormatter_US()
-                $0.add(rule: RulePhone_US())
+                if let metaPairs = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry),
+                   let formatCode:String = CodePair.findValue(pairs: metaPairs, givenCode: "###Format") {
+                    switch formatCode {
+                    case "-":
+                        break   // no formatting or rule checking
+                    default:
+                        // includes "NANP", "US", "CA"
+                        $0.formatter = PhoneFormatter_NANP()
+                        $0.placeholder = PhoneFormatter_NANP.placeholder
+                        $0.add(rule: RulePhone_NANP())
+                    }
+                } else {
+                    $0.formatter = PhoneFormatter_NANP()
+                    $0.placeholder = PhoneFormatter_NANP.placeholder
+                    $0.add(rule: RulePhone_NANP())
+                }
+                if !(rowPlaceholder ?? "").isEmpty { $0.placeholder = rowPlaceholder }
                 $0.validationOptions = .validatesOnChangeAfterBlurred
                 }.cellUpdate {cell, row in
                     cell.textField.borderStyle = UITextField.BorderStyle.bezel
@@ -1949,14 +1985,9 @@ class EntryFormViewController: FormViewController {
     // build up the metadata attribute controlPairs that might be needed;
     // the CodePair is the TagCode:Shown-Value else TagCode:SV-File-Value
     private func prepareMetadata(forFormFieldEntry:OrgFormFieldsEntry) -> [CodePair]? {
-        let endUserDuring:String = NSLocalizedString("Form-Field#", comment:"") + " \(forFormFieldEntry.mFormFieldRec.rFormField_Index)"
-        let extra:String = "\(forFormFieldEntry.mFormFieldRec.rFormField_Index): \(forFormFieldEntry.mFormFieldRec.rFieldProp_IDCode) is \(forFormFieldEntry.mFormFieldRec.rFieldProp_Row_Type.rawValue)"
         if (forFormFieldEntry.mFormFieldRec.rFieldProp_Metadatas_Code_For_SV_File?.count() ?? 0) == 0 &&
            (forFormFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Metadatas_Name_Shown?.count() ?? 0) == 0 {
-            
-            let funcName:String = "prepareMetadata" + (self.mEntryVC!.mEFP!.mPreviewMode ? ".previewMode":"")
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).\(funcName)", during: "precheck", errorMessage: "Missing entries", extra: extra)
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Form Field Error", comment:""), endUserDuring: endUserDuring, errorStruct: APP_ERROR(funcName: "\(self.mCTAG).\(funcName)", domain: self.mThrownDomain, errorCode: .MISSING_OR_MISMATCHED_FIELD_METADATA, userErrorDetails: nil), buttonText: NSLocalizedString("Okay", comment:""))
+            // the entry has no metadata available; this is not an error since older created fields may not have newer metadata but should work in their default manner
             return nil
         }
         
