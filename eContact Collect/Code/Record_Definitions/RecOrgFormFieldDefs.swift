@@ -175,6 +175,17 @@ public enum FIELD_IDCODE_METADATA:String {
     F = options contains ONLY fixed attributes (can be edited but not add/move/delete); may also include meta-data
     V = options contains Variable attributes (can add, delete, or re-order them); it may also include Fixed attributes or Metadata attributes
 */
+/*
+    rFieldProp_Metadatas_Code_For_SV_File:
+        Metadata prefixes (no metadata can be added, deleted, or moved):
+            ***     metadata stores a phrase (including multi-lingual variants); does not have any changable SVCode
+            ###     metadata stores a non-multi-lingual code, such as a Country Code or a Formatting Code; it has no phrases
+ 
+    rFieldProp_Options_Code_For_SV_File
+        Option prefixes:
+            ***     option-insert function: include data from the OptionSetLocales; cannot be deleted; does not have changable SVCode or Phrases
+            $$$     option is permanent; end-user cannot delete it; it can be moved and its SVCode and Phrases can be changed
+ */
 
 // special-use version of the record that is all optional; used for importing JSON records and
 // specialized database queries if not every field will to be loaded; this record cannot be saved to the database

@@ -16,6 +16,7 @@
 		D7576B4B230F2E1D00F1DEEC /* FieldLocales_es.json in Resources */ = {isa = PBXBuildFile; fileRef = D7576B4A230F2E1D00F1DEEC /* FieldLocales_es.json */; };
 		D7576B4D230F2EFC00F1DEEC /* OptionSetLocales_en.json in Resources */ = {isa = PBXBuildFile; fileRef = D7576B4C230F2EFC00F1DEEC /* OptionSetLocales_en.json */; };
 		D7576B4F230F2F1700F1DEEC /* OptionSetLocales_es.json in Resources */ = {isa = PBXBuildFile; fileRef = D7576B4E230F2F1700F1DEEC /* OptionSetLocales_es.json */; };
+		D7B1EB342319F2EE005C0AC8 /* CommonSampleFormsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7B1EB332319F2EE005C0AC8 /* CommonSampleFormsViewController.swift */; };
 		D7BA6B4221EED9F400F45AFC /* Eureka.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; };
 		D7BA6B4321EED9F400F45AFC /* Eureka.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B3C21EED9BC00F45AFC /* Eureka.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D7BA6B6021EEDA6300F45AFC /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7BA6B5321EEDA5000F45AFC /* SQLite.framework */; };
@@ -26,7 +27,6 @@
 		D7CC2AA322027E0E00F39E36 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AA222027E0E00F39E36 /* Security.framework */; };
 		D7CC2ABF22027EAB00F39E36 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CC2AB222027E4500F39E36 /* libMailCore-ios.a */; };
 		D7CEDDC7230633EF00B115B9 /* PopupDownloadViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CEDDC6230633EF00B115B9 /* PopupDownloadViewController.swift */; };
-		D7D852F221C9724200948408 /* PopupFirstTimeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */; };
 		D7D87FD621E67B7B002847DE /* ChooserLangRegionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */; };
 		D7EB06122296105200D0CA02 /* PopupImportViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7EB06112296105200D0CA02 /* PopupImportViewController.swift */; };
 		D7EE5BEC21FB7E0700769CA6 /* App_Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */; };
@@ -39,7 +39,6 @@
 		D90D6EAD2182C4C0000A90EB /* RecOrgFormFieldLocales.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90D6EAC2182C4C0000A90EB /* RecOrgFormFieldLocales.swift */; };
 		D90D6EAF2183D3A1000A90EB /* RecOrgCustomFieldLocales.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90D6EAE2183D3A1000A90EB /* RecOrgCustomFieldLocales.swift */; };
 		D9118B1121A47F8D00309857 /* WizOrgDefine11ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9118B1021A47F8D00309857 /* WizOrgDefine11ViewController.swift */; };
-		D912DE7221A90297002ABF0E /* WizFormDefine11ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D912DE7121A90297002ABF0E /* WizFormDefine11ViewController.swift */; };
 		D91378C721B843A1000E667D /* EntryFormProvisioner.swift in Sources */ = {isa = PBXBuildFile; fileRef = D91378C621B843A1000E667D /* EntryFormProvisioner.swift */; };
 		D91378C921B843BC000E667D /* OrgFormFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = D91378C821B843BC000E667D /* OrgFormFields.swift */; };
 		D9229EAC219F46C300404079 /* UIColorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9229EAB219F46C300404079 /* UIColorExtension.swift */; };
@@ -57,12 +56,8 @@
 		D92EFC2C216D7BD200C1F12A /* EntryFormViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D92EFC2B216D7BD200C1F12A /* EntryFormViewController.swift */; };
 		D92EFC31216DB9B000C1F12A /* PopupEnterEventViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D92EFC30216DB9B000C1F12A /* PopupEnterEventViewController.swift */; };
 		D930D7D2216C310300BD1AF5 /* ChooserFormViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D930D7D1216C310300BD1AF5 /* ChooserFormViewController.swift */; };
-		D9395791216175B1004E9BE9 /* WizDefinePINViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9395790216175B1004E9BE9 /* WizDefinePINViewController.swift */; };
 		D93957932161799E004E9BE9 /* WizDefineNicknameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D93957922161799E004E9BE9 /* WizDefineNicknameViewController.swift */; };
 		D939A0CB21724F4100D57B11 /* SendContactsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D939A0CA21724F4100D57B11 /* SendContactsViewController.swift */; };
-		D94399DC21690DBF00FC2AD8 /* WizFormDefine6ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D94399DB21690DBF00FC2AD8 /* WizFormDefine6ViewController.swift */; };
-		D94399E42169115B00FC2AD8 /* WizFormDefine16ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D94399E32169115B00FC2AD8 /* WizFormDefine16ViewController.swift */; };
-		D94399E62169A26F00FC2AD8 /* WizUsageNotesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D94399E52169A26F00FC2AD8 /* WizUsageNotesViewController.swift */; };
 		D94399EA2169DD0600FC2AD8 /* FieldHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D94399E92169DD0600FC2AD8 /* FieldHandler.swift */; };
 		D94BBC1D21B1E539003B6C6B /* WizOrgDefine1ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D94BBC1C21B1E539003B6C6B /* WizOrgDefine1ViewController.swift */; };
 		D94CDF7121626F1200ABB052 /* OrgTitleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D94CDF7021626F1200ABB052 /* OrgTitleViewController.swift */; };
@@ -91,8 +86,6 @@
 		D9A654D62167259600F0CD1E /* WizOrgDefine21ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9A654D52167259600F0CD1E /* WizOrgDefine21ViewController.swift */; };
 		D9A654D82167308C00F0CD1E /* WizOrgDefine26ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9A654D72167308C00F0CD1E /* WizOrgDefine26ViewController.swift */; };
 		D9E74A87217FA9D60049D844 /* AdminPrefsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9E74A86217FA9D60049D844 /* AdminPrefsViewController.swift */; };
-		D9EA2B1E2187805B00A4FE55 /* WizLangNoteViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EA2B1D2187805B00A4FE55 /* WizLangNoteViewController.swift */; };
-		D9EA2B202187A56300A4FE55 /* WizFirstTimeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EA2B1F2187A56300A4FE55 /* WizFirstTimeViewController.swift */; };
 		D9EA2B232187DB1C00A4FE55 /* NumberKeyboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = D9EA2B222187DB1C00A4FE55 /* NumberKeyboard.xib */; };
 		D9EA2B252187F0BF00A4FE55 /* NumberKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EA2B242187F0BF00A4FE55 /* NumberKeyboard.swift */; };
 		D9EA940D21B38A9E00F78543 /* PopupEnterCloneViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EA940C21B38A9E00F78543 /* PopupEnterCloneViewController.swift */; };
@@ -334,6 +327,7 @@
 		D7576B4A230F2E1D00F1DEEC /* FieldLocales_es.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = FieldLocales_es.json; sourceTree = "<group>"; };
 		D7576B4C230F2EFC00F1DEEC /* OptionSetLocales_en.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = OptionSetLocales_en.json; sourceTree = "<group>"; };
 		D7576B4E230F2F1700F1DEEC /* OptionSetLocales_es.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = OptionSetLocales_es.json; sourceTree = "<group>"; };
+		D7B1EB332319F2EE005C0AC8 /* CommonSampleFormsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonSampleFormsViewController.swift; sourceTree = "<group>"; };
 		D7BA6B3621EED9BC00F45AFC /* Eureka.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Eureka.xcodeproj; path = "../SubModules/Eureka-master/Eureka.xcodeproj"; sourceTree = "<group>"; };
 		D7BA6B4821EEDA4F00F45AFC /* SQLite.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SQLite.xcodeproj; path = "../SubModules/SQLite.swift-master/SQLite.xcodeproj"; sourceTree = "<group>"; };
 		D7BA6C0121EF901500F45AFC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
@@ -344,7 +338,6 @@
 		D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../SubModules/mailcore2-master/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
 		D7CC2AC222027F4400F39E36 /* Project-Name-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Project-Name-Bridging-Header.h"; path = "Code/Project-Name-Bridging-Header.h"; sourceTree = "<group>"; };
 		D7CEDDC6230633EF00B115B9 /* PopupDownloadViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupDownloadViewController.swift; sourceTree = "<group>"; };
-		D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupFirstTimeViewController.swift; sourceTree = "<group>"; };
 		D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserLangRegionViewController.swift; sourceTree = "<group>"; };
 		D7EB06112296105200D0CA02 /* PopupImportViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupImportViewController.swift; sourceTree = "<group>"; };
 		D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App_Error.swift; sourceTree = "<group>"; };
@@ -357,7 +350,6 @@
 		D90D6EAC2182C4C0000A90EB /* RecOrgFormFieldLocales.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecOrgFormFieldLocales.swift; sourceTree = "<group>"; };
 		D90D6EAE2183D3A1000A90EB /* RecOrgCustomFieldLocales.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecOrgCustomFieldLocales.swift; sourceTree = "<group>"; };
 		D9118B1021A47F8D00309857 /* WizOrgDefine11ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizOrgDefine11ViewController.swift; sourceTree = "<group>"; };
-		D912DE7121A90297002ABF0E /* WizFormDefine11ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizFormDefine11ViewController.swift; sourceTree = "<group>"; };
 		D91378C621B843A1000E667D /* EntryFormProvisioner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = EntryFormProvisioner.swift; path = "eContact Collect/Code/Handlers_and_Core/EntryFormProvisioner.swift"; sourceTree = SOURCE_ROOT; };
 		D91378C821B843BC000E667D /* OrgFormFields.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OrgFormFields.swift; sourceTree = "<group>"; };
 		D9229EAB219F46C300404079 /* UIColorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColorExtension.swift; sourceTree = "<group>"; };
@@ -375,12 +367,8 @@
 		D92EFC2B216D7BD200C1F12A /* EntryFormViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryFormViewController.swift; sourceTree = "<group>"; };
 		D92EFC30216DB9B000C1F12A /* PopupEnterEventViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupEnterEventViewController.swift; sourceTree = "<group>"; };
 		D930D7D1216C310300BD1AF5 /* ChooserFormViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserFormViewController.swift; sourceTree = "<group>"; };
-		D9395790216175B1004E9BE9 /* WizDefinePINViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizDefinePINViewController.swift; sourceTree = "<group>"; };
 		D93957922161799E004E9BE9 /* WizDefineNicknameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizDefineNicknameViewController.swift; sourceTree = "<group>"; };
 		D939A0CA21724F4100D57B11 /* SendContactsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendContactsViewController.swift; sourceTree = "<group>"; };
-		D94399DB21690DBF00FC2AD8 /* WizFormDefine6ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizFormDefine6ViewController.swift; sourceTree = "<group>"; };
-		D94399E32169115B00FC2AD8 /* WizFormDefine16ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizFormDefine16ViewController.swift; sourceTree = "<group>"; };
-		D94399E52169A26F00FC2AD8 /* WizUsageNotesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizUsageNotesViewController.swift; sourceTree = "<group>"; };
 		D94399E92169DD0600FC2AD8 /* FieldHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldHandler.swift; sourceTree = "<group>"; };
 		D94BBC1C21B1E539003B6C6B /* WizOrgDefine1ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizOrgDefine1ViewController.swift; sourceTree = "<group>"; };
 		D94CDF7021626F1200ABB052 /* OrgTitleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrgTitleViewController.swift; sourceTree = "<group>"; };
@@ -418,8 +406,6 @@
 		D9A654D72167308C00F0CD1E /* WizOrgDefine26ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizOrgDefine26ViewController.swift; sourceTree = "<group>"; };
 		D9C9FEA321C577CC00E29D8F /* Links and Info.rtf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.rtf; name = "Links and Info.rtf"; path = "../../MetaData/Sites/Links and Info.rtf"; sourceTree = "<group>"; };
 		D9E74A86217FA9D60049D844 /* AdminPrefsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminPrefsViewController.swift; sourceTree = "<group>"; };
-		D9EA2B1D2187805B00A4FE55 /* WizLangNoteViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizLangNoteViewController.swift; sourceTree = "<group>"; };
-		D9EA2B1F2187A56300A4FE55 /* WizFirstTimeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizFirstTimeViewController.swift; sourceTree = "<group>"; };
 		D9EA2B222187DB1C00A4FE55 /* NumberKeyboard.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = NumberKeyboard.xib; sourceTree = "<group>"; };
 		D9EA2B242187F0BF00A4FE55 /* NumberKeyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NumberKeyboard.swift; sourceTree = "<group>"; };
 		D9EA940C21B38A9E00F78543 /* PopupEnterCloneViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupEnterCloneViewController.swift; sourceTree = "<group>"; };
@@ -531,7 +517,6 @@
 			isa = PBXGroup;
 			children = (
 				D94CDF7021626F1200ABB052 /* OrgTitleViewController.swift */,
-				D7D852F121C9724200948408 /* PopupFirstTimeViewController.swift */,
 				D95B1F902167BFE700099709 /* ChooserOrgViewController.swift */,
 				D930D7D1216C310300BD1AF5 /* ChooserFormViewController.swift */,
 				D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */,
@@ -541,6 +526,7 @@
 				D9EA940C21B38A9E00F78543 /* PopupEnterCloneViewController.swift */,
 				D7CEDDC6230633EF00B115B9 /* PopupDownloadViewController.swift */,
 				D7EB06112296105200D0CA02 /* PopupImportViewController.swift */,
+				D7B1EB332319F2EE005C0AC8 /* CommonSampleFormsViewController.swift */,
 				D9229EAB219F46C300404079 /* UIColorExtension.swift */,
 			);
 			path = Utility_and_Popup;
@@ -571,14 +557,7 @@
 			isa = PBXGroup;
 			children = (
 				D9A654CF21671F4D00F0CD1E /* WizMenuViewController.swift */,
-				D9EA2B1F2187A56300A4FE55 /* WizFirstTimeViewController.swift */,
-				D9EA2B1D2187805B00A4FE55 /* WizLangNoteViewController.swift */,
-				D9395790216175B1004E9BE9 /* WizDefinePINViewController.swift */,
 				D93957922161799E004E9BE9 /* WizDefineNicknameViewController.swift */,
-				D94399E52169A26F00FC2AD8 /* WizUsageNotesViewController.swift */,
-				D74D600622A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift */,
-				D74D600A22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift */,
-				D74D600C22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift */,
 				D94BBC1C21B1E539003B6C6B /* WizOrgDefine1ViewController.swift */,
 				D9A654C721671A0000F0CD1E /* WizOrgDefine3ViewController.swift */,
 				D9A654D12167225500F0CD1E /* WizOrgDefine6ViewController.swift */,
@@ -587,9 +566,9 @@
 				D9A654D52167259600F0CD1E /* WizOrgDefine21ViewController.swift */,
 				D9A654D72167308C00F0CD1E /* WizOrgDefine26ViewController.swift */,
 				D95B1F982167CB0100099709 /* WizFormDefine1ViewController.swift */,
-				D94399DB21690DBF00FC2AD8 /* WizFormDefine6ViewController.swift */,
-				D912DE7121A90297002ABF0E /* WizFormDefine11ViewController.swift */,
-				D94399E32169115B00FC2AD8 /* WizFormDefine16ViewController.swift */,
+				D74D600622A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift */,
+				D74D600A22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift */,
+				D74D600C22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift */,
 			);
 			path = Wizards;
 			sourceTree = "<group>";
@@ -1096,7 +1075,6 @@
 				D9EBEAF4215F4DAD00A258C8 /* OrgsMgmtViewController.swift in Sources */,
 				D7CEDDC7230633EF00B115B9 /* PopupDownloadViewController.swift in Sources */,
 				D74D600D22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift in Sources */,
-				D912DE7221A90297002ABF0E /* WizFormDefine11ViewController.swift in Sources */,
 				D90D6EAF2183D3A1000A90EB /* RecOrgCustomFieldLocales.swift in Sources */,
 				D92EFC2C216D7BD200C1F12A /* EntryFormViewController.swift in Sources */,
 				D9A043DB215C3B3F008BE46F /* AdminPINViewController.swift in Sources */,
@@ -1107,19 +1085,16 @@
 				D9254B3121597569006FDBF8 /* RecContactsCollected.swift in Sources */,
 				D9254B3321597569006FDBF8 /* RecOptionSetLocales.swift in Sources */,
 				D91378C721B843A1000E667D /* EntryFormProvisioner.swift in Sources */,
-				D94399E62169A26F00FC2AD8 /* WizUsageNotesViewController.swift in Sources */,
 				D92ACAEB21706FAF00F8B556 /* MainTabBarViewController.swift in Sources */,
 				D9278382217398EA00B9B88A /* SVFilesHandler.swift in Sources */,
 				D94BBC1D21B1E539003B6C6B /* WizOrgDefine1ViewController.swift in Sources */,
 				D90D6EAB2182A262000A90EB /* RecJsonFieldLocales.swift in Sources */,
 				D93957932161799E004E9BE9 /* WizDefineNicknameViewController.swift in Sources */,
 				D90D6EA421823807000A90EB /* RecOrganizationLangs.swift in Sources */,
-				D94399E42169115B00FC2AD8 /* WizFormDefine16ViewController.swift in Sources */,
 				D7CC2A982201456200F39E36 /* EmailHandler.swift in Sources */,
 				D9A654D82167308C00F0CD1E /* WizOrgDefine26ViewController.swift in Sources */,
 				D9A043E0215C4786008BE46F /* AdminMenuViewController.swift in Sources */,
 				D9229EAC219F46C300404079 /* UIColorExtension.swift in Sources */,
-				D9EA2B202187A56300A4FE55 /* WizFirstTimeViewController.swift in Sources */,
 				D90D6EAD2182C4C0000A90EB /* RecOrgFormFieldLocales.swift in Sources */,
 				D95B1F992167CB0100099709 /* WizFormDefine1ViewController.swift in Sources */,
 				D9A654D22167225500F0CD1E /* WizOrgDefine6ViewController.swift in Sources */,
@@ -1127,7 +1102,6 @@
 				D74D600722A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift in Sources */,
 				D954DF5F215ABFC9003FD748 /* DatabaseHandler.swift in Sources */,
 				D94399EA2169DD0600FC2AD8 /* FieldHandler.swift in Sources */,
-				D9EA2B1E2187805B00A4FE55 /* WizLangNoteViewController.swift in Sources */,
 				D9A654D42167246D00F0CD1E /* WizOrgDefine16ViewController.swift in Sources */,
 				D9A043DC215C3B3F008BE46F /* EntryViewController.swift in Sources */,
 				D9A043E6215C5062008BE46F /* AlertsMgmtViewController.swift in Sources */,
@@ -1141,12 +1115,11 @@
 				D903B63C21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift in Sources */,
 				D7EB06122296105200D0CA02 /* PopupImportViewController.swift in Sources */,
 				D74D600B22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift in Sources */,
-				D9395791216175B1004E9BE9 /* WizDefinePINViewController.swift in Sources */,
 				D9254B3221597569006FDBF8 /* RecOrgCustomFieldDefs.swift in Sources */,
 				D9F2D2A721891BC4001507CB /* HexKeyboard.swift in Sources */,
+				D7B1EB342319F2EE005C0AC8 /* CommonSampleFormsViewController.swift in Sources */,
 				D90D6EA92182A0F8000A90EB /* RecJsonFieldDefs.swift in Sources */,
 				D930D7D2216C310300BD1AF5 /* ChooserFormViewController.swift in Sources */,
-				D7D852F221C9724200948408 /* PopupFirstTimeViewController.swift in Sources */,
 				D94CFCF12155A6D8009CE207 /* AppDelegate.swift in Sources */,
 				D9254B3521597572006FDBF8 /* RecOrgFormFieldDefs.swift in Sources */,
 				D7416EAE21F78A9D004850C6 /* ContactsReviewViewController.swift in Sources */,
@@ -1159,7 +1132,6 @@
 				D91378C921B843BC000E667D /* OrgFormFields.swift in Sources */,
 				D9A043DE215C46AA008BE46F /* SupportAboutViewController.swift in Sources */,
 				D9A043D1215BD34E008BE46F /* RecAlert.swift in Sources */,
-				D94399DC21690DBF00FC2AD8 /* WizFormDefine6ViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -547,7 +547,7 @@ debugPrint("\(mCTAG).deinit STARTED")
     }
     
     // return from a successful import
-    func completed_CIVC_ImportSuccess() {
+    func completed_CIVC_ImportSuccess(fromVC:PopupImportViewController, orgWasImported:String, formWasImported:String?) {
 //debugPrint("\(self.mCTAG).completed_CIVC_ImportSuccess STARTED")
         self.refreshActions()
     }

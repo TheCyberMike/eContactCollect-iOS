@@ -729,7 +729,7 @@ public class FieldHandler {
                 self.mAppError = APP_ERROR(funcName: funcName, during: "Bundle.main.path", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Missing: FieldLocales.json")
                 throw self.mAppError!
             }
-debugPrint("\(self.mCTAG).loadFiles.FieldLocales LR=\(forLangRegion) PATH=\(jsonPath2!)")
+//debugPrint("\(self.mCTAG).loadFiles.FieldLocales LR=\(forLangRegion) PATH=\(jsonPath2!)")
             // read the file, parse the JSON, and validate the file's JSON headers
             let jsonContents2 = FileManager.default.contents(atPath: jsonPath2!)   // obtain the data in JSON format
             if jsonContents2 == nil {
@@ -835,7 +835,7 @@ debugPrint("\(self.mCTAG).loadFiles.FieldLocales LR=\(forLangRegion) PATH=\(json
             self.mAppError = APP_ERROR(funcName: funcName, during: "Bundle.main.path", domain: self.mThrowErrorDomain, errorCode: .FILESYSTEM_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Missing: OptionSetLocales.json")
             throw self.mAppError!
         }
-debugPrint("\(self.mCTAG).loadFiles.FieldsLocale LR=\(forLangRegion) PATH=\(jsonPath3!)")
+//debugPrint("\(self.mCTAG).loadFiles.FieldsLocale LR=\(forLangRegion) PATH=\(jsonPath3!)")
         let jsonContents3 = FileManager.default.contents(atPath: jsonPath3!)   // obtain the data in JSON format
         if jsonContents3 == nil {
             self.mFHstatus_state = .Errors

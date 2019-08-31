@@ -9,7 +9,10 @@ import UIKit
 import SQLite
 import Eureka
 
-class WizFormDefine1ViewController: UIViewController, COVC_Delegate {
+class WizFormDefine1ViewController: UIViewController, CSFVC_Delegate {
+    // member variables
+    private var mImportsSucceeded:Bool = false
+    
     // member constants and other static content
     private let mCTAG:String = "VCW3-1"
     internal weak var mRootVC:WizMenuViewController? = nil
@@ -18,11 +21,40 @@ class WizFormDefine1ViewController: UIViewController, COVC_Delegate {
     
     // outlets to screen controls
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
-        self.mRootVC!.mWorking_Form_Rec = nil
         self.clearVC()
         if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
             self.navigationController!.popToRootViewController(animated: true)
         }
+    }
+    @IBAction func button_next_pressed(_ sender: UIBarButtonItem) {
+        let selected:String = self.mFormVC!.mSelections!.selectedRow()!.selectableValue!
+        switch selected {
+        case "Create":
+            // create a default Form
+            do {
+                let formRec:RecOrgFormDefs = try DatabaseHandler.shared.createDefaultForm(forOrgRec: self.mRootVC!.mWorking_Org_Rec!)
+                (UIApplication.shared.delegate as! AppDelegate).checkCurrentForm(withFormRec: formRec)
+            } catch {
+                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).button_next_pressed", errorStruct: error, extra: nil)
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+            }
+            self.clearVC()
+            if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
+                self.navigationController!.popToRootViewController(animated: true)
+            }
+            return
+            
+        case "Sample":
+            break
+        default:
+            break
+        }
+        
+        // allow end-user to choose sample forms; they will return to this VC when done
+        let nextVC:SampleFormsViewController = SampleFormsViewController()
+        nextVC.mForOrgShortCode = self.mRootVC!.mWorking_Org_Rec!.rOrg_Code_For_SV_File
+        nextVC.mDelegate = self
+        self.navigationController?.pushViewController(nextVC, animated:true)
     }
     
     // called when the object instance is being destroyed
@@ -59,11 +91,22 @@ class WizFormDefine1ViewController: UIViewController, COVC_Delegate {
     }
     
     // called by the framework when the view will *re-appear* (first time, from popovers, etc)
-    // parent and all children are now available
+    // parent and all children are now available; this will be invoked upon return from the sample forms screen
     override func viewWillAppear(_ animated:Bool) {
 //debugPrint("\(self.mCTAG).viewWillAppear STARTED")
         super.viewWillAppear(animated)
         
+        // is the screen post-Sample Forms and some were imported?
+        if self.mImportsSucceeded {
+            // yes, terminate this screen
+            self.clearVC()
+            if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
+                self.navigationController!.popToRootViewController(animated: true)
+            }
+            return
+        }
+        
+        // re-ensure there is an Org record defined
         if self.mRootVC!.mWorking_Org_Rec == nil {
 //debugPrint("\(self.mCTAG).viewWillAppear STARTED self.mRootVC!.mWorking_Org_Rec == nil")
             // obtain a list of all Org records
@@ -78,12 +121,6 @@ class WizFormDefine1ViewController: UIViewController, COVC_Delegate {
                 }
                 if count == 0 {
                     AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("There are no Organizations yet defined to make a Form for", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
-                } else if count > 1 {
-                    let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
-                    let newViewController = storyBoard.instantiateViewController(withIdentifier: "VC ChooseOrg") as! ChooserOrgViewController
-                    newViewController.mCOVCdelegate = self
-                    newViewController.modalPresentationStyle = .custom
-                    self.present(newViewController, animated: true, completion: nil)
                 }
             } catch {
                 AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).viewWillAppear", errorStruct: error, extra: nil)
@@ -92,12 +129,8 @@ class WizFormDefine1ViewController: UIViewController, COVC_Delegate {
 //debugPrint("\(self.mCTAG).viewWillAppear ENDED self.mRootVC!.mWorking_Org_Rec == nil")
         }
         
-        // create an empty Form record if it does not already exist and setup the Org Title
+        // re-setup the Org Title
         if self.mRootVC!.mWorking_Org_Rec != nil {
-            if self.mRootVC!.mWorking_Form_Rec == nil {
-//debugPrint("\(self.mCTAG).viewWillAppear STARTED self.mRootVC!.mWorking_Form_Rec == nil")
-                self.mRootVC!.mWorking_Form_Rec = RecOrgFormDefs(org_code_sv_file: self.mRootVC!.mWorking_Org_Rec!.rOrg_Code_For_SV_File, form_code_sv_file: "")
-            }
 //debugPrint("\(self.mCTAG).viewWillAppear STARTED self.mOrgTitleViewController!.mEFP = self.mRootVC!.mEFP!")
             self.mOrgTitleViewController!.mEFP = self.mRootVC!.mEFP!
             self.mOrgTitleViewController!.mWait = false
@@ -129,6 +162,9 @@ class WizFormDefine1ViewController: UIViewController, COVC_Delegate {
     // clear out the Form so this VC will deinit
     private func clearVC() {
         self.mFormVC?.clearVC()
+        self.mFormVC = nil
+        self.mRootVC = nil
+        self.mOrgTitleViewController = nil
     }
     
     // called by the framework when memory needs to be freed
@@ -137,83 +173,13 @@ class WizFormDefine1ViewController: UIViewController, COVC_Delegate {
         // Dispose of any resources that can be recreated.
     }
     
-    // return from the Org Chooser view;
-    // note: the chooser view is still showing and the chooser view controller is still the mainline;
-    // this callback MUST perform dismiss of the chooser view controller
-    func completed_COVC(fromVC:ChooserOrgViewController, wasChosen:String?) {
-        if wasChosen == nil {
-            if self.mRootVC != nil { self.mRootVC!.mWorking_Form_Rec = nil }
-            self.navigationController?.popToRootViewController(animated: true)
-            dismiss(animated: true, completion: nil)
-            return
+    // callback from the sample forms screen
+    // note this could get called several times if the end-user imports more than one form
+    func completed_CSFVC(fromVC:SampleFormsViewController, orgWasImported:String, formWasImported:String?) {
+        if formWasImported != nil {
+            (UIApplication.shared.delegate as! AppDelegate).setCurrentForm(toFormShortName: formWasImported!, withOrgShortName: orgWasImported)
         }
-        
-        dismiss(animated: true, completion: {
-            // perform the following after the dismiss is completed so if there is an error, the showAlertDialog will work
-            // load the chosen Org record
-            do {
-                self.mRootVC!.mWorking_Org_Rec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName:wasChosen!)
-            } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_COVC", errorStruct: error, extra: nil)
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
-                return  // from the completion handler
-            }
-            if self.mRootVC!.mWorking_Org_Rec == nil {
-                AppDelegate.showAlertDialog(vc:self, title:NSLocalizedString("Database Error", comment:""), errorStruct: APP_ERROR(funcName: "\(self.mCTAG).completed_COVC", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .RECORD_NOT_FOUND, userErrorDetails: nil), buttonText:NSLocalizedString("Okay", comment:""))
-                return  // from the completion handler
-            }
-            
-            // create an empty Form record if it does not already exist and setup the Org Title
-            if self.mRootVC!.mWorking_Org_Rec != nil {
-                if self.mRootVC!.mWorking_Form_Rec == nil {
-                    self.mRootVC!.mWorking_Form_Rec = RecOrgFormDefs(org_code_sv_file: self.mRootVC!.mWorking_Org_Rec!.rOrg_Code_For_SV_File, form_code_sv_file: "")
-                }
-                self.mOrgTitleViewController!.mEFP = self.mRootVC!.mEFP!
-                self.mOrgTitleViewController!.mWait = false
-                self.mOrgTitleViewController!.refresh()
-            }
-            return  // from the completion handler
-        })
-    }
-    
-    // intercept the Next segue
-    override open func shouldPerformSegue(withIdentifier identifier:String, sender:Any?) -> Bool {
-        if identifier != "Segue Next_W_FORM_1_2" { return true }
-        let validationError = self.mFormVC!.form.validate()
-        if validationError.count > 0 {
-            var message:String = NSLocalizedString("There are errors in certain fields of the form; they are shown with red text. \n\nErrors:\n", comment:"")
-            for errorStr in validationError {
-                message = message + errorStr.msg + "\n"
-            }
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: message, buttonText: NSLocalizedString("Okay", comment:""))
-            return false
-        }
-        
-        // safety double-checks
-        if self.mRootVC!.mWorking_Form_Rec!.rForm_Code_For_SV_File.isEmpty {
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("Form short name cannot be empty", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
-            return false
-        }
-        if self.mRootVC!.mWorking_Form_Rec!.rForm_Code_For_SV_File.rangeOfCharacter(from: AppDelegate.mAcceptableNameChars.inverted) != nil {
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("Form short name can only contain letters, digits, space, or _ . + -", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
-            return false
-        }
-        
-        // the short name cannot already exist in the database
-        var formRec:RecOrgFormDefs?
-        do {
-            formRec = try RecOrgFormDefs.orgFormGetSpecifiedRecOfShortName(formShortName: self.mRootVC!.mWorking_Form_Rec!.rForm_Code_For_SV_File, forOrgShortName:self.mRootVC!.mWorking_Org_Rec!.rOrg_Code_For_SV_File)
-        } catch {
-            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_COVC", errorStruct: error, extra: nil)
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
-            return false
-        }
-        if formRec != nil {
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("Form short name already exists in the database", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
-            return false
-        }
-
-        return true
+        self.mImportsSucceeded = true
     }
 }
 
@@ -223,7 +189,7 @@ class WizFormDefine1ViewController: UIViewController, COVC_Delegate {
 
 class WizFormDefine1FormViewController: FormViewController {
     // member variables
-    private var mFormIsBuilt:Bool = false
+    internal var mSelections:SelectableSection<ListCheckRow<String>>? = nil
     
     // member constants and other static content
     private let mCTAG:String = "VCW3-1F"
@@ -238,7 +204,7 @@ debugPrint("\(mCTAG).deinit STARTED")
     
     // called by the framework after the view has been setup from Storyboard or NIB
     override func viewDidLoad() {
-debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+//debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
         // self.parent is not set until viewWillAppear()
     }
@@ -264,13 +230,12 @@ debugPrint("\(self.mCTAG).viewWillAppear STARTED")
     public func clearVC() {
         form.removeAll()
         tableView.reloadData()
-        self.mFormIsBuilt = false
+        self.mSelections = nil
+        self.mWiz1VC = nil
     }
     
     // build the form
     private func buildForm() {
-debugPrint("\(self.mCTAG).rebuildForm STARTED")
-        if self.mFormIsBuilt { return }
         form.removeAll()
         tableView.reloadData()
         
@@ -286,31 +251,25 @@ debugPrint("\(self.mCTAG).rebuildForm STARTED")
                 cell.textView.font = .systemFont(ofSize: 17.0)
                 cell.textView.textColor = UIColor.black
         }
-
-        let section2 = Section(NSLocalizedString("Form Identity", comment:""))
-        form +++ section2
         
-        let formShortNameRow = TextRow() {
-            $0.tag = "form_short_name"
-            $0.title = NSLocalizedString("Short Form Code", comment:"")
-            $0.add(rule: RuleRequired(msg: NSLocalizedString("Form short name cannot be blank", comment:"")))
-            $0.add(rule: RuleValidChars(acceptableChars: AppDelegate.mAcceptableNameChars, msg: NSLocalizedString("Form short name can only contain letters, digits, space, or _ . + -", comment:"")))
-            $0.validationOptions = .validatesAlways
+        // show the allowed selections
+        self.mSelections = SelectableSection<ListCheckRow<String>>(NSLocalizedString("Please Choose Below then Press Next", comment:""), selectionType: .singleSelection(enableDeselection: false))
+        form +++ self.mSelections!
+        form.last! <<< ListCheckRow<String>("option_Create"){ listRow in
+            listRow.title = NSLocalizedString("Create a simple default Form you can edit later", comment:"")
+            listRow.selectableValue = "Create"
+            listRow.value = "Create"
             }.cellUpdate { cell, row in
-                if !row.isValid {
-                    cell.titleLabel?.textColor = .red
-                }
-            }.onChange { [weak self] chgRow in
-                let _ = chgRow.validate()
-                if chgRow.isValid {
-                    if chgRow.value != nil {
-                        self!.mWiz1VC!.mRootVC!.mWorking_Form_Rec!.rForm_Code_For_SV_File = chgRow.value!
-                    }
-                }
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.numberOfLines = 0
         }
-        section2 <<< formShortNameRow
-        formShortNameRow.value = self.mWiz1VC!.mRootVC!.mWorking_Form_Rec!.rForm_Code_For_SV_File
-        self.mFormIsBuilt = true
-debugPrint("\(self.mCTAG).rebuildForm ENDED")
+        form.last! <<< ListCheckRow<String>("option_import"){ listRow in
+            listRow.title = NSLocalizedString("Choose a Form from the Form Sample Library; it can be edited afterwards", comment:"")
+            listRow.selectableValue = "Sample"
+            listRow.value = nil
+            }.cellUpdate { cell, row in
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.numberOfLines = 0
+        }
     }
 }

@@ -78,7 +78,7 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
     // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
     override func viewDidLoad() {
-//debugPrint("\(self.mCTAG).viewDidLoad STARTED \(self)")
+debugPrint("\(self.mCTAG).viewDidLoad STARTED \(self)")
         
         // if we were not immediately given a provisioner, then use the mainline one (if there is indeed one available);
         // need to do this soonest possible
@@ -96,11 +96,10 @@ class EntryViewController: UIViewController, UITextFieldDelegate, UITextViewDele
     // called by the framework when the view will *re-appear* (first time, from popovers, etc)
     // parent and all children are now available
     override func viewWillAppear(_ animated:Bool) {
-//debugPrint("\(self.mCTAG).viewWillAppear STARTED \(self)")
+debugPrint("\(self.mCTAG).viewWillAppear STARTED \(self)")
         super.viewWillAppear(animated)
         self.isVisible = true
 
-        
         // find the two Container View Controllers
         var orgTitleViewController:OrgTitleViewController? = nil
         for childVC in children {

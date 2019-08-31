@@ -463,6 +463,9 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
                 // do not show an error to the end-user
             }
         }
+
+        // if a new main EFP was setup, then let everyone know
+        if AppDelegate.mEntryFormProvisioner != nil { NotificationCenter.default.post(name: .APP_MainEFPaddedRemoved, object: nil) }
     }
     
     // check if the Org record should be remembered

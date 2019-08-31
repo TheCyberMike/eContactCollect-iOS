@@ -283,10 +283,6 @@
 "Test the Settings" = "Test the Settings";
 "Press HERE to test access to Email Provider" = "Press HERE to test access to Email Provider";
 
-// WizDefinePINViewController
-"App PIN" = "App PIN";
-"%info%_WizDefinePIN" = "Optionally define a short numeric PIN number that will be needed to access this App's settings.  This ensures that if you hand your iPhone or iPad to someone else to fill in their contact information, that other person cannot alter the App.  Two to four digits is sufficient.  If you leave this blank then no PIN will be asked for.\n\nPlease note this PIN does NOT lock out using the Home button.  People you hand your iPhone or iPad to CAN ACCESS the rest of your device.  You should monitor their use of your device at all times.";
-
 // WizDefineNicknameViewController
 "Nickname" = "Nickname";
 "%info%_WizDefineNickname" = "Enter YOUR name, usually just your last name or a short nickname that the Organization can use to identify you (the Collector).  This name will be included in every contact record that you collect.";
@@ -333,6 +329,13 @@
 "Cancel Confirmation" = "Cancel Confirmation";
 "If you Cancel you will lose your changes; are you sure?" = "If you Cancel you will lose your changes; are you sure?";
 "Yes, Cancel" = "Yes, Cancel";
+
+// WizOrgDefine1ViewController.swift
+"%info%_WizOrgDefine1" = "All forms and collected data is separated into Organizations.  You must have at least one Organization defined, and normally only one is needed.  However you can use the App to collect contacts for more than one Organization, and keep them completely separate.  An Organization can have a custom title (in multiple languages) and optionally a logo.";
+"Please Choose Below then Press Next" = "Please Choose Below then Press Next";
+"Create a simple default Organization you can edit later" = "Create a simple default Organization you can edit later";
+"Import an Organization Definitions file you have already been given" = "Import an Organization Definitions file you have already been given";
+"Use a Wizard to create and customize an Organization in detail" = "Use a Wizard to create and customize an Organization in detail";
 
 // WizOrgDefine3ViewController.swift
 "Organization Identity" = "Organization Identity";
@@ -462,13 +465,6 @@
 "Form Languages Mode" = "Form Languages Mode";
 
 // WizFormDefine!ViewController.swift
-"Form Identity" = "Form Identity";
-"%info%_WizFormDefine1" = "You can create more than one Form for an Organization if there are different types of people that need to provide different types of information.\n\nFor this new Form, enter a short nickname for this Form for the Organization.  This name will be inserted into every contact record that you collect.";
-
-// WizFormDefine6ViewController.swift
-"Form SV-File Mode" = "Form SV-File Mode";
-"%info%_WizFormDefine6" = "By default, a 'tab-delimited' text file is created for import into your Organization's contacts system.  The Tab-delmited file works with Excel, Numbers, and Google Spreadsheets.  Using a Tab-delimited file allows commas to be entered by end-users into the data fields.  Some other file types can be genereted as listed below if you need other types of data formats.";
-
-// WizFormDefine11ViewController.swift
-"There are no Organizations yet defined to make a Form for" = "There are no Organizations yet defined to make a Form for";
-"%info%_WizFormDefine11" = "The Organization is setup for mulitple languages.  This form can be setup to (1) display just one of those languages, or (2) two of those languages at the same time in 'bilingual' mode, or (3) letting the end-user choose their preferred language via buttons at the top of the form.";
+"%info%_WizFormDefine1" = "Forms are used to define what information to collect.  You can create more than one Form for an Organization if there are different types of people that need to provide different types of information.";
+"Create a simple default Form you can edit later" = "Create a simple default Form you can edit later";
+"Choose a Form from the Form Sample Library; it can be edited afterwards" = "Choose a Form from the Form Sample Library; it can be edited afterwards";

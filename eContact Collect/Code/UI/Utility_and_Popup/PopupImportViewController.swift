@@ -9,10 +9,9 @@ import UIKit
 import Eureka
 import SQLite
 
-// define the delegate protocol that other portions of the App must use to know when the choice is made or cancelled
+// define the delegate protocol that other portions of the App must use to know when the import succeeded
 protocol CIVC_Delegate {
-    // return wasChosen=nil if cancelled; wasChosen=Org_short_name if chosen
-    func completed_CIVC_ImportSuccess()
+    func completed_CIVC_ImportSuccess(fromVC:PopupImportViewController, orgWasImported:String, formWasImported:String?)
 }
 
 class PopupImportViewController: UIViewController {
@@ -206,7 +205,7 @@ class PopupImportViewController: UIViewController {
             if self.mFormOnly {
                 // Form-only import was performed
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Success", comment:""), message: NSLocalizedString("The Form configuration file was successfully imported.", comment:""), buttonText: NSLocalizedString("Okay", comment:""), completion: { self.dismiss(animated: true, completion: {
-                        if self.mCIVCdelegate != nil { self.mCIVCdelegate!.completed_CIVC_ImportSuccess() }
+                        if self.mCIVCdelegate != nil { self.mCIVCdelegate!.completed_CIVC_ImportSuccess(fromVC: self, orgWasImported: result.wasOrgShortName, formWasImported: nil) }
                     })
                 })
                 if AppDelegate.mEntryFormProvisioner == nil {
@@ -220,7 +219,7 @@ class PopupImportViewController: UIViewController {
             } else {
                 // entire Org and all its Forms inport was performed
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Success", comment:""), message: NSLocalizedString("The Organization configuration file was successfully imported.", comment:""), buttonText: NSLocalizedString("Okay", comment:""), completion: { self.dismiss(animated: true, completion: {
-                        if self.mCIVCdelegate != nil { self.mCIVCdelegate!.completed_CIVC_ImportSuccess() }
+                        if self.mCIVCdelegate != nil { self.mCIVCdelegate!.completed_CIVC_ImportSuccess(fromVC: self, orgWasImported: result.wasOrgShortName, formWasImported: result.wasFormShortName) }
                     })
                 })
                 if AppDelegate.mEntryFormProvisioner == nil {

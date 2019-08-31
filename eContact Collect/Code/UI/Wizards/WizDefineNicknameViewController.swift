@@ -10,19 +10,34 @@ import Eureka
 
 class WizDefineNicknameViewController: FormViewController {
     // member constants and other static content
-    private let mCTAG:String = "VCW1-4"
+    private let mCTAG:String = "VCW1-1"
     
     // outlets to screen controls
+    @IBAction func button_next_pressed(_ sender: UIBarButtonItem) {
+        let validationError = form.validate()
+        if validationError.count > 0 {
+            var message:String = NSLocalizedString("There are errors in certain fields of the form; they are shown with red text. \n\nErrors:\n", comment:"")
+            for errorStr in validationError {
+                message = message + errorStr.msg + "\n"
+            }
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message:message, buttonText: NSLocalizedString("Okay", comment:""))
+        } else {
+            AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: 2)
+            AppDelegate.mFirstTImeStages = 2
+            self.clearVC()
+            self.navigationController!.popToRootViewController(animated: true)
+        }
+    }
     
     // called when the object instance is being destroyed
     deinit {
-//debugPrint("\(mCTAG).deinit STARTED")
+debugPrint("\(mCTAG).deinit STARTED")
     }
     
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
     // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
     override func viewDidLoad() {
-//debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
         
         // build the form
@@ -54,21 +69,6 @@ class WizDefineNicknameViewController: FormViewController {
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
-    }
-    
-    // intercept the Next segue
-    override open func shouldPerformSegue(withIdentifier identifier:String, sender:Any?) -> Bool {
-        if identifier != "Segue Next_W_DN_UN" { return true }
-        let validationError = form.validate()
-        if validationError.count > 0 {
-            var message:String = NSLocalizedString("There are errors in certain fields of the form; they are shown with red text. \n\nErrors:\n", comment:"")
-            for errorStr in validationError {
-                message = message + errorStr.msg + "\n"
-            }
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message:message, buttonText: NSLocalizedString("Okay", comment:""))
-            return false
-        }
-        return true
     }
     
     // clear out the Form so this VC will deinit

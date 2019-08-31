@@ -508,32 +508,42 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
     // The following methods perform exports and imports of organizational definitions
     /////////////////////////////////////////////////////////////////////////////////////////
     
-    // create a default Organization and Form
-    public func createDefaultOrgAndForm() throws -> (RecOrganizationDefs, RecOrgFormDefs) {
+    // create a default Organization
+    public func createDefaultOrg() throws -> RecOrganizationDefs {
         // create a default Organization
         var orgRec:RecOrganizationDefs
-        var formRec:RecOrgFormDefs
         do {
             orgRec = RecOrganizationDefs(org_code_sv_file: "Org1", org_title_mode: RecOrganizationDefs.ORG_TITLE_MODE.ONLY_TITLE, org_logo_image_png_blob: nil, org_email_to: nil, org_email_cc: nil, org_email_subject: "Contacts collected from eContact Collect")
             orgRec.rOrg_Visuals.rOrgTitle_Background_Color = UIColor.lightGray
             let _ = try orgRec.addNewFinalLangRec(forLangRegion: "en")
-            try orgRec.setOrgTitleShown_Editing(langRegion: "en", title: "Organization's Name")
+            try orgRec.setOrgTitleShown_Editing(langRegion: "en", title: "The Organization's Name")
             orgRec.mOrg_Lang_Recs_are_changed = true
             let _ = try orgRec.saveNewToDB()
-            
+        } catch var appError as APP_ERROR {
+            appError.prependCallStack(funcName: "\(self.mCTAG).createDefaultOrg")
+            throw appError
+        } catch { throw error }
+        return orgRec
+    }
+    
+    // create a default Form for an Organization
+    public func createDefaultForm(forOrgRec: RecOrganizationDefs) throws -> RecOrgFormDefs {
+        // create a default Organization
+        var formRec:RecOrgFormDefs
+        do {
             // create a default Form
-            formRec = RecOrgFormDefs(org_code_sv_file: "Org1", form_code_sv_file: "Form1")
-            let _ = try formRec.saveNewToDB(withOrgRec: orgRec)     // allow all the default meta-data fields be auto-created
+            formRec = RecOrgFormDefs(org_code_sv_file: forOrgRec.rOrg_Code_For_SV_File, form_code_sv_file: "Form1")
+            let _ = try formRec.saveNewToDB(withOrgRec: forOrgRec)     // allow all the default meta-data fields be auto-created
             
             // now add all the selected form fields
             var orderSVfile:Int = 10
             var orderShown:Int = 10
-            try FieldHandler.shared.addFieldstoForm(field_IDCodes: ["FC_Name1st","FC_NameLast","FC_Email","FC_PhFull"], forFormRec: formRec, withOrgRec: orgRec, orderSVfile: &orderSVfile, orderShown: &orderShown)
+            try FieldHandler.shared.addFieldstoForm(field_IDCodes: ["FC_Name1st","FC_NameLast","FC_Email","FC_PhFull"], forFormRec: formRec, withOrgRec: forOrgRec, orderSVfile: &orderSVfile, orderShown: &orderShown)
         } catch var appError as APP_ERROR {
-            appError.prependCallStack(funcName: "\(self.mCTAG).createDefaultOrgAndForm")
+            appError.prependCallStack(funcName: "\(self.mCTAG).createDefaultForm")
             throw appError
         } catch { throw error }
-        return (orgRec, formRec)
+        return formRec
     }
     
     /* File structure -- loosely based upon Google's JSON Style Gude : https://raw.githubusercontent.com/google/styleguide/gh-pages/jsoncstyleguide.xml

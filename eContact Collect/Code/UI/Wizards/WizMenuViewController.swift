@@ -8,7 +8,7 @@
 import UIKit
 import SQLite
 
-class WizMenuViewController: UIViewController, C1stVC_Delegate {
+class WizMenuViewController: UIViewController {
     // caller pre-set member variables
     public var mRunWizard:Wizards = .NONE
     
@@ -18,39 +18,28 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
     public var mWorking_Org_Rec:RecOrganizationDefs? = nil {
         didSet {
             if self.mWorking_Org_Rec != nil {
-                if self.mWorking_Form_Rec == nil {
-                    self.mEFP = EntryFormProvisioner(forOrgRecOnly: self.mWorking_Org_Rec!)
-                } else {
-                    self.mEFP = EntryFormProvisioner(forOrgRec: self.mWorking_Org_Rec!, forFormRec: self.mWorking_Form_Rec!)
-                }
+                self.mEFP = EntryFormProvisioner(forOrgRecOnly: self.mWorking_Org_Rec!)
             } else {
                 self.mEFP = nil
-            }
-        }
-    }
-    public var mWorking_Form_Rec:RecOrgFormDefs? = nil {
-        didSet {
-            if self.mWorking_Org_Rec != nil && self.mWorking_Form_Rec != nil {
-                self.mEFP = EntryFormProvisioner(forOrgRec: self.mWorking_Org_Rec!, forFormRec: self.mWorking_Form_Rec!)
             }
         }
     }
     
     // member constants and other static content
     private let mCTAG:String = "VCW0"
-    public enum Wizards { case NONE, ORGANIZATION, FORM, SENDINGEMAIL }
+    public enum Wizards { case NONE, ORGANIZATION, SENDINGEMAIL }
 
     // outlets to screen controls
 
     // called when the object instance is being destroyed
     deinit {
-//debugPrint("\(mCTAG).deinit STARTED")
+debugPrint("\(mCTAG).deinit STARTED")
     }
     
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
     // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
     override func viewDidLoad() {
-//debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
     }
     
@@ -64,11 +53,10 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
     // called by the framework when the view has re-appeared (first time, from popovers, etc)
     // parent and all children are now available
     override func viewDidAppear(_ animated:Bool) {
-//debugPrint("\(self.mCTAG).viewDidAppear STARTED")
+debugPrint("\(self.mCTAG).viewDidAppear STARTED")
         super.viewDidAppear(animated)
         
         self.mWorking_Org_Rec = nil     // clear out any previously created Org definition
-        self.mWorking_Form_Rec = nil     // clear out any previously created Form definition
         let storyboard = UIStoryboard(name:"Main", bundle:nil)
         
         switch self.mRunWizard {
@@ -80,15 +68,6 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
             if self.mWizardAlreadyInvoked { self.navigationController?.popViewController(animated:true) }
             else {
                 let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizOrgDefine3")
-                self.mWizardAlreadyInvoked = true
-                self.navigationController?.pushViewController(nextViewController, animated:true)
-            }
-            break
-            
-        case .FORM:
-            if self.mWizardAlreadyInvoked { self.navigationController?.popViewController(animated:true) }
-            else {
-                let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizFormDefine1")
                 self.mWizardAlreadyInvoked = true
                 self.navigationController?.pushViewController(nextViewController, animated:true)
             }
@@ -144,20 +123,12 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
         let storyboard = UIStoryboard(name:"Main", bundle:nil)
         switch AppDelegate.mFirstTImeStages {
         case 1:
-            // present the First Time popup
-            let nextViewController = storyboard.instantiateViewController(withIdentifier:"VC PopupFirstTime") as! PopupFirstTimeViewController
-            nextViewController.mC1stVCdelegate = self
-            nextViewController.modalPresentationStyle = .custom
-            self.present(nextViewController, animated: true, completion: nil)
-            break
-            
-        case 2:
-            // segue to the First Time Wizard sequence
-            let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizFirstTime")
+            // segue to the Nickname Define wizard
+            let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizDefineNickname")
             self.navigationController?.pushViewController(nextViewController, animated:true)
             break
             
-        case 3:
+        case 2:
             // step thru the Org and Form Wizard sequences
             var qtyOrgs:Int64 = 0
             do {
@@ -188,13 +159,21 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
                     let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizFormDefine1")
                     self.navigationController?.pushViewController(nextViewController, animated:true)
                 } else {
-                    AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: -1)
-                    AppDelegate.mFirstTImeStages = -1
-                    AppDelegate.setupMainlineEFP()
-                    let tbc:MainTabBarViewController = self.tabBarController as! MainTabBarViewController
-                    tbc.exitWizardFirstTime()
+                    AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: 3)
+                    AppDelegate.mFirstTImeStages = 3
+                    self.checkFirstTime()   // recheck
                 }
             }
+            break
+            
+        case 3:
+            // step thru the Sending Email sequence
+            // ???
+            AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: -1)
+            AppDelegate.mFirstTImeStages = -1
+            AppDelegate.setupMainlineEFP()
+            let tbc:MainTabBarViewController = self.tabBarController as! MainTabBarViewController
+            tbc.exitWizardFirstTime()
             break
             
         default:
@@ -208,48 +187,5 @@ class WizMenuViewController: UIViewController, C1stVC_Delegate {
             }
             break
         }
-    }
-    
-    // return from the Popup First Time view
-    func completed_C1stVC(fromVC:PopupFirstTimeViewController, choice:Int) {
-//debugPrint("\(self.mCTAG).completed_C1stVC STARTED choice=\(choice)")
-        switch choice {
-        
-        case 1:
-            // create a default Org and Form
-            do {
-                let (orgRec, formRec) = try DatabaseHandler.shared.createDefaultOrgAndForm()
-                (UIApplication.shared.delegate as! AppDelegate).checkCurrentOrg(withOrgRec: orgRec)
-                (UIApplication.shared.delegate as! AppDelegate).checkCurrentForm(withFormRec: formRec)
-                AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: -1)
-                AppDelegate.mFirstTImeStages = -1
-                AppDelegate.setupMainlineEFP()
-                let tbc:MainTabBarViewController = self.tabBarController as! MainTabBarViewController
-                tbc.exitWizardFirstTime()
-            } catch {
-                AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).completed_C1stVC", errorStruct: error, extra: nil)
-                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
-            }
-            break
-            
-        case 2:
-            AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: 2)
-            AppDelegate.mFirstTImeStages = 2
-            break
-        
-        case 3:
-            // Helper to import an Org-config
-            AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.APP_Pin, value: "")
-            AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: 3)
-            AppDelegate.mFirstTImeStages = 3
-            break
-            
-        default:
-            break
-        }
-        dismiss(animated: true, completion: {
-            self.checkFirstTime()
-            return // from callback
-        })
     }
 }
