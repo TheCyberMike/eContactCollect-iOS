@@ -24,6 +24,7 @@ class WizMenuViewController: UIViewController {
             }
         }
     }
+    public var mWorking_EmailVia:EmailVia? = nil
     
     // member constants and other static content
     private let mCTAG:String = "VCW0"
@@ -56,9 +57,7 @@ debugPrint("\(self.mCTAG).viewDidLoad STARTED")
 debugPrint("\(self.mCTAG).viewDidAppear STARTED")
         super.viewDidAppear(animated)
         
-        self.mWorking_Org_Rec = nil     // clear out any previously created Org definition
-        let storyboard = UIStoryboard(name:"Main", bundle:nil)
-        
+        let storyboard = UIStoryboard(name:"Main", bundle:nil)        
         switch self.mRunWizard {
         case .NONE:
             self.checkFirstTime()
@@ -76,7 +75,7 @@ debugPrint("\(self.mCTAG).viewDidAppear STARTED")
         case .SENDINGEMAIL:
             if self.mWizardAlreadyInvoked { self.navigationController?.popViewController(animated:true) }
             else {
-                let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizSendEmailDefine1")
+                let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizSendEmailDefine6")
                 self.mWizardAlreadyInvoked = true
                 self.navigationController?.pushViewController(nextViewController, animated:true)
             }
@@ -168,12 +167,18 @@ debugPrint("\(self.mCTAG).viewDidAppear STARTED")
             
         case 3:
             // step thru the Sending Email sequence
-            // ???
-            AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: -1)
-            AppDelegate.mFirstTImeStages = -1
-            AppDelegate.setupMainlineEFP()
-            let tbc:MainTabBarViewController = self.tabBarController as! MainTabBarViewController
-            tbc.exitWizardFirstTime()
+            if !EmailHandler.shared.hasAnyEmailVias() {
+                // segue to the Form Definition Wizard sequence
+                let nextViewController:UIViewController = storyboard.instantiateViewController(withIdentifier:"VC WizSendEmailDefine1")
+                self.navigationController?.pushViewController(nextViewController, animated:true)
+            } else {
+                AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: -1)
+                AppDelegate.mFirstTImeStages = -1
+                AppDelegate.setupMainlineEFP()
+                self.mWorking_Org_Rec = nil
+                let tbc:MainTabBarViewController = self.tabBarController as! MainTabBarViewController
+                tbc.exitWizardFirstTime()
+            }
             break
             
         default:
@@ -182,6 +187,7 @@ debugPrint("\(self.mCTAG).viewDidAppear STARTED")
                 AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: -1)
                 AppDelegate.mFirstTImeStages = -1
                 AppDelegate.setupMainlineEFP()
+                self.mWorking_Org_Rec = nil
                 let tbc:MainTabBarViewController = self.tabBarController as! MainTabBarViewController
                 tbc.exitWizardFirstTime()
             }

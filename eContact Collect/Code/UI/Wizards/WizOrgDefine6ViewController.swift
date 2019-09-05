@@ -15,7 +15,7 @@ class WizOrgDefine6ViewController: FormViewController {
     
     // outlets to screen controls
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
-        self.mRootVC!.mWorking_Org_Rec = nil
+        self.mRootVC?.mWorking_Org_Rec = nil
         self.clearVC()
         if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
             self.navigationController!.popToRootViewController(animated: true)

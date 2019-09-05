@@ -9,14 +9,16 @@ import UIKit
 import Eureka
 
 class WizSendEmailDefine1ViewController: FormViewController {
-/*
+    // member variables
+    private var mSelections:SelectableSection<ListCheckRow<String>>? = nil
+    
     // member constants and other static content
     private let mCTAG:String = "VCW4-1"
     private weak var mRootVC:WizMenuViewController? = nil
     
     // outlets to screen controls
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
-        self.mRootVC!.mWorking_EmailVia = nil
+        self.mRootVC?.mWorking_EmailVia = nil
         self.clearVC()
         if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
             self.navigationController!.popToRootViewController(animated: true)
@@ -75,20 +77,22 @@ class WizSendEmailDefine1ViewController: FormViewController {
     // intercept the Next segue
     override open func shouldPerformSegue(withIdentifier identifier:String, sender:Any?) -> Bool {
         if identifier != "Segue Next_W_EMAIL_1_6" { return true }
-        let validationError = form.validate()
-        if validationError.count > 0 {
-            var message:String = NSLocalizedString("There are errors in certain fields of the form; they are shown with red text. \n\nErrors:\n", comment:"")
-            for errorStr in validationError {
-                message = message + errorStr.msg + "\n"
+        let selected:String = self.mSelections!.selectedRow()!.selectableValue!
+        switch selected {
+        case "Skip":
+            AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: 4)
+            AppDelegate.mFirstTImeStages = 4
+            self.mRootVC?.mWorking_EmailVia = nil
+            self.clearVC()
+            if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
+                self.navigationController!.popToRootViewController(animated: true)
             }
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: message, buttonText: NSLocalizedString("Okay", comment:""))
             return false
-        }
-        
-        // safety double-checks
-        if self.mRootVC!.mWorking_EmailVia!.sendingEmailAddress.isEmpty {
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: NSLocalizedString("Email Address cannot be empty", comment:""), buttonText: NSLocalizedString("Okay", comment:""))
-            return false
+            
+        case "Wizard":
+            break
+        default:
+            break
         }
         return true
     }
@@ -117,25 +121,24 @@ class WizSendEmailDefine1ViewController: FormViewController {
                 cell.textView.textColor = UIColor.black
         }
         
-        let section2 = Section(NSLocalizedString("Sending Email", comment:""))
-        form +++ section2
-        
-        section2 <<< EmailRow() {
-            $0.tag = "sendingEmail"
-            $0.title = NSLocalizedString("Email Addr", comment:"")
-            $0.add(rule: RuleRequired())
-            $0.add(rule: RuleEmail(msg: NSLocalizedString("Email Address is invalid", comment:"")) )
-            $0.validationOptions = .validatesAlways
+        // show the allowed selections
+        self.mSelections = SelectableSection<ListCheckRow<String>>(NSLocalizedString("Please Choose Below then Press Next", comment:""), selectionType: .singleSelection(enableDeselection: false))
+        form +++ self.mSelections!
+        form.last! <<< ListCheckRow<String>("option_Skip"){ listRow in
+            listRow.title = NSLocalizedString("Skip this step for now; the Wizard can be used later when first emailing", comment:"")
+            listRow.selectableValue = "Skip"
+            listRow.value = "Skip"
             }.cellUpdate { cell, row in
-                cell.textField.font = .systemFont(ofSize: 14.0)
-                if !row.isValid {
-                    cell.titleLabel?.textColor = .red
-                }
-            }.onChange { chgRow in
-                if !(chgRow.value ?? "").isEmpty {
-                    self.mRootVC!.mWorking_EmailVia!.sendingEmailAddress = chgRow.value!
-                }
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.numberOfLines = 0
+        }
+        form.last! <<< ListCheckRow<String>("option_Wizard"){ listRow in
+            listRow.title = NSLocalizedString("Use a Wizard to setup your sending email", comment:"")
+            listRow.selectableValue = "Wizard"
+            listRow.value = nil
+            }.cellUpdate { cell, row in
+                cell.textLabel?.font = .systemFont(ofSize: 15.0)
+                cell.textLabel?.numberOfLines = 0
         }
     }
- */
 }

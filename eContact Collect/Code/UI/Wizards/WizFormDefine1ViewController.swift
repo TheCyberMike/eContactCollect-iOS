@@ -263,7 +263,7 @@ debugPrint("\(self.mCTAG).viewWillAppear STARTED")
                 cell.textLabel?.font = .systemFont(ofSize: 15.0)
                 cell.textLabel?.numberOfLines = 0
         }
-        form.last! <<< ListCheckRow<String>("option_import"){ listRow in
+        form.last! <<< ListCheckRow<String>("option_Sample"){ listRow in
             listRow.title = NSLocalizedString("Choose a Form from the Form Sample Library; it can be edited afterwards", comment:"")
             listRow.selectableValue = "Sample"
             listRow.value = nil

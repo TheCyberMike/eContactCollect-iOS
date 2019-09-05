@@ -18,6 +18,7 @@ class WizOrgDefine1ViewController: FormViewController, UIDocumentPickerDelegate,
     
     // outlets to screen controls
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
+        self.mRootVC?.mWorking_Org_Rec = nil
         self.clearVC()
         if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
             self.navigationController!.popToRootViewController(animated: true)
@@ -106,7 +107,6 @@ debugPrint("\(self.mCTAG).viewDidLoad STARTED")
     
     // clear out the Form so this VC will deinit
     private func clearVC() {
-        self.mRootVC!.mWorking_Org_Rec = nil
         form.removeAll()
         tableView.reloadData()
         self.mSelections = nil

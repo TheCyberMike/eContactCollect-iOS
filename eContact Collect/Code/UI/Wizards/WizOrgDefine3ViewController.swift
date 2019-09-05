@@ -14,7 +14,7 @@ class WizOrgDefine3ViewController: FormViewController {
     
     // outlets to screen controls
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
-        self.mRootVC!.mWorking_Org_Rec = nil
+        self.mRootVC?.mWorking_Org_Rec = nil
         self.clearVC()
         if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
             self.navigationController!.popToRootViewController(animated: true)
@@ -34,10 +34,8 @@ class WizOrgDefine3ViewController: FormViewController {
         self.mRootVC = self.navigationController!.findViewController(ofKind: WizMenuViewController.self) as? WizMenuViewController
         assert(self.mRootVC != nil, "\(self.mCTAG).viewDidLoad self.mRootVC == nil")
         
-        // create an empty Org record if it does not already exist
-        if self.mRootVC!.mWorking_Org_Rec == nil {
-            self.mRootVC!.mWorking_Org_Rec = RecOrganizationDefs(org_code_sv_file: "")
-        }
+        // create an empty Org record the first time the screen is created
+        self.mRootVC!.mWorking_Org_Rec = RecOrganizationDefs(org_code_sv_file: "")
         
         // build the form
         self.buildForm()

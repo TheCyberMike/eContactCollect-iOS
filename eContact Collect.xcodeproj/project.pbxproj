@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D7121A76231AE36100D7550D /* WizSendEmailDefine16ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7121A75231AE36100D7550D /* WizSendEmailDefine16ViewController.swift */; };
 		D7416EAE21F78A9D004850C6 /* ContactsReviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7416EAD21F78A9D004850C6 /* ContactsReviewViewController.swift */; };
 		D74C37B7220CC52500A5B23E /* OAuthSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D74C37A4220CB2BE00A5B23E /* OAuthSwift.framework */; };
 		D74D600722A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74D600622A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift */; };
@@ -318,6 +319,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D7121A75231AE36100D7550D /* WizSendEmailDefine16ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizSendEmailDefine16ViewController.swift; sourceTree = "<group>"; };
 		D7416EAD21F78A9D004850C6 /* ContactsReviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsReviewViewController.swift; sourceTree = "<group>"; };
 		D74C3790220CB2BE00A5B23E /* OAuthSwift.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = OAuthSwift.xcodeproj; path = "../SubModules/OAuthSwift-master/OAuthSwift.xcodeproj"; sourceTree = "<group>"; };
 		D74D600622A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WizSendEmailDefine1ViewController.swift; sourceTree = "<group>"; };
@@ -341,6 +343,7 @@
 		D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserLangRegionViewController.swift; sourceTree = "<group>"; };
 		D7EB06112296105200D0CA02 /* PopupImportViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupImportViewController.swift; sourceTree = "<group>"; };
 		D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App_Error.swift; sourceTree = "<group>"; };
+		D7FEF3EC231C40BD0074E658 /* Accounts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accounts.framework; path = System/Library/Frameworks/Accounts.framework; sourceTree = SDKROOT; };
 		D903B63921778B110021A80E /* ChooserRatingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserRatingViewController.swift; sourceTree = "<group>"; };
 		D903B63B21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupEnterCollectorNotesViewController.swift; sourceTree = "<group>"; };
 		D9042EC12176B6DB0088CF7A /* ContactsMgmtViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsMgmtViewController.swift; sourceTree = "<group>"; };
@@ -569,6 +572,7 @@
 				D74D600622A6EFE50056A11A /* WizSendEmailDefine1ViewController.swift */,
 				D74D600A22A6F86A0056A11A /* WizSendEmailDefine6ViewController.swift */,
 				D74D600C22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift */,
+				D7121A75231AE36100D7550D /* WizSendEmailDefine16ViewController.swift */,
 			);
 			path = Wizards;
 			sourceTree = "<group>";
@@ -699,6 +703,7 @@
 		D9EAF0AB21586F7800B4EB2A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D7FEF3EC231C40BD0074E658 /* Accounts.framework */,
 				D74C3790220CB2BE00A5B23E /* OAuthSwift.xcodeproj */,
 				D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */,
 				D7CC2AA222027E0E00F39E36 /* Security.framework */,
@@ -1075,6 +1080,7 @@
 				D9EBEAF4215F4DAD00A258C8 /* OrgsMgmtViewController.swift in Sources */,
 				D7CEDDC7230633EF00B115B9 /* PopupDownloadViewController.swift in Sources */,
 				D74D600D22A70AC80056A11A /* WizSendEmailDefine11ViewController.swift in Sources */,
+				D7121A76231AE36100D7550D /* WizSendEmailDefine16ViewController.swift in Sources */,
 				D90D6EAF2183D3A1000A90EB /* RecOrgCustomFieldLocales.swift in Sources */,
 				D92EFC2C216D7BD200C1F12A /* EntryFormViewController.swift in Sources */,
 				D9A043DB215C3B3F008BE46F /* AdminPINViewController.swift in Sources */,

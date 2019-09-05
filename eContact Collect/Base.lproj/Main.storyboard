@@ -489,7 +489,11 @@
                                     <segue destination="a6q-lv-ct1" kind="show" identifier="Segue Next_W_EMAIL_6_11" id="deV-Or-lQ2"/>
                                 </connections>
                             </barButtonItem>
-                            <barButtonItem title="Cancel" id="Tha-JV-5Px"/>
+                            <barButtonItem title="Cancel" id="Tha-JV-5Px">
+                                <connections>
+                                    <action selector="button_cancel_pressed:" destination="eG9-Tx-DAm" id="qJg-n6-1Sy"/>
+                                </connections>
+                            </barButtonItem>
                         </rightBarButtonItems>
                     </navigationItem>
                 </viewController>
@@ -509,14 +513,15 @@
                     </view>
                     <navigationItem key="navigationItem" title="Define Email 3" id="sMS-Ij-Pzb">
                         <rightBarButtonItems>
-                            <barButtonItem title="Done" id="y9Z-5F-22o">
+                            <barButtonItem title="Next" id="y9Z-5F-22o">
                                 <connections>
                                     <action selector="button_done_pressed:" destination="a6q-lv-ct1" id="XxO-Sw-G8D"/>
+                                    <segue destination="qdQ-8X-XRE" kind="show" identifier="Segue Next_W_EMAIL_11_16" id="1Mw-4W-0fx"/>
                                 </connections>
                             </barButtonItem>
                             <barButtonItem title="Cancel" id="HdC-ud-Ni2">
                                 <connections>
-                                    <action selector="button_cancel_pressed:" destination="a6q-lv-ct1" id="brg-eC-gYd"/>
+                                    <action selector="button_cancel_pressed:" destination="a6q-lv-ct1" id="wEZ-uG-gla"/>
                                 </connections>
                             </barButtonItem>
                         </rightBarButtonItems>
@@ -525,6 +530,35 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="cIc-Lx-wdV" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="2838" y="-1665"/>
+        </scene>
+        <!--VC WizSendEmailDefine16-->
+        <scene sceneID="dlR-JO-zfo">
+            <objects>
+                <viewController storyboardIdentifier="VC WizSendEmailDefine16" title="Email Define 4" id="qdQ-8X-XRE" userLabel="VC WizSendEmailDefine16" customClass="WizSendEmailDefine16ViewController" customModule="eContact_Collect" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="eZ0-tk-18f">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="BoF-yR-nHQ"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Define Email 4" id="lr7-wl-A2C">
+                        <rightBarButtonItems>
+                            <barButtonItem title="Done" id="phF-Jj-e3B">
+                                <connections>
+                                    <action selector="button_done_pressed:" destination="qdQ-8X-XRE" id="Wdl-Xa-ncJ"/>
+                                </connections>
+                            </barButtonItem>
+                            <barButtonItem title="Cancel" id="tAn-2i-IXB">
+                                <connections>
+                                    <action selector="button_cancel_pressed:" destination="qdQ-8X-XRE" id="DLt-t2-yRA"/>
+                                </connections>
+                            </barButtonItem>
+                        </rightBarButtonItems>
+                    </navigationItem>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iRm-pT-tOi" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3636" y="-1664"/>
         </scene>
         <!--VC WizFormDefine1-->
         <scene sceneID="p4I-4N-duM">
@@ -2757,6 +2791,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="50"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="Ty2-0b-ySo"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="WLC-Jt-ldp" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -2771,6 +2806,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="573"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="JdR-87-0DJ"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="2Tj-u7-lj3" userLabel="First Responder" sceneMemberID="firstResponder"/>

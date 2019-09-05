@@ -78,6 +78,7 @@ public struct EmailAccountCredentials:Equatable {
 public struct EmailProviderSMTP:Equatable {
     public var viaNameLocalized:String = ""
     public var providerInternalName:String = ""
+    public var defaultDomainNames:String = ""
     public var hostname:String = ""
     public var port:Int = 0
     public var connectionType:MCOConnectionType = .clear
@@ -86,9 +87,10 @@ public struct EmailProviderSMTP:Equatable {
     
     init() {}
     
-    init(viaNameLocalized:String, providerInternalName:String, hostname:String, port:Int, connectionType:MCOConnectionType, authType:MCOAuthType, localizedNotes:String?=nil) {
+    init(viaNameLocalized:String, providerInternalName:String, defaultDomains:String?=nil, hostname:String, port:Int, connectionType:MCOConnectionType, authType:MCOAuthType, localizedNotes:String?=nil) {
         self.viaNameLocalized = viaNameLocalized
         self.providerInternalName = providerInternalName
+        self.defaultDomainNames = (defaultDomains ?? "")
         self.hostname = hostname
         self.port = port
         self.connectionType = connectionType
@@ -101,6 +103,7 @@ public struct EmailProviderSMTP:Equatable {
             if provider.providerInternalName == knownProviderInternalName {
                 self.viaNameLocalized = localizedName
                 self.providerInternalName = provider.providerInternalName
+                self.defaultDomainNames = provider.defaultDomainNames
                 self.hostname = provider.hostname
                 self.port = provider.port
                 self.connectionType = provider.connectionType
@@ -239,6 +242,7 @@ public struct EmailProviderSMTP_OAuth:Equatable {
         return URL(string: urlString)
     }
 }
+
 // class object to hold information regarding an email account, including provider, credentials, etc.
 // since its a class, it will be referenced by object rather than copied
 public class EmailVia {
@@ -257,6 +261,11 @@ public class EmailVia {
         case None = 0, Stored = 1, API = 2, SMTPknown = 3, SMTPsettings = 4
     }
     
+    // Mail API types
+    public enum APIType: Int {
+        case iOSMail = 0
+    }
+    
     // create a default instance which is the iOS Mail App API
     init() {}
     
@@ -269,6 +278,26 @@ public class EmailVia {
     // create an instance from an encoded string
     init?(fromEncode:String?, fromCredentials: Data?) throws {
         try self.decode(fromEncode: fromEncode, fromCredentials: fromCredentials)
+    }
+    
+    // create instance for an API
+    init(fromAPI:APIType, displayName:String, sendingEmailAddr:String) {
+        switch fromAPI {
+        case .iOSMail:
+            self.viaNameLocalized = NSLocalizedString("iOS Mail App", comment:"")
+            self.emailProvider_InternalName = "iOSMail"
+            break
+        }
+
+        self.viaType = .API
+        self.userDisplayName = displayName
+        self.sendingEmailAddress = sendingEmailAddr
+        
+        if !self.userDisplayName.isEmpty {
+            self.viaNameLocalized = self.viaNameLocalized + " - " + self.userDisplayName
+        } else if !self.sendingEmailAddress.isEmpty {
+            self.viaNameLocalized = self.viaNameLocalized + " - " + self.sendingEmailAddress
+        }
     }
     
     // create an instance from a known SMTP Email Provider
@@ -296,8 +325,8 @@ public class EmailVia {
     // create an encoded string
     // encode formats:
     //   <localizedName> \1 stored
-    //   <localizedName> \1 api       \1 api \t <api>
-    //   <localizedName> \1 smtpKnown \1 from \t     \1 knownProvider \t <providerInternalName>
+    //   <localizedName> \1 api       \1 from \t ... \1 api \t <api>
+    //   <localizedName> \1 smtpKnown \1 from \t ... \1 knownProvider \t <providerInternalName>
     //   <localizedName> \1 smtpSet   \1 from \t ... \1 settingsSMTP \t ... \1 settingsOAuth \t ... \1 credentials \t ...
     //   <localizedName> \1 appScheme \1 from \t ... \1 ??FUTURE
     //
@@ -309,7 +338,7 @@ public class EmailVia {
         case .Stored:
             return "\(self.viaNameLocalized)\u{1}stored"
         case .API:
-            return "\(self.viaNameLocalized)\u{1}api\u{1}api\t\(self.emailProvider_InternalName)"
+            return "\(self.viaNameLocalized)\u{1}api\u{1}from\t\(self.userDisplayName)\t\(self.sendingEmailAddress)\u{1}api\t\(self.emailProvider_InternalName)"
         case .SMTPknown:
             return "\(self.viaNameLocalized)\u{1}smtpKnown\u{1}from\t\(self.userDisplayName)\t\(self.sendingEmailAddress)\u{1}knownProvider\t\(self.emailProvider_InternalName)"
         case .SMTPsettings:
@@ -484,31 +513,32 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     
     public static var knownSMTPEmailProviders:[EmailProviderSMTP] = [
         // WARNING: providerInternalName must NOT have any spaces: just letters, digits, and dash
+        // always place OAuth entries before non-OAuth entries for the same provider
         
         // Google GMail - OAuth access; username is full gmail email address
-        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Gmail OAuth2", comment:""), providerInternalName: "Gmail-OAuth2", hostname: "smtp.gmail.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.xoAuth2),
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Gmail OAuth2", comment:""), providerInternalName: "Gmail-OAuth2", defaultDomains: "gmail.com", hostname: "smtp.gmail.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.xoAuth2),
         
         // Google GMail - "less secure" access; username is full gmail email address
         // https://support.google.com/mail/answer/7126229
         // https://support.google.com/accounts/answer/6010255
-        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Gmail legacy", comment:""), providerInternalName: "Gmail-Legacy", hostname: "smtp.gmail.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain, localizedNotes: NSLocalizedString("GMail Legacy Notes", comment:"")),
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Gmail legacy", comment:""), providerInternalName: "Gmail-Legacy", defaultDomains: "gmail.com", hostname: "smtp.gmail.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain, localizedNotes: NSLocalizedString("GMail Legacy Notes", comment:"")),
         
         // Yahoo Mail - OAuth access; username is full yahoo email address
         // access to Yahoo SMTP email via OAuth has been removed by Yahoo
-        //EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Yahoo OAuth2", comment:""), providerInternalName: "Yahoo-OAuth2", hostname: "smtp.mail.yahoo.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.xoAuth2),
+        //EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Yahoo OAuth2", comment:""), providerInternalName: "Yahoo-OAuth2", defaultDomains: "yahoo.com", hostname: "smtp.mail.yahoo.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.xoAuth2),
         
         // Yahoo Mail - "less secure" access; username is full yahoo email address
         // https://help.yahoo.com/kb/pop-settings-sln4724.html
         // https://help.yahoo.com/kb/SLN3792.html
-        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Yahoo legacy", comment:""), providerInternalName: "Yahoo-Legacy", hostname: "smtp.mail.yahoo.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain, localizedNotes: NSLocalizedString("Yahoo Legacy Notes", comment:"")),
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Yahoo legacy", comment:""), providerInternalName: "Yahoo-Legacy", defaultDomains: "yahoo.com", hostname: "smtp.mail.yahoo.com", port: 465, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain, localizedNotes: NSLocalizedString("Yahoo Legacy Notes", comment:"")),
         
         // Outlook.com Mail - "less secure" access; username is full outlook email address
         // https://support.office.com/en-us/article/pop-imap-and-smtp-settings-for-outlook-com-d088b986-291d-42b8-9564-9c414e2aa040
-        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Outlook.com legacy", comment:""), providerInternalName: "Outlook-Legacy", hostname: "smtp-mail.outlook.com", port: 587, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain),
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("Outlook.com legacy", comment:""), providerInternalName: "Outlook-Legacy", defaultDomains: "outlook.com,hotmail.com,live.com,msn.com,passport.com,passport.net", hostname: "smtp-mail.outlook.com", port: 587, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain),
         
         // iCloud Mail - "less secure" access; username is full icloud email address
         // https://support.office.com/en-us/article/pop-imap-and-smtp-settings-for-outlook-com-d088b986-291d-42b8-9564-9c414e2aa040
-        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("iCloud legacy", comment:""), providerInternalName: "iCloud-Legacy", hostname: "smtp.mail.me.com", port: 587, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain),
+        EmailProviderSMTP(viaNameLocalized: NSLocalizedString("iCloud legacy", comment:""), providerInternalName: "iCloud-Legacy", defaultDomains: "icloud.com,me.com,mac.com", hostname: "smtp.mail.me.com", port: 587, connectionType: MCOConnectionType.TLS, authType: MCOAuthType.saslPlain)
     ]
     
     public static var connectionTypeDefs:[ConnectionTypeDef] = [
@@ -548,15 +578,7 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     // errors are stored via the class members and will already be posted to the error.log
     public func firstTimeSetup(method:String) {
 //debugPrint("\(mCTAG).firstTimeSetup STARTED")
-        if AppDelegate.getPreferenceInt(prefKey: PreferencesKeys.Ints.APP_Handler_Email_FirstTime_Done) != 1 {
-            do {
-                try self.storeEmailVia(via: EmailVia())     // store the iOS Mail App as a possible Email provider
-                AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_Handler_Email_FirstTime_Done, value: 1)
-            } catch {
-                self.mEMHstatus_state = .Errors
-                self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).firstTimeSetup", domain: self.mThrowErrorDomain, error: error, errorCode: .INTERNAL_ERROR, userErrorDetails: NSLocalizedString("Load Defaults", comment:""))
-            }
-        }
+        // none needed
     }
     
     // return whether the handler is fully operational
@@ -576,23 +598,49 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
         self.mEmailPendingTagCntr = self.mEmailPendingTagCntr + 1
         return self.mEmailPendingTagCntr
     }
+    
+    // remove all email vias and default email
+    public func factoryReset() {
+        let allStored:[EmailVia]? = self.getListEmailOptions()
+        if (allStored?.count ?? 0) > 0 {
+            for via in allStored! {
+                do {
+                    try self.deleteEmailVia(localizedName: via.viaNameLocalized)
+                } catch {}  // ignore any errors
+            }
+        }
+    }
+    
+    // determine if the local iOS Mail App is installed amd usable
+    public static func hasLocalMailApp() -> Bool {
+        if !MFMailComposeViewController.canSendMail() { return false }
+        if !UIApplication.shared.canOpenURL(URL(string: "mailto:cybermike@yahoo.com")!) { return false }
+        return true
+    }
 
     /////////////////////////////////////////////////////////////////////////////////////////
     // public methods for Email Accounts
     /////////////////////////////////////////////////////////////////////////////////////////
+    
+    // has the end-user setup any email accounts yet?
+    public func hasAnyEmailVias() -> Bool {
+        let viaEncodeKeys:[String] = AppDelegate.getAllPreferenceKeys(keyPrefix: PreferencesKeys.Strings.EmailVia_Stored_Named.rawValue)
+        if viaEncodeKeys.isEmpty { return false }
+        else { return true }
+    }
     
     // set the end-users preferred default EmailVia
     public func setLocalizedDefaultEmail(localizedName:String) {
         AppDelegate.setPreferenceString(prefKey: PreferencesKeys.Strings.EmailVia_Default_Name, value: localizedName)
     }
     
-    // provide the current default email provider's localized name; no credentials are accessed
-    public func getLocalizedDefaultEmail() -> String {
+    // provide the current default email provider's localized name; no credentials are accessed; nil returned if none setup yet
+    public func getLocalizedDefaultEmail() -> String? {
         let defaultViaLocalizedName:String? = AppDelegate.getPreferenceString(prefKey: PreferencesKeys.Strings.EmailVia_Default_Name)
         let viaEncodeKeys:[String] = AppDelegate.getAllPreferenceKeys(keyPrefix: PreferencesKeys.Strings.EmailVia_Stored_Named.rawValue)
         if viaEncodeKeys.isEmpty {
             // no stored EmailVia's
-            return EmailVia().viaNameLocalized   // default to the iOS Mail App
+            return nil
         } else if viaEncodeKeys.count == 1 || (defaultViaLocalizedName ?? "").isEmpty {
             // use the first/only stored EmailVia
             let size:Int = viaEncodeKeys[0].count - PreferencesKeys.Strings.EmailVia_Stored_Named.rawValue.count
@@ -611,11 +659,11 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     }
     
     // provide a list of all stored email provider's localized names
-    public func getListEmailOptions() -> [EmailVia] {
+    public func getListEmailOptions() -> [EmailVia]? {
         let viaEncodeKeys:[String] = AppDelegate.getAllPreferenceKeys(keyPrefix: PreferencesKeys.Strings.EmailVia_Stored_Named.rawValue)
         if viaEncodeKeys.isEmpty {
             // no stored EmailVia
-            return [EmailVia()]   // default to the iOS Mail App
+            return nil
         }
         
         var result:[EmailVia] = []
@@ -627,10 +675,14 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
         return result
     }
     
-    // provide a list of all stored email provider's localized names
+    // provide a list of all stored email provider's localized names, plus the iOS Main App, and an Other SMTP entry
     public func getListPotentialEmailProviders() -> [EmailVia] {
-        var result:[EmailVia] = [EmailVia()]    // always include the iOS Mail App
+        var result:[EmailVia] = []
         
+        // always include the iOS Mail App
+        result.append(EmailVia())
+        
+        // add in all app-known providers
         for providerSMTP in EmailHandler.knownSMTPEmailProviders {
             let via:EmailVia = EmailVia(fromSMTPProvider: providerSMTP)
             let oauth:EmailProviderSMTP_OAuth? = EmailProviderSMTP_OAuth(localizedName: providerSMTP.viaNameLocalized, knownProviderInternalName: providerSMTP.providerInternalName)
@@ -644,6 +696,24 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
         lastVia.emailProvider_InternalName = "$Other"
         result.append(lastVia)
         return result
+    }
+    
+    // given an email address, does one of the known providers handle it?  Used by the SendEmailDefine wizard
+    public func getKnownProvider(forEmailAddr:String) -> EmailVia? {
+        if forEmailAddr.isEmpty { return nil }
+        let atIndex = forEmailAddr.lastIndex(of: "@")
+        if atIndex == nil { return nil }
+        let forDomain = forEmailAddr.suffix(from: forEmailAddr.index(atIndex!, offsetBy: 1))
+        
+        for providerSMTP in EmailHandler.knownSMTPEmailProviders {
+            let domains:[String] = providerSMTP.defaultDomainNames.components(separatedBy: ",")
+            for domain:String in domains {
+                if domain == forDomain {
+                    return EmailVia(fromSMTPProvider: providerSMTP)
+                }
+            }
+        }
+        return nil
     }
     
     // store an EmailVia is the proper storage respositories
@@ -762,10 +832,20 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
         do {
             if via == nil {
                 // none provided so use the default
-                usingVia = try self.getDefaultStoredViaWithCredentials()
+                let v:EmailVia? = try self.getDefaultStoredViaWithCredentials()
+                if v == nil {
+                    // no default is available
+                    throw USER_ERROR(domain: self.mThrowErrorDomain, errorCode: .NO_EMAIL_ACCOUNTS_SETUP, userErrorDetails: nil)
+                }
+                usingVia = v!
             } else if via!.viaType == .None {
                 // none provided so use the default
-                usingVia = try self.getDefaultStoredViaWithCredentials()
+                let v:EmailVia? = try self.getDefaultStoredViaWithCredentials()
+                if v == nil {
+                    // no default is available
+                    throw USER_ERROR(domain: self.mThrowErrorDomain, errorCode: .NO_EMAIL_ACCOUNTS_SETUP, userErrorDetails: nil)
+                }
+                usingVia = v!
             } else if via!.viaType == .Stored {
                 // lookup the indicated stored EmailVia including the securely stored credentials
                 let tempVia:EmailVia? = try self.getStoredEmailViaWithCredentials(localizedName: via!.viaNameLocalized)
@@ -809,7 +889,7 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
                 throw APP_ERROR(funcName: "\(self.mCTAG).sendEmail", domain: self.mThrowErrorDomain, errorCode: .INTERNAL_ERROR, userErrorDetails: usingVia.viaNameLocalized, developerInfo: "usingVia.viaType == .Stored")
             case .API:
                 // presently the only allowed API is the iOS provided API for the Apple Mail App
-                try sendEmailViaAppleMailApp(vc: vc, invoker: invoker, tagI: tagI, tagS: tagS, localizedTitle: localizedTitle, to: to, cc: cc, subject: subject, body: body, includingAttachment: includingAttachment, mimeType: mimeType)
+                try sendEmailViaAppleMailApp(vc: vc, invoker: invoker, tagI: tagI, tagS: tagS, localizedTitle: localizedTitle, via: usingVia, to: to, cc: cc, subject: subject, body: body, includingAttachment: includingAttachment, mimeType: mimeType)
                 break
             case .SMTPknown:
                 // send using SMTP via a known provider; provider settings and secure credentials have already been obtained
@@ -875,17 +955,17 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     // private methods
     /////////////////////////////////////////////////////////////////////////////////////////
     
-    // get the default stored via, or force the iOS Mail App via
+    // get the default stored via; returns nil if the end-user has not defined any yet;
     // case EmailVia_Stored_Named = "emailVia_stored_named_"   // storage of one or more EmailVia as set by the Collector
     // case EmailVia_Default_Name = "emailVia_default_name"    // the name of the default EmailVia as chosen by the Collector
     // if !AppDelegate.doesPreferenceIntExist(prefKey: PreferencesKeys.Ints.APP_FirstTime) { AppDelegate.mFirstTImeStages = 0 }
     // else { AppDelegate.mFirstTImeStages = AppDelegate.getPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime) }
-    private func getDefaultStoredViaWithCredentials() throws -> EmailVia {
+    private func getDefaultStoredViaWithCredentials() throws -> EmailVia? {
         let defaultViaLocalizedName:String? = AppDelegate.getPreferenceString(prefKey: PreferencesKeys.Strings.EmailVia_Default_Name)
         let viaEncodeKeys:[String] = AppDelegate.getAllPreferenceKeys(keyPrefix: PreferencesKeys.Strings.EmailVia_Stored_Named.rawValue)
         if viaEncodeKeys.isEmpty {
             // no stored EmailVia
-            return EmailVia()   // default to the iOS Mail App
+            return nil
         } else if viaEncodeKeys.count == 1 || (defaultViaLocalizedName ?? "").isEmpty {
             // use the first/only stored EmailVia
             let size:Int = viaEncodeKeys[0].count - PreferencesKeys.Strings.EmailVia_Stored_Named.rawValue.count
@@ -922,7 +1002,7 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     }
 
     // send the email using the iOS Mail App
-    private func sendEmailViaAppleMailApp(vc:UIViewController, invoker:String, tagI:Int, tagS:String?, localizedTitle:String, to:String?, cc:String?, subject:String?, body:String?, includingAttachment:URL?, mimeType:String) throws {
+    private func sendEmailViaAppleMailApp(vc:UIViewController, invoker:String, tagI:Int, tagS:String?, localizedTitle:String, via:EmailVia, to:String?, cc:String?, subject:String?, body:String?, includingAttachment:URL?, mimeType:String) throws {
 //debugPrint("\(self.mCTAG).sendEmailViaAppleMailApp STARTED")
         
         // build up the needed to/cc arrays
@@ -952,6 +1032,11 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
         if !(cc ?? "").isEmpty { mailVC.setCcRecipients(emailCCArray) }
         if !(subject ?? "").isEmpty { mailVC.setSubject(subject!) }
         if !(body ?? "").isEmpty { mailVC.setMessageBody(body!, isHTML: false) }
+        if !via.sendingEmailAddress.isEmpty {
+            if #available(iOS 11.0, *) {
+                mailVC.setPreferredSendingEmailAddress(via.sendingEmailAddress)
+            }
+        }
         if includingAttachment != nil {
             let fileName:String = includingAttachment!.lastPathComponent
             let fileData:Data = FileManager.default.contents(atPath: includingAttachment!.path)!
@@ -1167,28 +1252,31 @@ debugPrint(msg)*/
         let _ = pending.oAuth2Swift!.authorize(
             withCallbackURL: callbackURL,
             scope: pending.via.emailProvider_SMTP_OAuth!.oAuthScope,
-            state: pending.via.emailProvider_SMTP_OAuth!.providerInternalName,
-            success: { credential, response, parameters in
-                // initial authorization interaction with the end-user succceeded;
-                // we should have been given an authorization code and a refresh token but the expiration should be ignored
+            state: pending.via.emailProvider_SMTP_OAuth!.providerInternalName, completionHandler: { result in
+                switch result {
+                case .success(let (credential, _, _)):  // let (credential, _, parameters)
+                    // initial authorization interaction with the end-user succceeded;
+                    // we should have been given an authorization code and a refresh token but the expiration should be ignored
 //debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization.authorize.success AT=\(credential.oauthToken), RT=\(credential.oauthRefreshToken), ED=\(credential.oauthTokenExpiresAt), parameters=\(parameters)")
-                pending.via.emailProvider_Credentials!.oAuthAccessToken = credential.oauthToken
-                pending.via.emailProvider_Credentials!.oAuthRefreshToken = credential.oauthRefreshToken
-                pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime = credential.oauthTokenExpiresAt
-                do {
-                    try AppDelegate.storeSecureItem(key: pending.via.viaNameLocalized, label: "Email", data: pending.via.emailProvider_Credentials!.data())
-                } catch var appError as APP_ERROR {
-                    appError.prependCallStack(funcName: "\(self.mCTAG).validateOAuthAskForAuthorization")
-                    callback(appError)
-                } catch { callback(error) }
-                callback(nil)
-                return // from success callback
-            },
-            failure: { error in
-                // initial authorization interaction with the end-user failed or was denied
+                    pending.via.emailProvider_Credentials!.oAuthAccessToken = credential.oauthToken
+                    pending.via.emailProvider_Credentials!.oAuthRefreshToken = credential.oauthRefreshToken
+                    pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime = credential.oauthTokenExpiresAt
+                    do {
+                        try AppDelegate.storeSecureItem(key: pending.via.viaNameLocalized, label: "Email", data: pending.via.emailProvider_Credentials!.data())
+                    } catch var appError as APP_ERROR {
+                        appError.prependCallStack(funcName: "\(self.mCTAG).validateOAuthAskForAuthorization")
+                        callback(appError)
+                    } catch { callback(error) }
+                    callback(nil)
+                    break
+                    
+                case .failure(let error):
+                    // initial authorization interaction with the end-user failed or was denied
 debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization.authorize.failure \(error.description)")
-                callback(APP_ERROR(funcName: "\(self.mCTAG).validateOAuthAskForAuthorization", during: "oauthswift.authorize", domain: self.mThrowErrorDomain, error: error, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: NSLocalizedString("OAuth failure", comment: ""), noPost: true))
-                return // from failure callback
+                    callback(APP_ERROR(funcName: "\(self.mCTAG).validateOAuthAskForAuthorization", during: "oauthswift.authorize", domain: self.mThrowErrorDomain, error: error, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: NSLocalizedString("OAuth failure", comment: ""), noPost: true))
+                    break
+                }
+                return // from completionHandler callback
             }
         )
 //debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization ASK FOR AUTHORIZATION POSTED AND ENDED")
@@ -1208,32 +1296,35 @@ debugPrint("\(self.mCTAG).validateOAuthAskForAuthorization.authorize.failure \(e
         
         pending.oAuth2Swift!.authorizeURLHandler = SafariURLHandler(viewController: vc, oauthSwift: pending.oAuth2Swift!)
         let _ = pending.oAuth2Swift!.renewAccessToken(
-            withRefreshToken: pending.via.emailProvider_Credentials!.oAuthRefreshToken,
-            success: { credential, response, parameters in
+            withRefreshToken: pending.via.emailProvider_Credentials!.oAuthRefreshToken, completionHandler: { result in
+                switch result {
+                case .success(let (credential, _, _)):     // let (credential, _, parameters)
 //debugPrint("\(self.mCTAG).validateOAuthRenew.renewAccessToken.success AT=\(credential.oauthToken), RT=\(credential.oauthRefreshToken), ED=\(credential.oauthTokenExpiresAt), parameters=\(parameters)")
-                pending.via.emailProvider_Credentials!.oAuthAccessToken = credential.oauthToken
-                if !credential.oauthRefreshToken.isEmpty { pending.via.emailProvider_Credentials!.oAuthRefreshToken = credential.oauthRefreshToken }
-                pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime = credential.oauthTokenExpiresAt
-                do {
-                    try AppDelegate.storeSecureItem(key: pending.via.viaNameLocalized, label: "Email", data: pending.via.emailProvider_Credentials!.data())
-                } catch var appError as APP_ERROR {
-                    appError.prependCallStack(funcName: "\(self.mCTAG).validateOAuthRenew")
-                    callback(appError)
-                } catch { callback(error) }
-                callback(nil)
-                return // from success callback
-            },
-            failure: { error in
-                // refresh failed or was denied
+                    pending.via.emailProvider_Credentials!.oAuthAccessToken = credential.oauthToken
+                    if !credential.oauthRefreshToken.isEmpty { pending.via.emailProvider_Credentials!.oAuthRefreshToken = credential.oauthRefreshToken }
+                    pending.via.emailProvider_Credentials!.oAuthAccessTokenExpiresDatetime = credential.oauthTokenExpiresAt
+                    do {
+                        try AppDelegate.storeSecureItem(key: pending.via.viaNameLocalized, label: "Email", data: pending.via.emailProvider_Credentials!.data())
+                    } catch var appError as APP_ERROR {
+                        appError.prependCallStack(funcName: "\(self.mCTAG).validateOAuthRenew")
+                        callback(appError)
+                    } catch { callback(error) }
+                    callback(nil)
+                    break
+                    
+                case .failure(let error):
+                    // refresh failed or was denied
 debugPrint("\(self.mCTAG).validateOAuthRenew.renewAccessToken.failure \(error.description)")
-                callback(APP_ERROR(funcName: "\(self.mCTAG).validateOAuthRenew", during: "oauthswift.renewAccessToken", domain: self.mThrowErrorDomain, error: error, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: NSLocalizedString("OAuth failure", comment: ""), noPost: true))
-                return // from failure callback
+                    callback(APP_ERROR(funcName: "\(self.mCTAG).validateOAuthRenew", during: "oauthswift.renewAccessToken", domain: self.mThrowErrorDomain, error: error, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: NSLocalizedString("OAuth failure", comment: ""), noPost: true))
+                    break
+                }
+                return // from completionHandler callback
             }
         )
 //debugPrint("\(self.mCTAG).validateOAuthRenew RENEW AUTHORIZATION POSTED AND ENDED")
     }
     
-    // need to do an OAuth renew
+    // need to check an existing token
     private func validateOAuthCheckExisting(vc:UIViewController, pending:EmailPending, callback:@escaping ((Error?) -> Void)) {
         // setup the oAuth2 parameters
 //debugPrint("\(self.mCTAG).validateOAuthCheckExisting CHECK ACCESS TOKEN STARTED")
@@ -1249,17 +1340,20 @@ debugPrint("\(self.mCTAG).validateOAuthRenew.renewAccessToken.failure \(error.de
         let _ = pending.oAuth2Swift!.checkToken(
             checkURL: pending.via.emailProvider_SMTP_OAuth!.oAuthCheckAccessTokenURL,
             checkURLParameter: pending.via.emailProvider_SMTP_OAuth!.oAuthCheckAccessTokenURLParameter,
-            token: pending.via.emailProvider_Credentials!.oAuthAccessToken,
-            success: { credential, response, parameters in
+            token: pending.via.emailProvider_Credentials!.oAuthAccessToken, completionHandler: { result in
+                switch result {
+                case .success(let (_, _, parameters)):
 //debugPrint("\(self.mCTAG).validateOAuthCheckExisting.checkToken.success parameters=\(parameters)")
-                callback(nil)
-                return // from success callback
-            },
-            failure: { error in
-                // token is invalid or expired or check failed or was denied
+                    callback(nil)
+                    break
+                    
+                case .failure(let error):
+                    // token is invalid or expired or check failed or was denied
 debugPrint("\(self.mCTAG).validateOAuthCheckExisting.checkToken.failure \(error.description)")
-                callback(APP_ERROR(funcName: "\(self.mCTAG).validateOAuthCheckExisting", during: "oauthswift.checkAccessToken", domain: self.mThrowErrorDomain, error: error, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: NSLocalizedString("OAuth failure", comment: ""), noPost: true))
-                return // from failure callback
+                    callback(APP_ERROR(funcName: "\(self.mCTAG).validateOAuthCheckExisting", during: "oauthswift.checkAccessToken", domain: self.mThrowErrorDomain, error: error, errorCode: .SMTP_EMAIL_SUBSYSTEM_ERROR, userErrorDetails: NSLocalizedString("OAuth failure", comment: ""), noPost: true))
+                    break
+                }
+                return // from completionHandler callback
             }
         )
 //debugPrint("\(self.mCTAG).validateOAuthCheckExisting CHECK ACCESS TOKEN POSTED AND ENDED")

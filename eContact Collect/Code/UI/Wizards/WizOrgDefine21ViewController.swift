@@ -22,7 +22,7 @@ class WizOrgDefine21ViewController: UIViewController, UIImagePickerControllerDel
     @IBOutlet weak var button_logo: UIButton!
     @IBOutlet weak var button_delete_logo: UIButton!
     @IBAction func button_cancel_pressed(_ sender: UIBarButtonItem) {
-        self.mRootVC!.mWorking_Org_Rec = nil
+        self.mRootVC?.mWorking_Org_Rec = nil
         if !self.navigationController!.popToViewController(ofKind: WizMenuViewController.self) {
             self.navigationController!.popToRootViewController(animated: true)
         }

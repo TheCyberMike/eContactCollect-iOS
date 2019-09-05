@@ -233,7 +233,7 @@ class PopupImportViewController: UIViewController {
             }
         } catch let userError as USER_ERROR {
             // user errors are never posted to the error.log
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Import Error", comment:""), errorStruct: userError, buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("User Error", comment:""), errorStruct: userError, buttonText: NSLocalizedString("Okay", comment:""))
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).importConfigFile", errorStruct: error, extra: self.mFileURL!.path)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Import Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))

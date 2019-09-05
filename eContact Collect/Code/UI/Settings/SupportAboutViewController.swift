@@ -472,7 +472,7 @@ class ContactOptionsViewController: FormViewController, UIActivityItemSource {
             try EmailHandler.shared.sendEmailToDeveloper(vc: self, invoker: "SupportOptionsViewController", tagI: 1, tagS: nil, localizedTitle: NSLocalizedString("Email the Developer", comment:""), subject: subject, body: body, includingAttachment: attachmentURL)
         } catch let userError as USER_ERROR {
             // user errors are never posted to the error.log
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: userError, buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("User Error", comment:""), errorStruct: userError, buttonText: NSLocalizedString("Okay", comment:""))
         } catch let appError as APP_ERROR {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailDeveloper", during:"sendEmailToDeveloper", errorStruct: appError, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: appError, buttonText: NSLocalizedString("Okay", comment:""))

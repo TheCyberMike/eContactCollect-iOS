@@ -356,12 +356,12 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource {
         let during:String = NSLocalizedString("Send Contacts for Org ", comment:"") + splits[2] + NSLocalizedString("and Form ", comment:"") + formSplits[0]
         if orgRec == nil {
             // user errors are not posted to the error.log
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), endUserDuring: during, errorStruct: USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Must have been deleted before sending collected contacts", comment:"")), buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("User Error", comment:""), endUserDuring: during, errorStruct: USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Must have been deleted before sending collected contacts", comment:"")), buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         if formRec == nil {
             // user errors are not posted to the error.log
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Database Error", comment:""), endUserDuring: during, errorStruct: USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .FORM_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Must have been deleted before sending collected contacts", comment:"")), buttonText: NSLocalizedString("Okay", comment:""))
+            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("User Error", comment:""), endUserDuring: during, errorStruct: USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .FORM_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Must have been deleted before sending collected contacts", comment:"")), buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
         
@@ -406,7 +406,21 @@ class SendContactsFormViewController: FormViewController, UIActivityItemSource {
             try EmailHandler.shared.sendEmail(vc: self, invoker: "SendContactsViewController", tagI: 1, tagS: fileName, localizedTitle: NSLocalizedString("Email SV-File", comment:""), via: email_via, to: email_to, cc: email_cc, subject: email_subject, body: nil, includingAttachment: URL(fileURLWithPath: filePath))
         } catch let userError as USER_ERROR {
             // user errors are never posted to the error.log
-            AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: userError, buttonText: NSLocalizedString("Okay", comment:""))
+            if userError.errorCode == .NO_EMAIL_ACCOUNTS_SETUP {
+                AppDelegate.showYesNoDialog(vc:self, title:NSLocalizedString("User Error", comment:""), message:NSLocalizedString("No sending email account has been setup yet. You can perform the Sending Email Setup Wizard now, or you can go to Settings->Manage Preferences to configure your sending email.", comment:""), buttonYesText:NSLocalizedString("Run Wizard", comment:""), buttonNoText:NSLocalizedString("Okay", comment:""), callbackAction:1, callbackString1:nil, callbackString2:nil, completion: {(vc:UIViewController, theResult:Bool, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
+                    // callback from the yes/no dialog upon one of the buttons being pressed
+                    if theResult {
+                        // answer was Yes, run the Wizard
+                        let storyboard = UIStoryboard(name:"Main", bundle:nil)
+                        let nextViewController:WizMenuViewController = storyboard.instantiateViewController(withIdentifier:"VC WizMenu") as! WizMenuViewController
+                        nextViewController.mRunWizard = .SENDINGEMAIL
+                        self.navigationController?.pushViewController(nextViewController, animated:true)
+                    }
+                    return  // from callback
+                })
+            } else {
+                AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("User Error", comment:""), errorStruct: userError, buttonText: NSLocalizedString("Okay", comment:""))
+            }
         } catch let appError as APP_ERROR {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).emailSVfile", during:"sendEmail", errorStruct: appError, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Email Error", comment:""), errorStruct: appError, buttonText: NSLocalizedString("Okay", comment:""))
@@ -428,7 +442,7 @@ debugPrint("\(self.mCTAG).noticeEmailCompleted STARTED for \(emailResult.invoker
                 } else {
                     if emailResult.invoker_tagS != nil && (emailResult.result == .Sent || emailResult.result == .Saved) {
                         do {
-                            try SVFilesHandler.shared.movePendingToSent(fileName: emailResult.invoker_tagS!) // ??? move this to EmailHandler?
+                            try SVFilesHandler.shared.movePendingToSent(fileName: emailResult.invoker_tagS!)
                             self.displayListOfFiles()
                         } catch {
                             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).noticeEmailCompleted", errorStruct: error, extra: emailResult.invoker_tagS!)

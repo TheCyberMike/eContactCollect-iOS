@@ -33,8 +33,8 @@ debugPrint("\(mCTAG).deinit STARTED")
 //debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
         
-        self.mEmailDefault = EmailHandler.shared.getLocalizedDefaultEmail()
-        self.mEmailViaOptions = EmailHandler.shared.getListEmailOptions()
+        self.mEmailDefault = EmailHandler.shared.getLocalizedDefaultEmail() // can be nil
+        self.mEmailViaOptions = EmailHandler.shared.getListEmailOptions()   // can be nil or empty
         
         // build the form entirely
         self.buildForm()
@@ -93,28 +93,35 @@ debugPrint("\(mCTAG).deinit STARTED")
     
     // refresh the Email Accts MVS
     private func refreshEmailAccts() {
-        self.mEmailViaOptions = EmailHandler.shared.getListEmailOptions()
-        let theNames = self.mEmailViaOptions!.map { $0.viaNameLocalized }
-        self.mDefaultAcct!.options = theNames
+        self.mEmailViaOptions = EmailHandler.shared.getListEmailOptions()   // can be nil or empty
+        var theNames:[String]? = nil
+        if (self.mEmailViaOptions?.count ?? 0) > 0 {
+            theNames = self.mEmailViaOptions!.map { $0.viaNameLocalized }
+            self.mDefaultAcct!.options = theNames
+        } else {
+            self.mDefaultAcct!.options = nil
+        }
         
         // check the recorded EmailVias against what is in the MVS
         var addedRemoved:Bool = false
-        for emailVia in self.mEmailViaOptions! {
-            if let br = form.rowBy(tag: "AC," + emailVia.viaNameLocalized) {
-                // EmailVia already exists as a buttonRow; change it
-                br.title = emailVia.viaNameLocalized
-                br.retainedObject = emailVia
-                br.updateCell()
-            } else {
-                // EmailVia is not in the MVS; add it
-                let br1 = self.makeAccountsButtonRow(forVia: emailVia)
-                let ar = form.rowBy(tag: "add_new_account")
-                do {
-                    try self.mMVSaccts!.insert(row: br1, before: ar!)
-                    addedRemoved = true
-                } catch {
-                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refreshEmailAccts", errorStruct: error, extra: nil)
-                    // do not show an error to the end-user
+        if (self.mEmailViaOptions?.count ?? 0) > 0 {
+            for emailVia in self.mEmailViaOptions! {
+                if let br = form.rowBy(tag: "AC," + emailVia.viaNameLocalized) {
+                    // EmailVia already exists as a buttonRow; change it
+                    br.title = emailVia.viaNameLocalized
+                    br.retainedObject = emailVia
+                    br.updateCell()
+                } else {
+                    // EmailVia is not in the MVS; add it
+                    let br1 = self.makeAccountsButtonRow(forVia: emailVia)
+                    let ar = form.rowBy(tag: "split_add_button")
+                    do {
+                        try self.mMVSaccts!.insert(row: br1, before: ar!)
+                        addedRemoved = true
+                    } catch {
+                        AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).refreshEmailAccts", errorStruct: error, extra: nil)
+                        // do not show an error to the end-user
+                    }
                 }
             }
         }
@@ -125,8 +132,13 @@ debugPrint("\(mCTAG).deinit STARTED")
                 let row = self.mMVSaccts!.allRows[inx]
                 let sp = row.tag!.components(separatedBy: ",")
                 if sp.count == 2 && sp[0] == "AC" {
-                    let pos = theNames.firstIndex(of: sp[1])
-                    if pos == nil {
+                    if (theNames?.count ?? 0) > 0 {
+                        let pos = theNames!.firstIndex(of: sp[1])
+                        if pos == nil {
+                            self.mMVSaccts!.remove(at: inx)
+                            addedRemoved = true
+                        }
+                    } else {
                         self.mMVSaccts!.remove(at: inx)
                         addedRemoved = true
                     }
@@ -138,7 +150,7 @@ debugPrint("\(mCTAG).deinit STARTED")
     
     // refresh the default email account
     private func refreshDefaultEmailAcct() {
-        self.mEmailDefault = EmailHandler.shared.getLocalizedDefaultEmail()
+        self.mEmailDefault = EmailHandler.shared.getLocalizedDefaultEmail() // can be nil
         self.mDefaultAcct!.value = self.mEmailDefault
     }
     
@@ -249,11 +261,15 @@ debugPrint("\(mCTAG).deinit STARTED")
         }
         
         let defaultAcctRow = PushRow<String>(){ row in
-            row.title = NSLocalizedString("Default Sending Email Acct", comment:"")
+            row.title = NSLocalizedString("Default Sending Email", comment:"")
             row.tag = "email_default"
             row.selectorTitle = NSLocalizedString("Choose one", comment:"")
-            row.options = self.mEmailViaOptions!.map { $0.viaNameLocalized }
+            if (self.mEmailViaOptions?.count ?? 0) > 0 {
+                row.options = self.mEmailViaOptions!.map { $0.viaNameLocalized }
+            }
             row.value = self.mEmailDefault
+            }.cellUpdate { updCell, updRow in
+                updCell.detailTextLabel?.font = .systemFont(ofSize: 15.0)
             }.onChange { [weak self] chgRow in
                 if chgRow.value != nil {
                     self!.mEmailDefault =  chgRow.value!
@@ -263,26 +279,52 @@ debugPrint("\(mCTAG).deinit STARTED")
         section1 <<< defaultAcctRow
         self.mDefaultAcct = defaultAcctRow
         
+        // create a SplitRow to be used add the AddButtonProvider
+        let mvs_accounts_splitRow = SplitRow<ButtonRow, ButtonRow>() {
+            $0.tag = "split_add_button"
+            $0.subscribeOnChangeLeft = false
+            $0.subscribeOnChangeRight = false
+            $0.rowLeft = ButtonRow(){ subRow in
+                subRow.tag = "wizard_new_account"
+                subRow.title = NSLocalizedString("Wizard", comment:"")
+                subRow.presentationMode = .show(
+                    controllerProvider: .callback(builder: {
+                        let storyboard = UIStoryboard(name:"Main", bundle:nil)
+                        let nextViewController:WizMenuViewController = storyboard.instantiateViewController(withIdentifier:"VC WizMenu") as! WizMenuViewController
+                        nextViewController.mRunWizard = .SENDINGEMAIL
+                        return nextViewController }),
+                    onDismiss: nil)
+                }.cellUpdate { updCell, updRow in
+                    updCell.textLabel?.textAlignment = .left
+                    //updCell.textLabel?.font = .systemFont(ofSize: 15.0)
+                    updCell.textLabel?.textColor = UIColor(hex6: 0x007AFF)
+                    updCell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
+                    updCell.imageView?.image = #imageLiteral(resourceName: "Add")
+                    updRow.onCellSelection { selCell, selRow in }    // override the default behavior of the MVS ButtonRow
+            }
+            $0.rowRight = ButtonRow(){ subRow in
+                subRow.title = NSLocalizedString("Manual", comment:"")
+                subRow.tag = "add_new_account"
+                subRow.presentationMode = .show(
+                    controllerProvider: .callback(builder: { return AdminPrefsEmailProvidersViewController() } ),
+                    onDismiss: nil)
+                }.cellUpdate { updCell, updRow in
+                    updCell.textLabel?.textAlignment = .left
+                    //updCell.textLabel?.font = .systemFont(ofSize: 15.0)
+                    updCell.textLabel?.textColor = UIColor(hex6: 0x007AFF)
+                    updCell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
+                    updCell.imageView?.image = #imageLiteral(resourceName: "Add")
+                    updRow.onCellSelection { selCell, selRow in }    // override the default behavior of the MVS ButtonRow
+            }
+            $0.rowLeftPercentage = 0.5
+        }
+        
         let mvs_accounts = MultivaluedSection(multivaluedOptions: [.Insert, .Delete],
             header: NSLocalizedString("Sending Email Accounts", comment:"")) { mvSection in
                 mvSection.tag = "email_mvs_accounts"
                 mvSection.showInsertIconInAddButton = false
                 mvSection.addButtonProvider = { section in
-                    return ButtonRow(){ row in
-                        row.title = NSLocalizedString("Select new provider to add", comment:"")
-                        row.tag = "add_new_account"
-                        row.presentationMode = .show(
-                            controllerProvider: .callback(builder: { return AdminPrefsEmailProvidersViewController() } ),
-                            onDismiss: nil)
-                        }.cellUpdate { updCell, updRow in
-                            updCell.textLabel?.textAlignment = .left
-                            //updCell.textLabel?.font = .systemFont(ofSize: 15.0)
-                            updCell.textLabel?.textColor = UIColor(hex6: 0x007AFF)
-                            updCell.accessoryType = UITableViewCell.AccessoryType.disclosureIndicator
-                            updCell.imageView?.image = #imageLiteral(resourceName: "Add")
-                            updRow.onCellSelection { selCell, selRow in }    // override the default behavior of the MVS ButtonRow
-                    }
-                }  // end of addButtonProvider
+                    return mvs_accounts_splitRow }
                 /*mvSection.multivaluedRowToInsertAt = { [weak self] index in
                  // not necessary for this particular MVS; will get auto-added during viewWillAppear()
                 }*/
@@ -354,6 +396,7 @@ debugPrint("\(mCTAG).deinit STARTED")
                         if row1 != nil { (row1! as! PasswordRow).value = nil; row1!.updateCell() }
                         let row2 = self!.form.rowBy(tag: "personal_nickname")
                         if row2 != nil { (row2! as! TextRow).value = nil; row2!.updateCell()  }
+                        EmailHandler.shared.factoryReset()
                         self!.refreshEmailAccts()
                         self!.refreshDefaultEmailAcct()
                         let succeeded = DatabaseHandler.shared.factoryResetEntireDB()
@@ -652,7 +695,7 @@ debugPrint("\(mCTAG).deinit STARTED")
 
 class AdminPrefsEditEmailAccountViewController: FormViewController {
     // caller pre-set member variables
-    public weak var mEditVia:EmailVia? = nil        // EmailVia to add or change
+    public var mEditVia:EmailVia? = nil             // EmailVia to add or change; note this is a hard reference to the via
     public var mAction:APEEAVC_Actions = .Add       // .Add or .Change
     
     // member variables
@@ -676,7 +719,7 @@ debugPrint("\(mCTAG).deinit STARTED")
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
     // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
     override func viewDidLoad() {
-//debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
         assert(self.mEditVia != nil, "\(self.mCTAG).viewDidLoad mEditVia == nil")    // this is a programming error
         self.mWorkingVia = EmailVia(fromExisting: self.mEditVia!)    // make a deep-copy duplicate
@@ -759,9 +802,16 @@ debugPrint("\(mCTAG).deinit STARTED")
         // Dispose of any resources that can be recreated.
     }
     
+    // clear the VC so it will de-init
+    private func clearVC() {
+        self.mEditVia = nil
+        self.mWorkingVia = nil
+        self.mTestResultsRow = nil
+    }
+    
     // Cancel button was tapped
     @objc func tappedCancel(_ barButtonItem: UIBarButtonItem) {
-        self.mEditVia = self.mWorkingVia        // return all unsaved changes so they can re-appear if the end-user returns to re-try the add/change
+        self.clearVC()
         self.navigationController?.popViewController(animated:true)
     }
     
@@ -805,14 +855,14 @@ debugPrint("\(mCTAG).deinit STARTED")
         self.mWorkingVia!.emailProvider_Credentials?.viaNameLocalized = self.mWorkingVia!.viaNameLocalized
         
         // save or update the EmailVia into the proper storage areas
-        self.mEditVia = self.mWorkingVia        // return all saved changes so they can re-appear if the end-user tries again
         do {
-            try EmailHandler.shared.storeEmailVia(via: self.mEditVia!)
+            try EmailHandler.shared.storeEmailVia(via: self.mWorkingVia!)
         } catch {
             AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).tappedDone", errorStruct: error, extra: nil)
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("App Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
             return
         }
+        self.clearVC()
         self.navigationController?.popViewController(animated:true)
     }
     
@@ -874,26 +924,25 @@ debugPrint("\(mCTAG).deinit STARTED")
                 }
         }
         
-        if self.mWorkingVia!.viaType == .API || self.mWorkingVia!.viaType == .None { return }
+        if self.mWorkingVia!.viaType == .None { return }
         
         section1 <<< TextRow() {
             $0.title = NSLocalizedString("From: Email Name", comment:"")
             $0.tag = "sending_email_name"
             $0.value = self.mWorkingVia!.userDisplayName
-            }.cellUpdate { cell, row in
-                if !row.isValid {
-                    cell.titleLabel?.textColor = .red
-                }
             }.onChange { [weak self] chgRow in
                 if chgRow.value != nil {
                     self!.mWorkingVia!.userDisplayName = chgRow.value!
+                } else {
+                    self!.mWorkingVia!.userDisplayName = ""
                 }
         }
         section1 <<< EmailRow() {
             $0.title = NSLocalizedString("From: Email Address", comment:"")
             $0.tag = "sending_email_addr"
             $0.value = self.mWorkingVia!.sendingEmailAddress
-            $0.add(rule: RuleRequired() )
+            if self.mWorkingVia!.viaType != .API { $0.add(rule: RuleRequired()) }
+            $0.add(rule: RuleEmail(msg: NSLocalizedString("Email Address is invalid", comment:"")) )
             $0.validationOptions = .validatesAlways
             }.cellUpdate { cell, row in
                 cell.textField?.font = .systemFont(ofSize: 14.0)
@@ -910,8 +959,13 @@ debugPrint("\(mCTAG).deinit STARTED")
             }.onChange { [weak self] chgRow in
                 if chgRow.value != nil {
                     self!.mWorkingVia!.sendingEmailAddress = chgRow.value!
+                } else {
+                    self!.mWorkingVia!.sendingEmailAddress = ""
                 }
         }
+        
+        if self.mWorkingVia!.viaType == .API { return }
+        
         section1 <<< TextRow() {
             $0.title = NSLocalizedString("Email Acct: UserID", comment:"")
             $0.tag = "acct_userid"

@@ -32,11 +32,13 @@
 "Missing Email Account Credentials" = "Missing Email Account Credentials";
 "SMTP Email Subsystem returned error" = "SMTP Email Subsystem returned error";
 // USER_ERROR
+"User Error" = "User Error";
 "Organization does not exist" = "Oganization does not exist";
 "Form does not exist" = "Form does not exist";
-"iOS is not allowing the App to send email" = "iOS is not allowing the App to send email";
-"iOS Email Subsystem is disabled" = "iOS Email Subsystem is disabled";
+"Attempt to import a file not supported by this App" = "Attempt to import a file not supported by this App";
+"No Sending Email Accounts have been setup" = "No Sending Email Accounts have been setup";
 "Email has no To and no CC" = "Email has no To and no CC";
+"iOS is not allowing the App to send email" = "iOS is not allowing the App to send email; either the iOS Mail App is not installed or it has not been setup with email accounts";
 "Invalid or missing SMTP parameter" = "Invalid or missing SMTP parameter";
 "Invalid or missing OAUTH parameter" = "Invalid or missing OAUTH parameter";
 "Invalid OAUTH URL" = "Invalid OAUTH URL";
@@ -227,6 +229,8 @@
 "Send Contacts for Org " = "Send Contacts for Org ";
 "and Form " = "and Form ";
 "Must have been deleted before sending collected contacts" = "Must have been deleted before sending collected contacts";
+"No sending email account has been setup yet. You can perform the Sending Email Setup Wizard now, or you can go to Settings->Manage Preferences to configure your sending email." = "No sending email account has been setup yet. You can perform the Sending Email Setup Wizard now, or you can go to Settings->Manage Preferences to configure your sending email.";
+"Run Wizard" = "Run Wizard";
 
 // AdminPrefsViewController.swift & WizMenuViewController.swift & EntryViewController.swift & WizDefinePINViewController & WizDefineNicknameViewController
 "Personal Settings" = "Personal Settings";
@@ -237,7 +241,7 @@
 "Your Short Nickname" = "Your Short Nickname";
 "Nickname cannot be blank" = "Nickname cannot be blank";
 "Nickname can only contain letters, digits, space, or _ . + -" = "Nickname can only contain letters, digits, space, or _ . + -";
-"Default Sending Email Acct" = "Default Sending Email Acct";
+"Default Sending Email" = "Default Sending Email";
 "Sending Email Accounts" = "Sending Email Accounts";
 "Select new provider to add" = "Select new provider to add";
 "Actions" = "Actions";
@@ -260,6 +264,7 @@
 "Account Nickname can only contain letters, digits, space, or _ . + -" = "Account Nickname can only contain letters, digits, space, or _ . + -";
 "From: Email Name" = "From: Email Name";
 "From: Email Address" = "From: Email Address";
+"Email Address is invalid" = "Email Address is invalid";
 "Email Acct: UserID" = "Email Acct: UserID";
 "Email Acct: Password" = "Email Acct: Password";
 "SMTP Email Provider Settings" = "SMTP Email Provider Settings";
@@ -282,6 +287,32 @@
 "Response Type" = "Response Type";
 "Test the Settings" = "Test the Settings";
 "Press HERE to test access to Email Provider" = "Press HERE to test access to Email Provider";
+
+// WizSendEmailDefine1.swift
+"%info%_WizSendEmailDefine1" = "Your own email is used to send your collected contacts attachment to yourself or your organization.  That sending email must be available on your phone.  You can use Apple's iOS Mail App if you have configured your Account in iOS Settings.  Or you can use an external sending email system such as GMail.";
+"Skip this step for now; the Wizard can be used later when first emailing" = "Skip this step for now; the Wizard can be used later when first emailing";
+"Use a Wizard to setup your sending email" = "Use a Wizard to setup your sending email";
+
+// WizFormDefine6ViewController.swift
+"%info%_WizSendEmailDefine6" = "Which email address to you plan to use to send your contacts to yourself or your Organization?  It must be accessible from your phone.";
+"Sending Email" = "Sending Email";
+"Email Addr" = "Email Addr";
+
+// WizFormDefine11ViewController.swift
+"%info%_WizSendEmailDefine11" = "One way to send your collected contacts via email is to use the native iOS Mail App.  However, you may have chosen to install a different mail app from some other cloud provider. Please answer the following questions below to help choose the proper next step.";
+"The native iOS Mail App appears to still be either uninstalled or not setup with accounts" = "The native iOS Mail App appears to still be either uninstalled or not setup with accounts";
+"%info%_WizSendEmailDefine11_Install" = "First ensure the native iOS Mail App is installed from the App Store.\n\nNext use iOS Settings to access Passwords and Accounts.  Add the above email address as a mail account.  Be sure to test that iOS and the Mail App can send and receive emails from the email address.";
+"Native iOS Mail App appears to be usable" = "Native iOS Mail App appears to be usable";
+"Do you use the native iOS Mail App?" = "Do you use the native iOS Mail App?";
+"Use?" = "Use?";
+"Is the email address above configured to send email in the native iOS Mail App?" = "Is the email address above configured to send email in the native iOS Mail App?";
+"Configured?" = "Configured?";
+"Do you wish to add the email address above to the Accounts for the native iOS Mail App?" = "Do you wish to add the email address above to the Accounts for the native iOS Mail App?";
+"Add?" = "Add?";
+"Native iOS Mail App is not setup" = "Native iOS Mail App is not setup";
+"Do you want to use the native iOS Mail App to send emails?" = "Do you want to use the native iOS Mail App to send emails?";
+"Press Next when the above has been completed." = "Press Next when the above has been completed.";
+"Press Next when all the questions are answered correctly." = "Press Next when all the questions are answered correctly.";
 
 // WizDefineNicknameViewController
 "Nickname" = "Nickname";
@@ -464,7 +495,21 @@
 "Then Form's Meta-data in SV-File order" = "Then Form's Meta-data in SV-File order";
 "Form Languages Mode" = "Form Languages Mode";
 
-// WizFormDefine!ViewController.swift
+// WizFormDefine1ViewController.swift
 "%info%_WizFormDefine1" = "Forms are used to define what information to collect.  You can create more than one Form for an Organization if there are different types of people that need to provide different types of information.";
 "Create a simple default Form you can edit later" = "Create a simple default Form you can edit later";
 "Choose a Form from the Form Sample Library; it can be edited afterwards" = "Choose a Form from the Form Sample Library; it can be edited afterwards";
+
+// EUREKA
+"Phone number is invalid" = "Phone number is invalid";
+"Phone extension is invalid" = "Phone extension is invalid";
+"International phone prefix is invalid" = "International phone prefix is invalid";
+" Name" = " Name";
+"Choose one" = "Choose one";
+" Size" = " Size";
+"Italic" = "Italic";
+"Bold" = "Bold";
+"Take photo" = "Take photo";
+"Photo Library" = "Photo Library";
+"Saved Photos" = "Saved Photos";
+"Clear Photo" = "Clear Photo";
