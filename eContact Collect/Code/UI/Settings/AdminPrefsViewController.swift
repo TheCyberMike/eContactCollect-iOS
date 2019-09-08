@@ -382,12 +382,6 @@ debugPrint("\(mCTAG).deinit STARTED")
                     // callback from the yes/no dialog upon one of the buttons being pressed
                     if theResult && callbackAction == 1  {
                         // answer was Yes; reset everything
-                        do {
-                            try SVFilesHandler.shared.deleteAll()
-                        } catch {
-                            AppDelegate.postToErrorLogAndAlert(method: "\(self!.mCTAG).buildForm.ButtonRow.factory_reset", errorStruct: error, extra: nil)
-                            // do not show this error to the end-user
-                        }
                         (UIApplication.shared.delegate as! AppDelegate).resetCurrents()
                         AppDelegate.removeAllPreferences()
                         AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_FirstTime, value: 0)
@@ -396,10 +390,11 @@ debugPrint("\(mCTAG).deinit STARTED")
                         if row1 != nil { (row1! as! PasswordRow).value = nil; row1!.updateCell() }
                         let row2 = self!.form.rowBy(tag: "personal_nickname")
                         if row2 != nil { (row2! as! TextRow).value = nil; row2!.updateCell()  }
-                        EmailHandler.shared.factoryReset()
+                        var succeeded = SVFilesHandler.shared.factoryReset()  // ignore its errors
+                        succeeded = EmailHandler.shared.factoryReset()  // ignore its errors
                         self!.refreshEmailAccts()
                         self!.refreshDefaultEmailAcct()
-                        let succeeded = DatabaseHandler.shared.factoryResetEntireDB()
+                        succeeded = DatabaseHandler.shared.factoryResetEntireDB()
                         if !succeeded {
                             AppDelegate.postAlert(message: NSLocalizedString("Factory reset of the database failed", comment:""))
                             AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("Database Error", comment:""), message: NSLocalizedString("Database failed to Factory Reset", comment:""), buttonText: NSLocalizedString("Okay", comment:""))

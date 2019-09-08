@@ -33,7 +33,7 @@ public class DatabaseHandler {
     public static let ThrowErrorDomain:String = NSLocalizedString("Database-Handler", comment:"")
     private let mThrowErrorDomain:String = ThrowErrorDomain
     internal let mDATABASE_NAME:String = "eContactCollect_DB.sqlite"
-    internal var mDATABASE_VERSION:Int64 = 2    // WARNING: changing this value will cause invocation of init_onUpgrade
+    internal var mDATABASE_VERSION:Int64 = 3    // WARNING: changing this value will cause invocation of init_onUpgrade
 
     // constructor;
     public init() {}
@@ -209,11 +209,11 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         }
         
         // for future upgrades
-        /*if self.mVersion == 2 {
+        if self.mVersion == 2 {
             do {
                 // invoke/perform upgrade activities inside a transaction so database integrity is preserved
                 try self.mDB!.transaction {     // throws Result
-                    // FUTURE
+                    try RecOrgFormFieldDefs.upgrade_2_to_3(db: self.mDB!)              // throws APP_ERROR
                 }
             } catch let appError as APP_ERROR {
                 self.mDBstatus_state = .Invalid
@@ -238,8 +238,40 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onUpgrade.2", during: "setUserVersion", domain: self.mThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: self.mDATABASE_NAME)
                 throw self.mAppError!
             }
-        }*/
+        }
         
+        // for future upgrades
+        /*if self.mVersion == 3 {
+            do {
+                // invoke/perform upgrade activities inside a transaction so database integrity is preserved
+                try self.mDB!.transaction {     // throws Result
+                    // FUTURE
+                }
+            } catch let appError as APP_ERROR {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = appError
+                self.mAppError?.prependCallStack(funcName: "\(self.mCTAG).init_onUpgrade.3")
+                throw self.mAppError!
+            } catch let sqlResult as Result {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onUpgrade.3", during:"self.mDB!.transaction", domain: self.mThrowErrorDomain, error: sqlResult, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: self.mDATABASE_NAME)
+                throw self.mAppError!
+            } catch {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onUpgrade.3", domain: self.mThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: self.mDATABASE_NAME)
+                throw self.mAppError!
+            }
+            // success; set the intermediate/final version state in-case of later throws
+            do {
+                try self.mDB!.setUserVersion(newVersion: 4)     // throws Result
+                self.mVersion = 4
+            } catch {
+                self.mDBstatus_state = .Invalid
+                self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onUpgrade.3", during: "setUserVersion", domain: self.mThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: self.mDATABASE_NAME)
+                throw self.mAppError!
+            }
+        }*/
+
         // all good; finalize
         self.mDBstatus_state = .Valid
         AppDelegate.noticeToErrorLogAndAlert(method: "\(AppDelegate.mCTAG).initialize", during: nil, notice: "Database successfully upgraded from version \(currentVersion) to version \(self.mVersion)", extra: nil, noAlert: true)
@@ -285,9 +317,12 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             return false
         }
         
-        // re-create and rebuild the database
+        // re-create, rebuild, and re-initialize the database
         self.mDBstatus_state = .Missing
-        return self.initialize(method: "\(self.mCTAG).factoryResetEntireDB")
+        AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_Handler_Database_FirstTime_Done, value: 0)
+        if !self.initialize(method: "\(self.mCTAG).factoryResetEntireDB") { return false }  // init_onNew will be auto-invoked
+        self.firstTimeSetup(method: "\(self.mCTAG).factoryResetEntireDB")
+        return true
     }
     
     /////////////////////////////////////////////////////////////////////////
@@ -1236,7 +1271,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
     
     // return structure for validateJSONdbFile
     public struct ValidateJSONdbFile_Result {
-        public var databaseVersion:String = ""
+        public var databaseVersion:Int64 = 0
         public var language:String = ""
         
         // top level contains: "apiVersion","method","context","id","data"
@@ -1311,12 +1346,12 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate 'data' level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level is missing 'forDatabaseVersion', 'language', or 'tables'")
         }
         
-        result.databaseVersion = (result.jsonDataLevel!["forDatabaseVersion"] as! String)
+        result.databaseVersion = Int64((result.jsonDataLevel!["forDatabaseVersion"] as! String)) ?? 0
         result.language = (result.jsonDataLevel!["language"] as! String)
         
         // this logic needs to be revised as the database version grows;
         // database versions 1 and 2 are safe to import with no modifications
-        if result.databaseVersion != "1" && result.databaseVersion != "2" {
+        if result.databaseVersion > 3 {
             throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate 'data' level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level 'forDatabaseVersion' is incompatible: \(result.databaseVersion)")
         }
 

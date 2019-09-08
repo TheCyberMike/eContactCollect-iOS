@@ -29,7 +29,7 @@ class SampleFormsViewController: UIViewController, WKNavigationDelegate, CIVC_De
     
     // called when the object instance is being destroyed
     deinit {
-debugPrint("\(mCTAG).deinit STARTED")
+//debugPrint("\(mCTAG).deinit STARTED")
     }
     
     // called by the framework when there is no storyboard entry defined for the UI Class

@@ -18,8 +18,8 @@ public class RecJsonOptionSetLocales {
     public var mOptionSetLoc_LangRegionCode:String?  // langRegion code
     
     // constructor creates the record from a plist array entry
-    init(jsonRecObj:NSDictionary, forDBversion:String) {
-        if forDBversion == "1" && jsonRecObj.count <= 3 {
+    init(jsonRecObj:NSDictionary, forDBversion:Int64) {
+        if forDBversion == 1 && jsonRecObj.count <= 3 {
             self.rOptionSetLoc_Code = jsonRecObj[RecOptionSetLocales.COLUMN_OPTIONSETLOC_CODE] as? String
             let value1:String? = jsonRecObj[RecOptionSetLocales.COLUMN_OPTIONSETLOC_CODE_EXTENSION] as? String
             if (value1 ?? "").isEmpty { self.rOptionSetLoc_Code_Extension = "" }      // do not want this to be nil

@@ -17,8 +17,8 @@ public class RecJsonLangDefs {
     public var mLang_LangRegionCode:String?     // langRegion code
     
     // constructor creates the record from a plist array entry
-    init(jsonRecObj:NSDictionary, forDBversion:String) {
-        if forDBversion == "1" && jsonRecObj.count <= 4 {
+    init(jsonRecObj:NSDictionary, forDBversion:Int64) {
+        if forDBversion == 1 && jsonRecObj.count <= 4 {
             self.rLang_Name_English = jsonRecObj[RecOrganizationLangs.COLUMN_ORGLANG_LANG_TITLE_EN] as? String
             self.rLang_Name_Speaker = jsonRecObj[RecOrganizationLangs.COLUMN_ORGLANG_LANG_TITLE_SHOWN] as? String            
             self.rLang_Icon_PNG_Blob = jsonRecObj[RecOrganizationLangs.COLUMN_ORGLANG_LANG_IMAGE_SHOWN_PNG_BLOB] as? Data

@@ -100,19 +100,24 @@ public class RecOrgFormFieldLocales_Composed {
         self.mLocale3LangRegion = jsonRec.mFormFieldLoc_LangRegionCode
         
         // break up the attribute sets; they could be singletons, pairs, or trios
-        // break up the attribute sets; they could be singletons, pairs, or trios
         if (jsonRec.rFieldLocProp_Option_Trios?.count ?? 0) > 0 {
             self.rFieldLocProp_Options_Name_Shown = FieldAttributes()
             for setString in jsonRec.rFieldLocProp_Option_Trios! {
-                // format can be one of: tag:SV:shown or SV:shown or SV&Shown or
-                //                       tag:[SVitem;SVitem;...]:[ShowItem;ShowItem;...] which is only used for Pronouns
                 let setComponents = setString.components(separatedBy: ":")
-                if setComponents.count == 1 {
-                    self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
-                } else if setComponents.count == 2 {
-                    self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
-                } else if setComponents.count >= 3 {
-                    self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                if setComponents.count >= 1 {
+                    if setComponents[0].prefix(3) == "***" {
+                        // format can be one of: ***tag; it has no SV code nor Shown
+                    } else {
+                        // format can be one of: tag:SV:shown or tag&SV:shown or tag&SV&Shown or
+                        //                       tag:[SVitem;SVitem;...]:[ShowItem;ShowItem;...] which is only used for Pronouns
+                        if setComponents.count == 1 {
+                            self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
+                        } else if setComponents.count == 2 {
+                            self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
+                        } else if setComponents.count >= 3 {
+                            self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                        }
+                    }
                 }
             }
         }
@@ -121,14 +126,20 @@ public class RecOrgFormFieldLocales_Composed {
         if (jsonRec.rFieldLocProp_Metadata_Trios?.count ?? 0) > 0 {
             self.rFieldLocProp_Metadatas_Name_Shown = FieldAttributes()
             for setString in jsonRec.rFieldLocProp_Metadata_Trios! {
-                // format can be one of: tag:SV:shown or SV:shown or SV&Shown
                 let setComponents = setString.components(separatedBy: ":")
-                if setComponents.count == 1 {
-                    self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
-                } else if setComponents.count == 2 {
-                    self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
-                } else if setComponents.count >= 3 {
-                    self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                if setComponents.count >= 1 {
+                    if setComponents[0].prefix(3) == "###" {
+                        // format can be one of: ###tag, ###tag:SV; it never has a shown
+                    } else {
+                        // format can be one of: ***tag:SV:shown or ***tag&SV:shown or ***tag&SV&Shown
+                        if setComponents.count == 1 {
+                            self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
+                        } else if setComponents.count == 2 {
+                            self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
+                        } else if setComponents.count >= 3 {
+                            self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                        }
+                    }
                 }
             }
         }
@@ -187,27 +198,41 @@ public class RecOrgFormFieldLocales_Optionals {
         if (jsonRec.rFieldLocProp_Option_Trios?.count ?? 0) > 0 {
             self.rFieldLocProp_Options_Name_Shown = FieldAttributes()
             for setString in jsonRec.rFieldLocProp_Option_Trios! {
-                // format can be one of: tag:SV:shown or SV:shown or SV&Shown or
-                //                       tag:[SVitem;SVitem;...]:[ShowItem;ShowItem;...] which is only used for Pronouns
                 let setComponents = setString.components(separatedBy: ":")
-                if setComponents.count == 1 {
-                    self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
-                } else if setComponents.count == 2 {
-                    self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
-                } else if setComponents.count >= 3 {
-                    self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                if setComponents.count >= 1 {
+                    if setComponents[0].prefix(3) == "***" {
+                        // format can be one of: ***tag; it has no SV code nor Shown
+                    } else {
+                        // format can be one of: tag:SV:shown or tag&SV:shown or tag&SV&Shown or
+                        //                       tag:[SVitem;SVitem;...]:[ShowItem;ShowItem;...] which is only used for Pronouns
+                        if setComponents.count == 1 {
+                            self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
+                        } else if setComponents.count == 2 {
+                            self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
+                        } else if setComponents.count >= 3 {
+                            self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                        }
+                    }
                 }
             }
         } else if (withJsonFormFieldRec.rFieldProp_Option_Tags?.count ?? 0) > 0 {
             self.rFieldLocProp_Options_Name_Shown = FieldAttributes()
             for setString in withJsonFormFieldRec.rFieldProp_Option_Tags! {
                 let setComponents = setString.components(separatedBy: ":")
-                if setComponents.count == 1 {
-                    self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
-                } else if setComponents.count == 2 {
-                    self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
-                } else if setComponents.count >= 3 {
-                    self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                if setComponents.count >= 1 {
+                    if setComponents[0].prefix(3) == "***" {
+                        // format can be one of: ***tag; it has no SV code nor Shown
+                    } else {
+                        // format can be one of: tag:SV:shown or tag&SV:shown or tag&SV&Shown or
+                        //                       tag:[SVitem;SVitem;...]:[ShowItem;ShowItem;...] which is only used for Pronouns
+                        if setComponents.count == 1 {
+                            self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
+                        } else if setComponents.count == 2 {
+                            self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
+                        } else if setComponents.count >= 3 {
+                            self.rFieldLocProp_Options_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                        }
+                    }
                 }
             }
         }
@@ -218,24 +243,38 @@ public class RecOrgFormFieldLocales_Optionals {
             for setString in jsonRec.rFieldLocProp_Metadata_Trios! {
                 // format can be one of: tag:SV:shown or SV:shown or SV&Shown
                 let setComponents = setString.components(separatedBy: ":")
-                if setComponents.count == 1 {
-                    self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
-                } else if setComponents.count == 2 {
-                    self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
-                } else if setComponents.count >= 3 {
-                    self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                if setComponents.count >= 1 {
+                    if setComponents[0].prefix(3) == "###" {
+                        // format can be one of: ###tag, ###tag:SV; it never has a shown
+                    } else {
+                        // format can be one of: ***tag:SV:shown or ***tag&SV:shown or ***tag&SV&Shown
+                        if setComponents.count == 1 {
+                            self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
+                        } else if setComponents.count == 2 {
+                            self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
+                        } else if setComponents.count >= 3 {
+                            self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                        }
+                    }
                 }
             }
         } else if (withJsonFormFieldRec.rFieldProp_Metadata_Tags?.count ?? 0) > 0 {
             self.rFieldLocProp_Metadatas_Name_Shown = FieldAttributes()
             for setString in withJsonFormFieldRec.rFieldProp_Metadata_Tags! {
                 let setComponents = setString.components(separatedBy: ":")
-                if setComponents.count == 1 {
-                    self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
-                } else if setComponents.count == 2 {
-                    self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
-                } else if setComponents.count >= 3 {
-                    self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                if setComponents.count >= 1 {
+                    if setComponents[0].prefix(3) == "###" {
+                        // format can be one of: ###tag, ###tag:SV; it never has a shown
+                    } else {
+                        // format can be one of: ***tag:SV:shown or ***tag&SV:shown or ***tag&SV&Shown
+                        if setComponents.count == 1 {
+                            self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[0])
+                        } else if setComponents.count == 2 {
+                            self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[1])
+                        } else if setComponents.count >= 3 {
+                            self.rFieldLocProp_Metadatas_Name_Shown!.append(codeString: setComponents[0], valueString: setComponents[2])
+                        }
+                    }
                 }
             }
         }
@@ -489,13 +528,13 @@ public class RecOrgFormFieldLocales {
         retArray.append(RecOrgFormFieldLocales.COL_EXPRESSION_FIELDLOCPROP_NAME_SHOWN <- self.rFieldLocProp_Name_Shown)
         retArray.append(RecOrgFormFieldLocales.COL_EXPRESSION_FIELDLOCPROP_PLACEHOLDER_SHOWN <- self.rFieldLocProp_Placeholder_Shown)
         
-        // place array components back into a comma separated array
-        if self.rFieldLocProp_Options_Name_Shown == nil {
+        // place array components back into a comma separated string
+        if (self.rFieldLocProp_Options_Name_Shown?.count() ?? 0) == 0 {
             retArray.append(RecOrgFormFieldLocales.COL_EXPRESSION_FIELDLOCPROP_OPTIONS_NAME_SHOWN <- nil)
         } else {
             retArray.append(RecOrgFormFieldLocales.COL_EXPRESSION_FIELDLOCPROP_OPTIONS_NAME_SHOWN <- self.rFieldLocProp_Options_Name_Shown!.pack())
         }
-        if self.rFieldLocProp_Metadatas_Name_Shown == nil {
+        if (self.rFieldLocProp_Metadatas_Name_Shown?.count() ?? 0) == 0 {
             retArray.append(RecOrgFormFieldLocales.COL_EXPRESSION_FIELDLOCPROP_METADATAS_NAME_SHOWN <- nil)
         } else {
             retArray.append(RecOrgFormFieldLocales.COL_EXPRESSION_FIELDLOCPROP_METADATAS_NAME_SHOWN <- self.rFieldLocProp_Metadatas_Name_Shown!.pack())
@@ -519,10 +558,10 @@ public class RecOrgFormFieldLocales {
         jsonObj[RecOrgFormFieldLocales.COLUMN_FIELDLOCPROP_NAME_SHOWN] = self.rFieldLocProp_Name_Shown
         jsonObj[RecOrgFormFieldLocales.COLUMN_FIELDLOCPROP_PLACEHOLDER_SHOWN] = self.rFieldLocProp_Placeholder_Shown
         
-        // place array components back into a comma separated array
-        if self.rFieldLocProp_Options_Name_Shown == nil { jsonObj[RecOrgFormFieldLocales.COLUMN_FIELDLOCPROP_OPTIONS_NAME_SHOWN] = nil }
+        // place array components back into a comma separated string
+        if (self.rFieldLocProp_Options_Name_Shown?.count() ?? 0) == 0 { jsonObj[RecOrgFormFieldLocales.COLUMN_FIELDLOCPROP_OPTIONS_NAME_SHOWN] = nil }
         else { jsonObj[RecOrgFormFieldLocales.COLUMN_FIELDLOCPROP_OPTIONS_NAME_SHOWN] = self.rFieldLocProp_Options_Name_Shown!.pack() }
-        if self.rFieldLocProp_Metadatas_Name_Shown == nil { jsonObj[RecOrgFormFieldLocales.COLUMN_FIELDLOCPROP_METADATAS_NAME_SHOWN] = nil }
+        if (self.rFieldLocProp_Metadatas_Name_Shown?.count() ?? 0) == 0 { jsonObj[RecOrgFormFieldLocales.COLUMN_FIELDLOCPROP_METADATAS_NAME_SHOWN] = nil }
         else { jsonObj[RecOrgFormFieldLocales.COLUMN_FIELDLOCPROP_METADATAS_NAME_SHOWN] = self.rFieldLocProp_Metadatas_Name_Shown!.pack() }
         
         return jsonObj

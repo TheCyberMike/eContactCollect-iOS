@@ -145,6 +145,21 @@ public class SVFilesHandler {
         self.mSVHstatus_state = .Unknown
     }
     
+    // remove all retained SV files
+    public func factoryReset() -> Bool {
+        do {
+            try self.deleteAll()
+        } catch {
+            AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).factoryReset.deleteAll", errorStruct: error, extra: nil, noAlert: true)
+        }
+        
+        self.mSVHstatus_state = .Unknown
+        AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_Handler_SVFiles_FirstTime_Done, value: 0)
+        if !self.initialize(method: "\(self.mCTAG).factoryReset") { return false }
+        self.firstTimeSetup(method: "\(self.mCTAG).factoryReset")
+        return true
+    }
+    
     /////////////////////////////////////////////////////////////////////////////////////////
     // public methods
     /////////////////////////////////////////////////////////////////////////////////////////

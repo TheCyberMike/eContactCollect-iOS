@@ -31,13 +31,13 @@ class WizDefineNicknameViewController: FormViewController {
     
     // called when the object instance is being destroyed
     deinit {
-debugPrint("\(mCTAG).deinit STARTED")
+//debugPrint("\(mCTAG).deinit STARTED")
     }
     
     // called by the framework after the view has been setup from Storyboard or NIB, but NOT called during a fully programmatic startup;
     // only children (no parents) will be available but not yet initialized (not yet viewDidLoad)
     override func viewDidLoad() {
-debugPrint("\(self.mCTAG).viewDidLoad STARTED")
+//debugPrint("\(self.mCTAG).viewDidLoad STARTED")
         super.viewDidLoad()
         
         // build the form

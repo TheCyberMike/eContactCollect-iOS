@@ -578,7 +578,10 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     // errors are stored via the class members and will already be posted to the error.log
     public func firstTimeSetup(method:String) {
 //debugPrint("\(mCTAG).firstTimeSetup STARTED")
-        // none needed
+        if AppDelegate.getPreferenceInt(prefKey: PreferencesKeys.Ints.APP_Handler_Email_FirstTime_Done) != 1 {
+            // none at this time
+            AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_Handler_Email_FirstTime_Done, value: 1)
+        }
     }
     
     // return whether the handler is fully operational
@@ -600,15 +603,23 @@ public class EmailHandler:NSObject, MFMailComposeViewControllerDelegate {
     }
     
     // remove all email vias and default email
-    public func factoryReset() {
+    public func factoryReset() -> Bool {
         let allStored:[EmailVia]? = self.getListEmailOptions()
         if (allStored?.count ?? 0) > 0 {
             for via in allStored! {
                 do {
                     try self.deleteEmailVia(localizedName: via.viaNameLocalized)
-                } catch {}  // ignore any errors
+                } catch {
+                    AppDelegate.postToErrorLogAndAlert(method: "\(self.mCTAG).factoryReset.deleteEmailVia", errorStruct: error, extra: nil, noAlert: true)
+                }
             }
         }
+        
+        self.mEMHstatus_state = .Unknown
+        AppDelegate.setPreferenceInt(prefKey: PreferencesKeys.Ints.APP_Handler_Email_FirstTime_Done, value: 0)
+        if !self.initialize(method: "\(self.mCTAG).factoryReset") { return false }
+        self.firstTimeSetup(method: "\(self.mCTAG).factoryReset")
+        return true
     }
     
     // determine if the local iOS Mail App is installed amd usable

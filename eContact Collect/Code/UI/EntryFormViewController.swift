@@ -149,7 +149,7 @@ class EntryFormViewController: FormViewController {
     
     // received a notification that the current Org or Form for our EFP has changed; this change will always occur while we are not visible
     @objc func noticeNewOrgForm(_ notification:Notification) {
-//debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
+debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
         self.mFormIsBuilt = false       // allow a rebuild to take place when viewWillAppear occurs
     }
     
@@ -610,6 +610,11 @@ class EntryFormViewController: FormViewController {
             workPhoneComponentsShown.phoneInternationalPrefix.shown = false
             workPhoneComponentsShown.phoneNumber.shown = false
             workPhoneComponentsShown.phoneExtension.shown = false
+            var formatCode:String? = nil
+            if let metaPairs = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry) {
+                formatCode = CodePair.findValue(pairs: metaPairs, givenCode: "###Region")
+                workPhoneComponentsShown.withFormattingRegion = formatCode
+            }
             if forFormFieldEntry.mFormFieldRec.hasSubFormFields() {
                 for subFormFieldIDCode in forFormFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes! {
                     let subFFentry:OrgFormFieldsEntry? = self.mEntryVC!.mEFP!.mFormFieldEntries!.findSubfield(forPrimaryIndex: forFormFieldEntry.mFormFieldRec.rFormField_Index, forSubFieldIDCode: subFormFieldIDCode)
@@ -653,17 +658,8 @@ class EntryFormViewController: FormViewController {
                 if !rowTitle2.isEmpty { $0.title2 = rowTitle2 }
                 $0.tag = rowTag
                 $0.phoneComponentsShown = workPhoneComponentsShown
-                if let metaPairs = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry),
-                    let formatCode:String = CodePair.findValue(pairs: metaPairs, givenCode: "###Format") {
-                    switch formatCode {
-                    case "-":
-                        break   // no rule checking
-                    default:
-                        // includes "NANP", "US", "CA"
-                        $0.add(rule: RulePhoneComponents_NANP())
-                    }
-                } else {
-                    $0.add(rule: RulePhoneComponents_NANP())
+                if !(formatCode ?? "").isEmpty, formatCode! != "-" {
+                    $0.add(rule: RulePhoneComponents_ECC())
                 }
                 $0.validationOptions = .validatesOnChangeAfterBlurred
             }
@@ -676,6 +672,11 @@ class EntryFormViewController: FormViewController {
             workPhoneComponentsShown.phoneNumber.shown = true
             workPhoneComponentsShown.phoneExtension.shown = true
             workPhoneComponentsShown.multiValued = false
+            var formatCode:String? = nil
+            if let metaPairs = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry) {
+                formatCode = CodePair.findValue(pairs: metaPairs, givenCode: "###Region")
+                workPhoneComponentsShown.withFormattingRegion = formatCode
+            }
             if !(rowPlaceholder ?? "").isEmpty {
                 let placeholderComponents = rowPlaceholder!.components(separatedBy: ";")
                 workPhoneComponentsShown.phoneNumber.placeholder = placeholderComponents[0]
@@ -686,17 +687,8 @@ class EntryFormViewController: FormViewController {
                 if !rowTitle2.isEmpty { $0.title2 = rowTitle2 }
                 $0.tag = rowTag
                 $0.phoneComponentsShown = workPhoneComponentsShown
-                if let metaPairs = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry),
-                   let formatCode:String = CodePair.findValue(pairs: metaPairs, givenCode: "###Format") {
-                    switch formatCode {
-                    case "-":
-                        break   // no rule checking
-                    default:
-                        // includes "NANP", "US", "CA"
-                        $0.add(rule: RulePhoneComponents_NANP())
-                    }
-                } else {
-                    $0.add(rule: RulePhoneComponents_NANP())
+                if !(formatCode ?? "").isEmpty, formatCode! != "-" {
+                    $0.add(rule: RulePhoneComponents_ECC())
                 }
                 $0.validationOptions = .validatesOnChangeAfterBlurred
             }
@@ -704,24 +696,15 @@ class EntryFormViewController: FormViewController {
             
         case FIELD_ROW_TYPE.PHONE_3:
             // formattable phone#; defaults to standard US phone number
-            self.mCurrentSection! <<< PhoneRow(){
+            self.mCurrentSection! <<< PhoneRowExt(){
                 $0.title = rowTitle
                 $0.tag = rowTag
                 if let metaPairs = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry),
-                   let formatCode:String = CodePair.findValue(pairs: metaPairs, givenCode: "###Format") {
-                    switch formatCode {
-                    case "-":
-                        break   // no formatting or rule checking
-                    default:
-                        // includes "NANP", "US", "CA"
-                        $0.formatter = PhoneFormatter_NANP()
-                        $0.placeholder = PhoneFormatter_NANP.placeholder
-                        $0.add(rule: RulePhone_NANP())
+                   let formatCode:String = CodePair.findValue(pairs: metaPairs, givenCode: "###Region") {
+                    $0.withFormatRegion = formatCode
+                    if !formatCode.isEmpty, formatCode != "-" {
+                        $0.add(rule: RulePhone_ECC())
                     }
-                } else {
-                    $0.formatter = PhoneFormatter_NANP()
-                    $0.placeholder = PhoneFormatter_NANP.placeholder
-                    $0.add(rule: RulePhone_NANP())
                 }
                 if !(rowPlaceholder ?? "").isEmpty { $0.placeholder = rowPlaceholder }
                 $0.validationOptions = .validatesOnChangeAfterBlurred
@@ -1996,12 +1979,14 @@ class EntryFormViewController: FormViewController {
         let includeBilingual:Bool = ((forFormFieldEntry.mComposedFormFieldLocalesRec.mFieldLocProp_Metadatas_Name_Shown_Bilingual_2nd?.count() ?? 0) > 0)
         if (forFormFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Metadatas_Name_Shown?.count() ?? 0) > 0 {
             for cp in forFormFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Metadatas_Name_Shown!.mAttributes {
-                if !includeBilingual { metaPairs.append(cp) }
-                else {
-                    let biValue:String? = forFormFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Metadatas_Name_Shown!.findValue(givenCode: cp.codeString)
-                    if (biValue ?? "").isEmpty { metaPairs.append(cp) }
+                if cp.codeString.prefix(3) != "###" {
+                    if !includeBilingual { metaPairs.append(cp) }
                     else {
-                        metaPairs.append(CodePair(cp.codeString, cp.valueString + "\n" + biValue!))
+                        let biValue:String? = forFormFieldEntry.mComposedFormFieldLocalesRec.rFieldLocProp_Metadatas_Name_Shown!.findValue(givenCode: cp.codeString)
+                        if (biValue ?? "").isEmpty { metaPairs.append(cp) }
+                        else {
+                            metaPairs.append(CodePair(cp.codeString, cp.valueString + "\n" + biValue!))
+                        }
                     }
                 }
             }

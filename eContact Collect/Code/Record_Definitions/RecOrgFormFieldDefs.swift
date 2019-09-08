@@ -179,7 +179,7 @@ public enum FIELD_IDCODE_METADATA:String {
     rFieldProp_Metadatas_Code_For_SV_File:
         Metadata prefixes (no metadata can be added, deleted, or moved):
             ***     metadata stores a phrase (including multi-lingual variants); does not have any changable SVCode
-            ###     metadata stores a non-multi-lingual code, such as a Country Code or a Formatting Code; it has no phrases
+            ###     metadata stores a non-multi-lingual code, it has no phrases; currently only ###Country and ###Region
  
     rFieldProp_Options_Code_For_SV_File
         Option prefixes:
@@ -208,7 +208,7 @@ public class RecOrgFormFieldDefs_Optionals {
     public var rFieldProp_Options_Code_For_SV_File:FieldAttributes?
     public var rFieldProp_Metadatas_Code_For_SV_File:FieldAttributes?
     
-    // constructor creates the record from a pair of json records
+    // constructor creates the record from a pair of factory json records
     init(jsonRec:RecJsonFieldDefs, forOrgShortName:String, forFormShortName:String?, withJsonFieldLocaleRec:RecJsonFieldLocales) {
         self.rFormField_Index = -1
         self.rOrg_Code_For_SV_File = forOrgShortName
@@ -281,7 +281,7 @@ public class RecOrgFormFieldDefs_Optionals {
         }
     }
     
-    // constructor creates the record from a JSON object; is tolerant of missing columns;
+    // constructor creates the record from an importer JSON object; is tolerant of missing columns;
     // must be tolerant that Int64's may be encoded as Strings, especially OIDs;
     // context is provided in case database version or language of the JSON file is important
     init(jsonRecObj:NSDictionary, context:DatabaseHandler.ValidateJSONdbFile_Result) {
@@ -337,6 +337,8 @@ public class RecOrgFormFieldDefs_Optionals {
         let value4:String? = jsonRecObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_METADATAS_CODE_FOR_SV_FILE] as? String
         if !(value4 ?? "").isEmpty { self.rFieldProp_Metadatas_Code_For_SV_File = FieldAttributes(duos: value4!.components(separatedBy:",")) }
         else { self.rFieldProp_Metadatas_Code_For_SV_File = nil }
+        
+        let _ = RecOrgFormFieldDefs.upgradesCummulative(forOptionalsRec: self, forSourceDBver: context.databaseVersion)
     }
     
     // is the optionals record valid in terms of required content?
@@ -472,7 +474,99 @@ public class RecOrgFormFieldDefs {
             t.column(COL_EXPRESSION_FIELDPROP_METADATAS_CODE_FOR_SV_FILE)
         }
     }
-
+    
+    // upgrade the table's entries going from db version 2 to 3;
+    // upgrades:  add '###Region:US' to the rFieldProp_Metadatas_Code_For_SV_File for selected phone fields if '###Region' is not present
+    public static func upgrade_2_to_3(db:Connection) throws {
+        let query = Table(RecOrgFormFieldDefs.TABLE_NAME).select(*)  // select all records
+        var rows:AnySequence<Row>
+        do {
+            rows = try DatabaseHandler.shared.genericQuery(method:"\(self.mCTAG).upgrade_2_to_3.1", tableQuery:query)
+        } catch {
+            let appError = APP_ERROR(funcName: "\(self.mCTAG).upgrade_2_to_3", during: "genericQuery", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: "DB table \(TABLE_NAME)", noAlert: false)
+            throw appError
+        }
+        for rowObj in rows {
+            var orgFormFieldRec:RecOrgFormFieldDefs
+            do {
+                orgFormFieldRec = try RecOrgFormFieldDefs(row:rowObj)
+            } catch {
+                let appError = APP_ERROR(funcName: "\(self.mCTAG).upgrade_2_to_3", during: "RecOrgFormFieldDefs", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: "DB table \(TABLE_NAME)", noAlert: false)
+                throw appError
+            }
+            
+            // only check certain phone fields
+            if self.upgradesCummulative(forRec: orgFormFieldRec, forSourceDBver: 2) {
+                var setters:[Setter]
+                do {
+                    setters = try orgFormFieldRec.buildSetters()
+                } catch var appError as APP_ERROR {
+                    appError.prependCallStack(funcName: "\(RecOrgFormFieldDefs.mCTAG).upgrade_2_to_3")
+                    throw appError
+                } catch { throw error}
+                let query = Table(RecOrgFormFieldDefs.TABLE_NAME).select(*).filter(RecOrgFormFieldDefs.COL_EXPRESSION_ORG_CODE_FOR_SV_FILE == orgFormFieldRec.rOrg_Code_For_SV_File && RecOrgFormFieldDefs.COL_EXPRESSION_FORM_CODE_FOR_SV_FILE == orgFormFieldRec.rForm_Code_For_SV_File && RecOrgFormFieldDefs.COL_EXPRESSION_FORMFIELD_INDEX == orgFormFieldRec.rFormField_Index)
+                do {
+                    let _ = try DatabaseHandler.shared.updateRec(method:"\(RecOrgFormFieldDefs.mCTAG).upgrade_2_to_3", tableQuery:query, cv:setters)
+                } catch {
+                    let appError = APP_ERROR(funcName: "\(self.mCTAG).upgrade_2_to_3", during: "saveChangesToDB", domain: DatabaseHandler.ThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Upgrade the Database", comment:""), developerInfo: "DB table \(TABLE_NAME) index# \(orgFormFieldRec.rFormField_Index)", noAlert: false)
+                    throw appError
+                }
+            }
+        }
+    }
+    
+    public static func upgradesCummulative(forRec:RecOrgFormFieldDefs, forSourceDBver:Int64) -> Bool {
+        var didChange:Bool = false
+        if forSourceDBver >= 2 {
+            // DB version 2 to 3
+            // only check certain phone fields
+            // upgrades:  add '###Region:US' to the rFieldProp_Metadatas_Code_For_SV_File for selected phone fields if '###Region' is not present
+            if forRec.rFieldProp_Row_Type == .PHONE_3 || forRec.rFieldProp_Row_Type == .PHONE_WORK ||
+               forRec.rFieldProp_Row_Type == .PHONE_CONTAINER {
+                
+                if forRec.rFieldProp_Metadatas_Code_For_SV_File == nil {
+                    // missing region code
+debugPrint("\(self.mCTAG).upgradesCummulative ###Region is added to index# \(forRec.rFormField_Index)")
+                    forRec.rFieldProp_Metadatas_Code_For_SV_File = FieldAttributes()
+                    forRec.rFieldProp_Metadatas_Code_For_SV_File!.append(codeString: "###Region", valueString: "US")
+                    didChange = true
+                } else if !forRec.rFieldProp_Metadatas_Code_For_SV_File!.codeExists(givenCode: "###Region") {
+                    // missing region code
+debugPrint("\(self.mCTAG).upgradesCummulative ###Region is added to index# \(forRec.rFormField_Index)")
+                    forRec.rFieldProp_Metadatas_Code_For_SV_File!.append(codeString: "###Region", valueString: "US")
+                    didChange = true
+                }
+            }
+        }
+        return didChange
+    }
+    
+    public static func upgradesCummulative(forOptionalsRec:RecOrgFormFieldDefs_Optionals, forSourceDBver:Int64) -> Bool {
+        var didChange:Bool = false
+        if forSourceDBver >= 2 {
+            // Import version 2 to 3
+            // only check certain phone fields
+            // upgrades:  add '###Region:US' to the rFieldProp_Metadatas_Code_For_SV_File for selected phone fields if '###Region' is not present
+            if forOptionalsRec.rFieldProp_Row_Type == .PHONE_3 || forOptionalsRec.rFieldProp_Row_Type == .PHONE_WORK ||
+               forOptionalsRec.rFieldProp_Row_Type == .PHONE_CONTAINER {
+                
+                if forOptionalsRec.rFieldProp_Metadatas_Code_For_SV_File == nil {
+                    // missing region code
+debugPrint("\(self.mCTAG).upgradesCummulative.optionals ###Region is added to index# \(forOptionalsRec.rFormField_Index ?? -1)")
+                    forOptionalsRec.rFieldProp_Metadatas_Code_For_SV_File = FieldAttributes()
+                    forOptionalsRec.rFieldProp_Metadatas_Code_For_SV_File!.append(codeString: "###Region", valueString: "US")
+                    didChange = true
+                } else if !forOptionalsRec.rFieldProp_Metadatas_Code_For_SV_File!.codeExists(givenCode: "###Region") {
+                    // missing region code
+debugPrint("\(self.mCTAG).upgradesCummulative.optionals ###Region is added to index# \(forOptionalsRec.rFormField_Index ?? -1)")
+                    forOptionalsRec.rFieldProp_Metadatas_Code_For_SV_File!.append(codeString: "###Region", valueString: "US")
+                    didChange = true
+                }
+            }
+        }
+        return didChange
+    }
+    
     // destructor
     deinit {
         if self.mFormFieldLocalesRecs != nil { self.mFormFieldLocalesRecs = nil } // likely not needed for heap management but cannot hurt
@@ -697,18 +791,18 @@ public class RecOrgFormFieldDefs {
         retArray.append(RecOrgFormFieldDefs.COL_EXPRESSION_FIELDPROP_FLAGS <- self.rFieldProp_Flags)
         retArray.append(RecOrgFormFieldDefs.COL_EXPRESSION_FORMFIELD_SUBFIELD_WITHIN_FORMFIELD_INDEX <- self.rFormField_SubField_Within_FormField_Index)
         
-        // break comma-delimited String into an Array
-        if self.rFieldProp_Contains_Field_IDCodes == nil {
+        // place array components back into a comma separated string
+        if (self.rFieldProp_Contains_Field_IDCodes?.count ?? 0) == 0 {
             retArray.append(RecOrgFormFieldDefs.COL_EXPRESSION_FIELDPROP_CONTAINS_FIELD_IDCODES <- nil)
         } else {
             retArray.append(RecOrgFormFieldDefs.COL_EXPRESSION_FIELDPROP_CONTAINS_FIELD_IDCODES <- self.rFieldProp_Contains_Field_IDCodes!.joined(separator:","))
         }
-        if self.rFieldProp_Options_Code_For_SV_File == nil {
+        if (self.rFieldProp_Options_Code_For_SV_File?.count() ?? 0) == 0 {
             retArray.append(RecOrgFormFieldDefs.COL_EXPRESSION_FIELDPROP_OPTIONS_CODE_FOR_SV_FILE <- nil)
         } else {
             retArray.append(RecOrgFormFieldDefs.COL_EXPRESSION_FIELDPROP_OPTIONS_CODE_FOR_SV_FILE <- self.rFieldProp_Options_Code_For_SV_File!.pack())
         }
-        if self.rFieldProp_Metadatas_Code_For_SV_File == nil {
+        if (self.rFieldProp_Metadatas_Code_For_SV_File?.count() ?? 0) == 0 {
             retArray.append(RecOrgFormFieldDefs.COL_EXPRESSION_FIELDPROP_METADATAS_CODE_FOR_SV_FILE <- nil)
         } else {
             retArray.append(RecOrgFormFieldDefs.COL_EXPRESSION_FIELDPROP_METADATAS_CODE_FOR_SV_FILE <- self.rFieldProp_Metadatas_Code_For_SV_File!.pack())
@@ -740,12 +834,12 @@ public class RecOrgFormFieldDefs {
         if self.rFormField_SubField_Within_FormField_Index == nil { jsonObj[RecOrgFormFieldDefs.COLUMN_FORMFIELD_SUBFIELD_WITHIN_FORMFIELD_INDEX] = nil }
         else { jsonObj[RecOrgFormFieldDefs.COLUMN_FORMFIELD_SUBFIELD_WITHIN_FORMFIELD_INDEX] = String(self.rFormField_SubField_Within_FormField_Index!) }
         
-        // break comma-delimited String into an Array
-        if self.rFieldProp_Contains_Field_IDCodes == nil { jsonObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_CONTAINS_FIELD_IDCODES] = nil }
+        // place array components back into a comma separated string
+        if (self.rFieldProp_Contains_Field_IDCodes?.count ?? 0) == 0 { jsonObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_CONTAINS_FIELD_IDCODES] = nil }
         else { jsonObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_CONTAINS_FIELD_IDCODES] = self.rFieldProp_Contains_Field_IDCodes!.joined(separator:",") }
-        if self.rFieldProp_Options_Code_For_SV_File == nil { jsonObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_OPTIONS_CODE_FOR_SV_FILE] = nil }
+        if (self.rFieldProp_Options_Code_For_SV_File?.count() ?? 0) == 0 { jsonObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_OPTIONS_CODE_FOR_SV_FILE] = nil }
         else { jsonObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_OPTIONS_CODE_FOR_SV_FILE] = self.rFieldProp_Options_Code_For_SV_File!.pack() }
-        if self.rFieldProp_Metadatas_Code_For_SV_File == nil { jsonObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_METADATAS_CODE_FOR_SV_FILE] = nil }
+        if (self.rFieldProp_Metadatas_Code_For_SV_File?.count() ?? 0) == 0 { jsonObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_METADATAS_CODE_FOR_SV_FILE] = nil }
         else { jsonObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_METADATAS_CODE_FOR_SV_FILE] = self.rFieldProp_Metadatas_Code_For_SV_File!.pack() }
         
         return jsonObj

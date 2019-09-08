@@ -33,8 +33,8 @@ public class RecJsonFieldDefs {
     public static let COLUMN_FIELDPROP_SORT_ORDER = "field_sort_order"
 
     // constructor creates the record from a json entry
-    init(jsonRecObj:NSDictionary, forDBversion:String) {
-        if forDBversion == "1" {
+    init(jsonRecObj:NSDictionary, forDBversion:Int64) {
+        if forDBversion == 1 {
             if let oidObj3 = jsonRecObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_VCARD_SUBPROPERTY_NO] {
                 if oidObj3 is String {
                     self.rFieldProp_vCard_Subproperty_No = Int(jsonRecObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_VCARD_SUBPROPERTY_NO] as! String)

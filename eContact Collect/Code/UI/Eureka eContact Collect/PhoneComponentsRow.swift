@@ -21,6 +21,17 @@ public struct PhoneComponentsValues {
 // fields are composed and shown in the order presented below (shown ordering cannot be changed)
 public struct PhoneComponentsShown {
     public var multiValued:Bool = true
+    public var withFormattingRegion:String? = "NANP" {
+        didSet {
+            if (withFormattingRegion ?? "").isEmpty {
+                self.phoneNumber.formatter = nil
+            } else if withFormattingRegion! == "-" {
+                self.phoneNumber.formatter = nil
+            } else {
+                self.phoneNumber.formatter = PhoneFormatter_ECC(forRegion: withFormattingRegion!)
+            }
+        }
+    }
     public var phoneInternationalPrefix = PhoneInternationalPrefix()
     public var phoneNumber = PhoneNumber()
     public var phoneExtension = PhoneExtension()
@@ -29,13 +40,13 @@ public struct PhoneComponentsShown {
         public var shown:Bool = true
         public var tag:String? = "PhoneIntl"
         public var placeholder:String? = "+"
-        public var formatter:Formatter? = PhoneInternationalPrefixFormatter()
+        public var formatter:Formatter? = PhoneInternationalPrefixFormatter_ECC()
     }
     public struct PhoneNumber {
         public var shown:Bool = true
         public var tag:String? = "Phone"
-        public var placeholder:String? = PhoneFormatter_NANP.placeholder
-        public var formatter:Formatter? = PhoneFormatter_NANP()
+        public var placeholder:String? = "#"
+        public var formatter:Formatter? = PhoneFormatter_ECC(forRegion: "NANP")
     }
     public struct PhoneExtension {
         public var shown:Bool = true
@@ -611,7 +622,9 @@ public class PhoneComponentsCell: Cell<[String:String?]>, CellType, UITextFieldD
         return formViewController()?.textInputShouldEndEditing(textField, cell: self) ?? true
     }
     
+    // called for every single character add, change, delete
     @objc open func textFieldDidChange(_ textField: UITextField) {
+        // the text field's contents are NOT yet formatted
         let phoneRow = self.row as! _PhoneComponentsRow
         switch textField {
         case let field1 where field1 == self.intlTextField:
@@ -650,8 +663,10 @@ public class PhoneComponentsCell: Cell<[String:String?]>, CellType, UITextFieldD
         var formatter:Formatter? = nil
         var formatter_field:UITextField? = nil
         
+        // record a final change (not yet formatted)
         self.textFieldDidChange(textField)
         
+        // determine which formatter to use
         switch textField {
         case let field1 where field1 == self.intlTextField:
             if !(field1.text ?? "").isEmpty && phoneRow._phoneComponentsShown.phoneInternationalPrefix.formatter != nil {
@@ -664,8 +679,16 @@ public class PhoneComponentsCell: Cell<[String:String?]>, CellType, UITextFieldD
             if !(field2.text ?? "").isEmpty && phoneRow._phoneComponentsShown.phoneNumber.formatter != nil {
                 formatter = phoneRow._phoneComponentsShown.phoneNumber.formatter!
                 formatter_field = field2
+                if phoneRow._phoneComponentsShown.phoneInternationalPrefix.shown &&
+                   !(phoneRow._phoneComponentsValues.phoneInternationalPrefix ?? "").isEmpty {
+                    
+                    if PhoneFormatter_ECC.isSupported(intlCode: phoneRow._phoneComponentsValues.phoneInternationalPrefix) {
+                        formatter = PhoneFormatter_ECC(forIntlCode: phoneRow._phoneComponentsValues.phoneInternationalPrefix!)
+debugPrint("\(self.cTag).textFieldDidEndEditing_handler Override Phone# formatter:  \((formatter as! PhoneFormatter_ECC).forRegion)")
+                    }
+                }
             }
-            break
+            break   
             
         case let field3 where field3 == self.extTextField:
             if !(field3.text ?? "").isEmpty && phoneRow._phoneComponentsShown.phoneExtension.formatter != nil {
@@ -678,6 +701,7 @@ public class PhoneComponentsCell: Cell<[String:String?]>, CellType, UITextFieldD
             break
         }
         
+        // perform the formatting if supposed to; re-store the results
         if formatter != nil, formatter_field != nil, formatter_field!.text != nil {
             let sourceText = formatter_field!.text!
             let unsafePointer = UnsafeMutablePointer<AnyObject?>.allocate(capacity: 1)
@@ -715,7 +739,7 @@ public class PhoneComponentsCell: Cell<[String:String?]>, CellType, UITextFieldD
 }
 
 // custom international phone formatter
-public class PhoneInternationalPrefixFormatter: Formatter {
+public class PhoneInternationalPrefixFormatter_ECC: Formatter {
     
     /// Returns a InputString:String from the given FormattedString:String
     /// - Parameter obj: Pointer to FormattedString object
@@ -746,8 +770,49 @@ public class PhoneInternationalPrefixFormatter: Formatter {
 }
 
 // custom phone formatter for US phones and others in the N. America Numbering Plan (including Canada; U.S. Protectorates; various Caribbean nations, states, territories)
-public class PhoneFormatter_NANP: Formatter {
-    public static var placeholder:String = "(###)###-####"
+public class PhoneFormatter_ECC: Formatter {
+    public var forRegion:String = "NANP"
+    public static var acceptableRegions:[String] = ["NANP","US","CA","MX","UK"]
+    public static var acceptablePhoneIntlCodes:[String] = ["+1","+1","+1","+52","+44"]
+    
+    // initializer
+    init(forRegion:String) {
+        super.init()
+        self.forRegion = forRegion
+    }
+    init(forIntlCode:String) {
+        super.init()
+        var working:String = forIntlCode
+        if working.first != "+" { working = "+" + working }
+        for i in 0...PhoneFormatter_ECC.acceptablePhoneIntlCodes.count - 1 {
+            if PhoneFormatter_ECC.acceptablePhoneIntlCodes[i] == working {
+                self.forRegion = PhoneFormatter_ECC.acceptableRegions[i]
+                return
+            }
+        }
+        self.forRegion = "NANP"
+    }
+    
+    // required initializer
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    // does the formatter support the indicated region or international code?
+    public static func isSupported(region:String?) -> Bool {
+        if (region ?? "").isEmpty { return false }
+        if region! == "-" { return false }
+        if self.acceptableRegions.contains(region!) { return true }
+        return false
+    }
+    public static func isSupported(intlCode:String?) -> Bool {
+        if (intlCode ?? "").isEmpty { return false }
+        if intlCode! == "-" { return false }
+        var working:String = intlCode!
+        if working.first != "+" { working = "+" + working }
+        if self.acceptablePhoneIntlCodes.contains(working) { return true }
+        return false
+    }
     
     /// Returns a InputString:String from the given FormattedString:String
     /// - Parameter obj: Pointer to FormattedString object
@@ -767,6 +832,38 @@ public class PhoneFormatter_NANP: Formatter {
         
         if obj == nil { return false }
         if string.isEmpty { return true }
+        if self.forRegion.isEmpty { return false }
+        
+debugPrint("EUREKA.PhoneComponentsRow.PhoneFormatter_ECC.getObjectValue formatRegion: \(self.forRegion)")
+        switch self.forRegion {
+        case "-":
+            return false
+            
+        case "NANP":
+            return formatAs_NANP(obj, for:string, errorDescription: error)
+            
+        case "US":
+            return formatAs_NANP(obj, for:string, errorDescription: error)
+            
+        case "CA":
+            return formatAs_NANP(obj, for:string, errorDescription: error)
+            
+        case "MX":
+            return formatAs_MX(obj, for:string, errorDescription: error)
+            
+        case "UK":
+            return formatAs_UK(obj, for:string, errorDescription: error)
+            
+        default:
+            return false
+        }
+    }
+    
+    // custom phone formatter for US phones and others in the N. America Numbering Plan (including Canada; U.S. Protectorates; various Caribbean nations, states, territories)
+    private func formatAs_NANP(_ obj: AutoreleasingUnsafeMutablePointer<AnyObject?>?, for string: String, errorDescription error: AutoreleasingUnsafeMutablePointer<NSString?>?) -> Bool {
+    
+        if obj == nil { return false }
+        if string.isEmpty { return true }
         
         // first remove all unacceptable characters and place each character into a string array
         var hasFormatting:Bool = false
@@ -774,6 +871,9 @@ public class PhoneFormatter_NANP: Formatter {
         for char in string {
             if char >= "0" && char <= "9" {
                 workStringComps.append(char)
+            } else if char == " " {
+                workStringComps.append("-")
+                hasFormatting = true
             } else if char == "(" || char == ")" || char == "-" {
                 workStringComps.append(char)
                 hasFormatting = true
@@ -784,8 +884,10 @@ public class PhoneFormatter_NANP: Formatter {
         if !hasFormatting {
             // has only digits
             if workStringComps.count == 7 {
+                // no area code; should be 7 digits when fully entered
                 workStringComps.insert("-", at: 3)
             } else if workStringComps.count == 10 {
+                // includes area code; should be 10 digits when fully entered
                 workStringComps.insert("-", at: 6)
                 workStringComps.insert(")", at: 3)
                 workStringComps.insert("(", at: 0)
@@ -794,6 +896,7 @@ public class PhoneFormatter_NANP: Formatter {
             // has formatting present
             if workStringComps.count >= 9 {
                 if workStringComps[3] == "-"  {
+                    // if a dash is used to separate the area code, put the area code in parentheses
                     workStringComps.remove(at: 3)
                     workStringComps.insert("-", at: 6)
                     workStringComps.insert(")", at: 3)
@@ -807,7 +910,239 @@ public class PhoneFormatter_NANP: Formatter {
         for char in workStringComps {
             result.append(char)
         }
-
+        
+        if !result.isEmpty {
+            obj!.pointee = result as AnyObject
+            return true
+        }
+        return false
+    }
+    
+    // custom phone formatter for UK phones
+    private func formatAs_UK(_ obj: AutoreleasingUnsafeMutablePointer<AnyObject?>?, for string: String, errorDescription error: AutoreleasingUnsafeMutablePointer<NSString?>?) -> Bool {
+        
+        if obj == nil { return false }
+        if string.isEmpty { return true }
+        
+        // first remove all unacceptable characters and place each character into a string array
+        var hasFormatting:Bool = false
+        var workStringComps:[Character] = []
+        for char in string {
+            if char >= "0" && char <= "9" {
+                workStringComps.append(char)
+            } else if char == "(" || char == ")" || char == " " {
+                workStringComps.append(char)
+                hasFormatting = true
+            }
+        }
+        
+        // now look at formatting
+        if !hasFormatting {
+            // has only digits
+            if workStringComps[0] == "0"  {
+                // it is a NSN; should be 11 digits when fully entered, though occasionally 10
+                let _ = formatAs_UK_NSN(string: string, workStringComps: &workStringComps)
+            } else {
+                // local numbers (non-NSN)
+                if workStringComps.count == 7 {
+                    // format:  ### ####
+                    workStringComps.insert(" ", at: 3)
+                } else if workStringComps.count == 8 {
+                    // format:  #### ####
+                    workStringComps.insert(" ", at: 4)
+                } else if workStringComps.count == 9 || workStringComps.count == 10 {
+                    // has the leading '0' been omitted?
+                    var nsnWorkStringComps:[Character] = workStringComps
+                    nsnWorkStringComps.insert("0", at: 0)
+                    let nsnString:String = "0" + string
+                    if formatAs_UK_NSN(string: nsnString, workStringComps: &nsnWorkStringComps) {
+                        workStringComps = nsnWorkStringComps
+                    }
+                }
+            }
+        } else {
+            // has formatting present
+            // not going to change nor correct
+        }
+        
+        // convert back into a string
+        var result:String = ""
+        for char in workStringComps {
+            result.append(char)
+        }
+        
+        if !result.isEmpty {
+            obj!.pointee = result as AnyObject
+            return true
+        }
+        return false
+    }
+    private func formatAs_UK_NSN(string:String, workStringComps:inout [Character]) -> Bool {
+        if workStringComps.count >= 10 {
+            if workStringComps[1] == "2" {
+                // London, format is: (02#)#### ####
+                workStringComps.insert(" ", at: 7)
+                workStringComps.insert(")", at: 3)
+                workStringComps.insert("(", at: 0)
+                return true
+            } else if workStringComps[1] == "7" {
+                if workStringComps[2] == "0" || workStringComps[2] == "6" {
+                    // pagers; format is:  070 #### ####, or 076 #### ####
+                    workStringComps.insert(" ", at: 7)
+                    workStringComps.insert(" ", at: 3)
+                    return true
+                } else {
+                    // mobile phones; format is:  07### ######
+                    workStringComps.insert(" ", at: 5)
+                    return true
+                }
+            } else if workStringComps[1] == "1" {
+                let sixCode = string.prefix(6)
+                if workStringComps[2] == "1" {
+                    // format is: (011#)### ####
+                    workStringComps.insert(" ", at: 7)
+                    workStringComps.insert(")", at: 4)
+                    workStringComps.insert("(", at: 0)
+                    return true
+                } else if workStringComps[3] == "1" {
+                    // format is: (01#1)### ####
+                    workStringComps.insert(" ", at: 7)
+                    workStringComps.insert(")", at: 4)
+                    workStringComps.insert("(", at: 0)
+                    return true
+                } else if sixCode == "013873" || sixCode == "015242" || sixCode == "015394" || sixCode == "015395" || sixCode == "015396" ||
+                    sixCode == "016973" || sixCode == "016974" || sixCode == "016977" || sixCode == "017683" || sixCode == "017684" ||
+                    sixCode == "017687" || sixCode == "019467" {
+                    // format is: (01## ##)#####, though also (01## ##)####
+                    workStringComps.insert(")", at: 6)
+                    workStringComps.insert(" ", at: 4)
+                    workStringComps.insert("(", at: 0)
+                    return true
+                } else {
+                    // format is: (01###)######, though also (01###)#####
+                    workStringComps.insert(")", at: 5)
+                    workStringComps.insert("(", at: 0)
+                    return true
+                }
+            } else if workStringComps[1] == "3" || workStringComps[1] == "8" || workStringComps[1] == "9" {
+                // non-geographic:  format is: 03## ### ####
+                // toll free; format is:  08## ### ####, though also 0800 1111, 0845 ####,  0800 ######
+                // premium rate content; format is: 09## ### ####
+                if workStringComps.count >= 8 &&  workStringComps.count <= 10 {
+                    workStringComps.insert(" ", at: 4)
+                    return true
+                } else if workStringComps.count == 11 {
+                    workStringComps.insert(" ", at: 7)
+                    workStringComps.insert(" ", at: 4)
+                    return true
+                }
+            } else if workStringComps[1] == "5" {
+                // corporate/VoIP: format is: 05# #### ####, though also 0500 ######,
+                if workStringComps.count >= 8 &&  workStringComps.count <= 10 {
+                    workStringComps.insert(" ", at: 4)
+                    return true
+                } else if workStringComps.count == 11 {
+                    workStringComps.insert(" ", at: 7)
+                    workStringComps.insert(" ", at: 3)
+                    return true
+                }
+            } else if workStringComps[1] == "0" || workStringComps[1] == "4" || workStringComps[1] == "6" {
+                // codes 4 and 6 are not presently in-use, code 0 indicates an international prefix
+            }
+        }
+        return false
+    }
+    
+    // custom phone formatter for MX phones
+    private func formatAs_MX(_ obj: AutoreleasingUnsafeMutablePointer<AnyObject?>?, for string: String, errorDescription error: AutoreleasingUnsafeMutablePointer<NSString?>?) -> Bool {
+        
+        if obj == nil { return false }
+        if string.isEmpty { return true }
+        
+        // first remove all unacceptable characters and place each character into a string array
+        var hasFormatting:Bool = false
+        var workStringComps:[Character] = []
+        for char in string {
+            if char >= "0" && char <= "9" {
+                workStringComps.append(char)
+            } else if char == " " {
+                workStringComps.append("-")
+                hasFormatting = true
+            } else if char == "(" || char == ")" || char == "-" {
+                workStringComps.append(char)
+                hasFormatting = true
+            }
+        }
+        
+        let twoCode = string.prefix(2)
+        let threeCode = string.prefix(3)
+        if !hasFormatting {
+            // has only digits
+            if twoCode == "01" || twoCode == "02" {
+                // has landline prefix; must include area code
+                if workStringComps.count == 12 {
+                    let twoCode2 = string[string.index(string.startIndex, offsetBy: 2) ..< string.index(string.startIndex, offsetBy: 4)]
+                    if twoCode2 == "33" || twoCode2 == "55" || twoCode2 == "56" || twoCode2 == "81" {
+                        // 01(##)####-####; includes area code; should be 12 digits when fully entered; two digit area code
+                        workStringComps.insert("-", at: 8)
+                        workStringComps.insert(")", at: 4)
+                        workStringComps.insert("(", at: 2)
+                    } else {
+                        // 01(###)###-####; includes area code; should be 10 digits when fully entered; three digit area code
+                        workStringComps.insert("-", at: 8)
+                        workStringComps.insert(")", at: 5)
+                        workStringComps.insert("(", at: 2)
+                    }
+                }
+            } else if threeCode == "044" || threeCode == "045" {
+                // has mobile prefix
+                if workStringComps.count == 13 {
+                    let twoCode2 = string[string.index(string.startIndex, offsetBy: 3) ..< string.index(string.startIndex, offsetBy: 5)]
+                    if twoCode2 == "33" || twoCode2 == "55" || twoCode2 == "56" || twoCode2 == "81" {
+                        // 044(##)####-####; includes area code; should be 13 digits when fully entered; two digit area code
+                        workStringComps.insert("-", at: 9)
+                        workStringComps.insert(")", at: 5)
+                        workStringComps.insert("(", at: 3)
+                    } else {
+                        // 044(###)###-####; includes area code; should be 13 digits when fully entered; three digit area code
+                        workStringComps.insert("-", at: 9)
+                        workStringComps.insert(")", at: 6)
+                        workStringComps.insert("(", at: 3)
+                    }
+                }
+            } else {
+                // not prefixed
+                if workStringComps.count == 7 {
+                    // ###-####; no area code; 7 digit local#
+                    workStringComps.insert("-", at: 3)
+                } else if workStringComps.count == 8 {
+                    // ####-####; no area code; 8 digit local#
+                    workStringComps.insert("-", at: 4)
+                } else if workStringComps.count == 10 {
+                    if twoCode == "33" || twoCode == "55" || twoCode == "56" || twoCode == "81" {
+                        // (##)####-####; includes area code; should be 10 digits when fully entered; two digit area code
+                        workStringComps.insert("-", at: 6)
+                        workStringComps.insert(")", at: 2)
+                        workStringComps.insert("(", at: 0)
+                    } else {
+                        // (###)###-####; includes area code; should be 10 digits when fully entered; three digit area code
+                        workStringComps.insert("-", at: 6)
+                        workStringComps.insert(")", at: 3)
+                        workStringComps.insert("(", at: 0)
+                    }
+                }
+            }
+        } else {
+            // has formatting present
+            // not going to change nor correct
+        }
+        
+        // convert back into a string
+        var result:String = ""
+        for char in workStringComps {
+            result.append(char)
+        }
+        
         if !result.isEmpty {
             obj!.pointee = result as AnyObject
             return true
@@ -818,14 +1153,14 @@ public class PhoneFormatter_NANP: Formatter {
 
 // example Eureka Rule struct for validating a set of [key:value] pairs using information from within the Row
 // validates the PhoneComponentsRow
-public struct RulePhoneComponents_NANP<T: Equatable>: RuleTypeExt {
+public struct RulePhoneComponents_ECC<T: Equatable>: RuleTypeExt {
     
     public init(id: String? = nil) {
         self.id = id
     }
     
     public var id: String?
-    public var validationError:ValidationError = ValidationError(msg: NSLocalizedString("Phone number is invalid", comment:""))
+    public var validationError:ValidationError = ValidationError(msg: NSLocalizedString("Phone number is invalid", comment:"") + " (NANP)")
     
     public func isValid(value: T?) -> ValidationError? {
         return ValidationError(msg: "$$$APP INTERNAL ERROR!!")
@@ -840,9 +1175,10 @@ public struct RulePhoneComponents_NANP<T: Equatable>: RuleTypeExt {
                 let valueString:String? = pair.value as? String
                 if !(valueString ?? "").isEmpty {
                     if pair.key == phoneRow._phoneComponentsShown.phoneNumber.tag {
-                        let valid = RulePhone_NANP<String>.testIsValid(phoneString: valueString!)
+                        let valid = RulePhone_ECC<String>.testIsValid(formatRegion: phoneRow._phoneComponentsShown.withFormattingRegion, phoneString: valueString!)
                         if !valid {
-                            errors = errors + comma + NSLocalizedString("Phone number is invalid", comment:"")
+                            errors = errors + comma + NSLocalizedString("Phone number is invalid", comment:"") +
+                            " (\(phoneRow._phoneComponentsShown.withFormattingRegion ?? "-"))"
                             comma = ", "
                         }
                     } else if pair.key == phoneRow._phoneComponentsShown.phoneExtension.tag {
@@ -865,4 +1201,3 @@ public struct RulePhoneComponents_NANP<T: Equatable>: RuleTypeExt {
         return ValidationError(msg: errors)
     }
 }
-

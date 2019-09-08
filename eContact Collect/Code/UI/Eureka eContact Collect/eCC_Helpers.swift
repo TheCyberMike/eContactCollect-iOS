@@ -167,24 +167,90 @@ extension Section /* Helpers */ {
     
 }
 
-public struct RulePhone_NANP<T: Equatable>: RuleType {
+public final class PhoneRowExt: _PhoneRow, RowType {
+    public var withFormatRegion:String? {
+        didSet {
+            if (withFormatRegion ?? "").isEmpty {
+                self.formatter = nil
+            } else if withFormatRegion! == "-" {
+                self.formatter = nil
+            } else {
+                self.formatter = PhoneFormatter_ECC(forRegion: withFormatRegion!)
+            }
+        }
+    }
+    required public init(tag: String?) {
+        super.init(tag: tag)
+    }
+}
+
+public struct RulePhone_ECC<T: Equatable>: RuleTypeExt {
     
     public init(id: String? = nil) {
         self.id = id
     }
     
+    public var acceptableRegions:[String] = ["NANP","US","CA","MX","UK"]
     public var id: String?
-    public var validationError:ValidationError = ValidationError(msg: NSLocalizedString("Phone number is invalid", comment:""))
+    public var validationError:ValidationError = ValidationError(msg: NSLocalizedString("Phone number is invalid", comment:"") + " (NANP)")
     
     public func isValid(value: T?) -> ValidationError? {
+        return ValidationError(msg: "$$$APP INTERNAL ERROR!!")
+    }
+    
+    public func isValidExt(row:BaseRow, value: T?) -> ValidationError? {
+        let phoneRow = row as! PhoneRowExt
+        if (phoneRow.withFormatRegion ?? "").isEmpty { return nil }
+        if phoneRow.withFormatRegion! == "-" { return nil }
+        
         if let valueString = value as? String {
-            let valid = RulePhone_NANP.testIsValid(phoneString: valueString)
+            var valid:Bool
+            switch phoneRow.withFormatRegion! {
+            case "NANP":
+                valid = RulePhone_ECC.testIsValid_NANP(phoneString: valueString)
+                break
+            case "US":
+                valid = RulePhone_ECC.testIsValid_NANP(phoneString: valueString)
+                break
+            case "CA":
+                valid = RulePhone_ECC.testIsValid_NANP(phoneString: valueString)
+                break
+            case "UK":
+                valid = RulePhone_ECC.testIsValid_UK(phoneString: valueString)
+                break
+            case "MX":
+                valid = RulePhone_ECC.testIsValid_MX(phoneString: valueString)
+                break
+            default:
+                valid = true
+                break
+            }
             if !valid { return validationError }
         }
         return nil
     }
     
-    public static func testIsValid(phoneString:String) -> Bool {
+    public static func testIsValid(formatRegion:String?, phoneString:String) -> Bool {
+        if (formatRegion ?? "").isEmpty { return true }
+        switch formatRegion {
+        case "-":
+            return true
+        case "NANP":
+            return RulePhone_ECC.testIsValid_NANP(phoneString: phoneString)
+        case "US":
+            return RulePhone_ECC.testIsValid_NANP(phoneString: phoneString)
+        case "CA":
+            return RulePhone_ECC.testIsValid_NANP(phoneString: phoneString)
+        case "UK":
+            return RulePhone_ECC.testIsValid_UK(phoneString: phoneString)
+        case "MX":
+            return RulePhone_ECC.testIsValid_MX(phoneString: phoneString)
+        default:
+            return true
+        }
+    }
+    
+    private static func testIsValid_NANP(phoneString:String) -> Bool {
         if phoneString.isEmpty { return true }
         let digitChars:CharacterSet = CharacterSet(charactersIn:"1234567890")
         let phoneChars:CharacterSet = CharacterSet(charactersIn:"1234567890#*()- ")
@@ -192,6 +258,61 @@ public struct RulePhone_NANP<T: Equatable>: RuleType {
         if phoneString.rangeOfCharacter(from: digitChars.inverted) == nil {
             // has only digits
             if phoneString.count == 7 || phoneString.count == 10 {
+                // phone numbers are 7 digits local without the area code, or 10 digits with the area code;
+                // in many areas a full 10 digits is manditory
+                return true
+            }
+            
+        } else if phoneString.rangeOfCharacter(from: phoneChars.inverted) == nil {
+            // has acceptable phone characters and is likely formatted
+            // ?? FUTURE validate the formatted phone#
+            return true
+            
+        } else {
+            // has non-phone characters
+        }
+        return false
+    }
+    
+    private static func testIsValid_UK(phoneString:String) -> Bool {
+        if phoneString.isEmpty { return true }
+        let digitChars:CharacterSet = CharacterSet(charactersIn:"1234567890")
+        let phoneChars:CharacterSet = CharacterSet(charactersIn:"1234567890#*() ")  // dash is not normally used in formatted phone numbers
+        
+        if phoneString.rangeOfCharacter(from: digitChars.inverted) == nil {
+            // has only digits
+            if phoneString.prefix(1) == "0" {
+                // a NSN has 10 or 11 digits including the leading zero
+                if phoneString.count == 10 || phoneString.count == 11 {
+                    return true
+                }
+            } else {
+                // non-NSN local phone#s can vary from 3 to 9 digits
+                if phoneString.count >= 3 && phoneString.count <= 10 {
+                    return true
+                }
+            }
+            
+        } else if phoneString.rangeOfCharacter(from: phoneChars.inverted) == nil {
+            // has acceptable phone characters and is likely formatted
+            // ?? FUTURE validate the formatted phone#
+            return true
+            
+        } else {
+            // has non-phone characters
+        }
+        return false
+    }
+    
+    private static func testIsValid_MX(phoneString:String) -> Bool {
+        if phoneString.isEmpty { return true }
+        let digitChars:CharacterSet = CharacterSet(charactersIn:"1234567890")
+        let phoneChars:CharacterSet = CharacterSet(charactersIn:"1234567890#*()- ")
+        
+        if phoneString.rangeOfCharacter(from: digitChars.inverted) == nil {
+            // has only digits
+            if phoneString.count == 10 {
+                // as of 2019 Aug 3; all regular phone#s include the area code and are 10 digits total; no more local-only numbers
                 return true
             }
             
@@ -634,17 +755,19 @@ public class ComposedLayout: Equatable {
         // compose the views and assess any Equal or LessThanOrEqual width fields
         if self.mImageTitleFirstControl != nil { views[self.mImageTitleFirstControl!.controlName] = self.mImageTitleFirstControl!.control }
         if self.mTextTitleFirstControl != nil { views[self.mTextTitleFirstControl!.controlName] = self.mTextTitleFirstControl!.control }
-        for line:Int in 0...self._mUnmovedComposedLayoutArray.count - 1 {
-            if self._mUnmovedComposedLayoutArray[line].count > 0 {
-                var lineHasVariWidth:Bool = false
-                for ctrl in 0...self._mUnmovedComposedLayoutArray[line].count - 1 {
-                    if !self._mUnmovedComposedLayoutArray[line][ctrl].isFixedWidthOrLess { lineHasVariWidth = true }
-                    self._mUnmovedComposedLayoutArray[line][ctrl]._noTrail = false
-                    views[self._mUnmovedComposedLayoutArray[line][ctrl].controlName] = self._mUnmovedComposedLayoutArray[line][ctrl].control
-                }
-                if !lineHasVariWidth {
-                    let ctrl = self._mUnmovedComposedLayoutArray[line].count - 1
-                    self._mUnmovedComposedLayoutArray[line][ctrl]._noTrail = true
+        if self._mUnmovedComposedLayoutArray.count > 0 {
+            for line:Int in 0...self._mUnmovedComposedLayoutArray.count - 1 {
+                if self._mUnmovedComposedLayoutArray[line].count > 0 {
+                    var lineHasVariWidth:Bool = false
+                    for ctrl in 0...self._mUnmovedComposedLayoutArray[line].count - 1 {
+                        if !self._mUnmovedComposedLayoutArray[line][ctrl].isFixedWidthOrLess { lineHasVariWidth = true }
+                        self._mUnmovedComposedLayoutArray[line][ctrl]._noTrail = false
+                        views[self._mUnmovedComposedLayoutArray[line][ctrl].controlName] = self._mUnmovedComposedLayoutArray[line][ctrl].control
+                    }
+                    if !lineHasVariWidth {
+                        let ctrl = self._mUnmovedComposedLayoutArray[line].count - 1
+                        self._mUnmovedComposedLayoutArray[line][ctrl]._noTrail = true
+                    }
                 }
             }
         }
@@ -688,46 +811,50 @@ public class ComposedLayout: Equatable {
         }
         
         // compose all the horizontal lines and controls
-        for line:Int in 0...self.mComposedLayoutArray.count - 1 {
-            var hasHori:Bool = false
-            var vizH:String = "H:|"
-            var nextHoriSep:String = "-"
-            if hasFirsts {
-                if self.mTextTitleFirstControl != nil { vizH = "[\(self.mTextTitleFirstControl!.controlName)]" }
-                else { vizH = "[\(self.mImageTitleFirstControl!.controlName))]" }
-                if self.horiInterItemPad >= 0 { nextHoriSep = nextHoriSep + "\(self.horiInterItemPad)-" }
-            } else {
-                if self.horiLeadingPad >= 0 { nextHoriSep = nextHoriSep + "\(self.horiLeadingPad)-" }
-            }
-            if self.mComposedLayoutArray[line].count > 0 {
-                for ctrl in 0...self.mComposedLayoutArray[line].count - 1 {
-                    hasHori = true
-                    //if !self.mComposedLayoutArray[line][ctrl]._noLead { vizH = vizH + nextHoriSep }
-                    vizH = vizH + nextHoriSep
-                    vizH = vizH + "[\(self.mComposedLayoutArray[line][ctrl].controlName)]"
-                    if self.mComposedLayoutArray[line][ctrl]._noTrail { nextHoriSep = "" }
-                    else {
-                        nextHoriSep = "-"
-                        if self.horiInterItemPad >= 0 { nextHoriSep = nextHoriSep + "\(self.horiInterItemPad)-" }
+        if self.mComposedLayoutArray.count > 0 {
+            for line:Int in 0...self.mComposedLayoutArray.count - 1 {
+                var hasHori:Bool = false
+                var vizH:String = "H:|"
+                var nextHoriSep:String = "-"
+                if hasFirsts {
+                    if self.mTextTitleFirstControl != nil { vizH = "[\(self.mTextTitleFirstControl!.controlName)]" }
+                    else { vizH = "[\(self.mImageTitleFirstControl!.controlName))]" }
+                    if self.horiInterItemPad >= 0 { nextHoriSep = nextHoriSep + "\(self.horiInterItemPad)-" }
+                } else {
+                    if self.horiLeadingPad >= 0 { nextHoriSep = nextHoriSep + "\(self.horiLeadingPad)-" }
+                }
+                if self.mComposedLayoutArray[line].count > 0 {
+                    for ctrl in 0...self.mComposedLayoutArray[line].count - 1 {
+                        hasHori = true
+                        //if !self.mComposedLayoutArray[line][ctrl]._noLead { vizH = vizH + nextHoriSep }
+                        vizH = vizH + nextHoriSep
+                        vizH = vizH + "[\(self.mComposedLayoutArray[line][ctrl].controlName)]"
+                        if self.mComposedLayoutArray[line][ctrl]._noTrail { nextHoriSep = "" }
+                        else {
+                            nextHoriSep = "-"
+                            if self.horiInterItemPad >= 0 { nextHoriSep = nextHoriSep + "\(self.horiInterItemPad)-" }
+                        }
                     }
                 }
-            }
-            if hasHori {
-                if self.horiTrailingPad >= -1 && !noBottomsOrEnds && !nextHoriSep.isEmpty {
-                    if self.horiTrailingPad >= 0 { nextHoriSep = nextHoriSep + "\(self.horiTrailingPad)-|" }
-                    else { vizH = vizH + "-|" }
+                if hasHori {
+                    if self.horiTrailingPad >= -1 && !noBottomsOrEnds && !nextHoriSep.isEmpty {
+                        if self.horiTrailingPad >= 0 { nextHoriSep = nextHoriSep + "\(self.horiTrailingPad)-|" }
+                        else { vizH = vizH + "-|" }
+                    }
+    //debugPrint("\(self.mCTAG).generateDynamicConstraints.\(self.mRow?.title ?? "") Hori=\(vizH)")
+                    dynConstraints += NSLayoutConstraint.constraints(withVisualFormat: vizH, options: [], metrics: nil, views: views)
                 }
-//debugPrint("\(self.mCTAG).generateDynamicConstraints.\(self.mRow?.title ?? "") Hori=\(vizH)")
-                dynConstraints += NSLayoutConstraint.constraints(withVisualFormat: vizH, options: [], metrics: nil, views: views)
             }
         }
         
         // compose all the easy align-vertical-center constraints
-        for line:Int in 0...self.mComposedLayoutArray.count - 1 {
-            if self.mComposedLayoutArray[line].count > 1 {
-                for ctrl in 1...self.mComposedLayoutArray[line].count - 1 {
-//debugPrint("\(self.mCTAG).generateDynamicConstraints.\(self.mRow?.title ?? "") To-First CenterY: \(self.mComposedLayoutArray[line][ctrl].controlName) to \(self.mComposedLayoutArray[line][0].controlName)")
-                    dynConstraints += [NSLayoutConstraint(item: self.mComposedLayoutArray[line][ctrl].control, attribute: .centerY, relatedBy: .equal, toItem: self.mComposedLayoutArray[line][0].control, attribute: .centerY, multiplier: 1, constant: 0)]
+        if self.mComposedLayoutArray.count > 0 {
+            for line:Int in 0...self.mComposedLayoutArray.count - 1 {
+                if self.mComposedLayoutArray[line].count > 1 {
+                    for ctrl in 1...self.mComposedLayoutArray[line].count - 1 {
+    //debugPrint("\(self.mCTAG).generateDynamicConstraints.\(self.mRow?.title ?? "") To-First CenterY: \(self.mComposedLayoutArray[line][ctrl].controlName) to \(self.mComposedLayoutArray[line][0].controlName)")
+                        dynConstraints += [NSLayoutConstraint(item: self.mComposedLayoutArray[line][ctrl].control, attribute: .centerY, relatedBy: .equal, toItem: self.mComposedLayoutArray[line][0].control, attribute: .centerY, multiplier: 1, constant: 0)]
+                    }
                 }
             }
         }
@@ -745,11 +872,13 @@ public class ComposedLayout: Equatable {
             titleHeight = self.mTextTitleFirstControl!.control.intrinsicContentSize.height
         }
         var fieldsHeight:CGFloat = 0.0
-        for line:Int in 0...self.mComposedLayoutArray.count - 1 {
-            var ctrlHeight:CGFloat = self.mComposedLayoutArray[line][0].control.intrinsicContentSize.height
-            if ctrlHeight <= 0.0 { ctrlHeight = self.mComposedLayoutArray[line][0].control.layer.frame.size.height }
-            fieldsHeight = fieldsHeight + ctrlHeight
-            if line > 0 { fieldsHeight = fieldsHeight + CGFloat(self.vertInterItemPad >= 0 ? self.vertInterItemPad : 10) }
+        if self.mComposedLayoutArray.count > 0 {
+            for line:Int in 0...self.mComposedLayoutArray.count - 1 {
+                var ctrlHeight:CGFloat = self.mComposedLayoutArray[line][0].control.intrinsicContentSize.height
+                if ctrlHeight <= 0.0 { ctrlHeight = self.mComposedLayoutArray[line][0].control.layer.frame.size.height }
+                fieldsHeight = fieldsHeight + ctrlHeight
+                if line > 0 { fieldsHeight = fieldsHeight + CGFloat(self.vertInterItemPad >= 0 ? self.vertInterItemPad : 10) }
+            }
         }
         var highestHeight:CGFloat = imageHeight
         if titleHeight > highestHeight { highestHeight = titleHeight }
@@ -799,11 +928,13 @@ public class ComposedLayout: Equatable {
             var nextVertSep:String = "-"
             if self.vertTopPad >= 0 { nextVertSep = nextVertSep + "\(self.vertTopPad)-" }
             
-            for line:Int in 0...self.mComposedLayoutArray.count - 1 {
-                hasVert = true
-                vizV = vizV + "\(nextVertSep)[\(self.mComposedLayoutArray[line][0].controlName)]"
-                nextVertSep = "-"
-                if self.vertInterItemPad >= 0 { nextVertSep = nextVertSep + "\(self.vertInterItemPad)-" }
+            if self.mComposedLayoutArray.count > 0 {
+                for line:Int in 0...self.mComposedLayoutArray.count - 1 {
+                    hasVert = true
+                    vizV = vizV + "\(nextVertSep)[\(self.mComposedLayoutArray[line][0].controlName)]"
+                    nextVertSep = "-"
+                    if self.vertInterItemPad >= 0 { nextVertSep = nextVertSep + "\(self.vertInterItemPad)-" }
+                }
             }
             if fieldsHeight >= highestHeight && !noBottomsOrEnds && !self.mCellHasManualHeight {
                 if self.vertBottomPad >= -1 && !self.mCellHasManualHeight {

@@ -25,8 +25,8 @@ public class RecJsonFieldLocales {
     public static let COLUMN_FIELDLOCPROP_METADATAS = "fieldlocprop_metadatas"
     
     // constructor creates the record from a json entry
-    init(jsonRecObj:NSDictionary, forDBversion:String) {
-        if forDBversion == "1" {
+    init(jsonRecObj:NSDictionary, forDBversion:Int64) {
+        if forDBversion == 1 {
             let value1 = jsonRecObj[RecOrgFormFieldDefs.COLUMN_FIELDPROP_IDCODE] as? String
             if (value1 ?? "").isEmpty { self.rField_IDCode = nil }
             else { self.rField_IDCode = value1 }

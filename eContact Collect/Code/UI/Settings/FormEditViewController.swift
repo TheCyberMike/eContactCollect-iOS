@@ -1808,7 +1808,8 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
         if svCode == forTag { svCode = nil }
         if shownName == forTag { shownName = nil }
         return ButtonRow() { row in
-            row.tag = "MT\t\(forTag)\t\((svCode ?? ""))\t\((shownName ?? ""))"
+            if forTag.prefix(3) == "###" { row.tag = "MT\t\(forTag)\t\((svCode ?? ""))" }
+            else { row.tag = "MT\t\(forTag)\t\((svCode ?? ""))\t\((shownName ?? ""))" }
             row.cellStyle = UITableViewCell.CellStyle.subtitle
             row.title = "(\(forTag)) " + (svCode ?? "")
             row.presentationMode = .show(
@@ -1833,7 +1834,8 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
                         var newShownName = self!.mWorking_FormFieldEntry!.getMetadataShown(forTag: newTag, forLangRegion: self!.mFormEditVC!.mReference_orgRec!.rOrg_LangRegionCodes_Supported[0])
                         if newSVcode == newTag { newSVcode = nil }
                         if newShownName == newTag { newShownName = nil }
-                        row!.tag = "MT\t\(newTag)\t\((newSVcode ?? ""))\t\((newShownName ?? ""))"
+                        if newTag.prefix(3) == "###" { row!.tag = "MT\t\(newTag)\t\((newSVcode ?? ""))" }
+                        else { row!.tag = "MT\t\(newTag)\t\((newSVcode ?? ""))\t\((newShownName ?? ""))" }
                         row!.title = "(\(newTag)) " + (newSVcode ?? "")
                         row!.updateCell()
                     }
