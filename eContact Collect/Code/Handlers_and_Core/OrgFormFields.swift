@@ -471,6 +471,10 @@ public struct FieldAttributes {
     
     // compare the sync-status of a SV-File set and a Shown set
     public static func compareSync(domain:String, sv:FieldAttributes?, shown:FieldAttributes?, deepSync:Bool=false) throws {
+        // special situations
+        if (sv?.count() ?? 0) == 1, (shown?.count() ?? 0) == 0, sv!.mAttributes[0].codeString == "***OSLC_StateCode" { return }
+        
+        // standard consistency checks
         if sv == nil || shown == nil {
             throw APP_ERROR(funcName: "FieldAttributes.compareSync", domain: domain, errorCode: .MISSING_OR_MISMATCHED_FIELD_OPTIONS, userErrorDetails: nil, developerInfo: "sv == nil || shown == nil")
         }

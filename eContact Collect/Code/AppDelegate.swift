@@ -220,11 +220,15 @@ debugPrint("\(AppDelegate.mCTAG).initialize STARTED")
         
         // this App supports multi-languages even aside from automatic Localization
         // get device locale information from iOS; iOS allows setting both preferred Languagess w/Region, and a separate Region
+        // iOS prefers the underscore (rather than dash) to separate language from region
         AppDelegate.mDeviceLanguage = AppDelegate.getLangOnly(fromLangRegion: NSLocale.preferredLanguages[0])
         let value2:String? = (Locale.current as NSLocale).object(forKey: .countryCode) as? String
         if value2 != nil { AppDelegate.mDeviceRegion = value2! }
         AppDelegate.mDeviceLangRegion = NSLocale.preferredLanguages[0]
-        if AppDelegate.mDeviceLangRegion == "en-US" { AppDelegate.mDeviceLangRegion = "en" }
+        if AppDelegate.mDeviceLangRegion.contains("-") {
+            AppDelegate.mDeviceLangRegion = AppDelegate.mDeviceLangRegion.replacingOccurrences(of: "-", with: "_")
+        }
+        if AppDelegate.mDeviceLangRegion == "en_US" { AppDelegate.mDeviceLangRegion = "en" }
         
         // get App's active locale from the Bundle; really want the localization directory in-use
         let filePath:String? = Bundle.main.path(forResource: "FieldLocales", ofType: "json")
@@ -235,10 +239,10 @@ debugPrint("\(AppDelegate.mCTAG).initialize STARTED")
             AppDelegate.mAppLangRegion = langFolder.components(separatedBy: ".")[0]
         } else {
             AppDelegate.mAppLangRegion = Bundle.main.preferredLocalizations.first!
-            if AppDelegate.mAppLangRegion.contains("_") {
-                AppDelegate.mAppLangRegion = AppDelegate.mAppLangRegion.replacingOccurrences(of: "_", with: "-")
+            if AppDelegate.mAppLangRegion.contains("-") {
+                AppDelegate.mAppLangRegion = AppDelegate.mAppLangRegion.replacingOccurrences(of: "-", with: "_")
             }
-            if AppDelegate.mAppLangRegion == "en-US" { AppDelegate.mAppLangRegion = "en" }
+            if AppDelegate.mAppLangRegion == "en_US" { AppDelegate.mAppLangRegion = "en" }
         }
         
         // get timezone information from iOS
@@ -970,7 +974,7 @@ debugPrint("\(AppDelegate.mCTAG).initialize Localization: iOS Language \(AppDele
     }
     
     ///////////////////////////////////////////////////////////////////
-    // localization
+    // localization; iOS prefers underscore (rather than dash) to separate language from region
     ///////////////////////////////////////////////////////////////////
     
     // get just the language portion of a LangRegion

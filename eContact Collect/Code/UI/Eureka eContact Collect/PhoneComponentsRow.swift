@@ -772,8 +772,8 @@ public class PhoneInternationalPrefixFormatter_ECC: Formatter {
 // custom phone formatter for US phones and others in the N. America Numbering Plan (including Canada; U.S. Protectorates; various Caribbean nations, states, territories)
 public class PhoneFormatter_ECC: Formatter {
     public var forRegion:String = "NANP"
-    public static var acceptableRegions:[String] = ["NANP","US","CA","MX","UK"]
-    public static var acceptablePhoneIntlCodes:[String] = ["+1","+1","+1","+52","+44"]
+    public static var acceptableRegions:[String] = ["NANP","US","CA","MX","UK","GB"]
+    public static var acceptablePhoneIntlCodes:[String] = ["+1","+1","+1","+52","+44","+44"]
     
     // initializer
     init(forRegion:String) {
@@ -852,6 +852,8 @@ debugPrint("EUREKA.PhoneComponentsRow.PhoneFormatter_ECC.getObjectValue formatRe
             return formatAs_MX(obj, for:string, errorDescription: error)
             
         case "UK":
+            return formatAs_UK(obj, for:string, errorDescription: error)
+        case "GB":
             return formatAs_UK(obj, for:string, errorDescription: error)
             
         default:

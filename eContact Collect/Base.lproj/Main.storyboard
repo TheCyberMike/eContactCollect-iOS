@@ -568,22 +568,32 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <containerView opaque="NO" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="BdI-gm-l40">
+                            <containerView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="BdI-gm-l40">
                                 <rect key="frame" x="0.0" y="64" width="414" height="50"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="50" id="AV9-MF-9Y1"/>
+                                </constraints>
                                 <connections>
                                     <segue destination="OX8-7y-UxB" kind="embed" id="nwo-l9-tFU"/>
                                 </connections>
                             </containerView>
-                            <containerView opaque="NO" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YCI-LU-bod">
+                            <containerView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="YCI-LU-bod">
                                 <rect key="frame" x="0.0" y="114" width="414" height="573"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                 <connections>
                                     <segue destination="4W6-lx-Usv" kind="embed" id="fLN-gG-6Fs"/>
                                 </connections>
                             </containerView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="YCI-LU-bod" firstAttribute="trailing" secondItem="egb-Fn-fUh" secondAttribute="trailing" id="Rx1-3F-jxK"/>
+                            <constraint firstItem="egb-Fn-fUh" firstAttribute="bottom" secondItem="YCI-LU-bod" secondAttribute="bottom" id="XHg-2m-RKR"/>
+                            <constraint firstItem="YCI-LU-bod" firstAttribute="leading" secondItem="egb-Fn-fUh" secondAttribute="leading" id="d4d-f7-gAi"/>
+                            <constraint firstItem="BdI-gm-l40" firstAttribute="trailing" secondItem="egb-Fn-fUh" secondAttribute="trailing" id="fH6-3Z-hl6"/>
+                            <constraint firstItem="BdI-gm-l40" firstAttribute="top" secondItem="egb-Fn-fUh" secondAttribute="top" id="rV0-rc-0vj"/>
+                            <constraint firstItem="BdI-gm-l40" firstAttribute="leading" secondItem="egb-Fn-fUh" secondAttribute="leading" id="u1a-Fa-ZBn"/>
+                            <constraint firstItem="YCI-LU-bod" firstAttribute="top" secondItem="BdI-gm-l40" secondAttribute="bottom" id="wSp-EP-pMU"/>
+                        </constraints>
                         <viewLayoutGuide key="safeArea" id="egb-Fn-fUh"/>
                     </view>
                     <navigationItem key="navigationItem" title="Define Form 1" id="cS7-7g-NWH">

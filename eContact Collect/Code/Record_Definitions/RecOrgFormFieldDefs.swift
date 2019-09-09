@@ -279,6 +279,8 @@ public class RecOrgFormFieldDefs_Optionals {
                 }
             }
         }
+        
+        self.regionalize()
     }
     
     // constructor creates the record from an importer JSON object; is tolerant of missing columns;
@@ -348,6 +350,45 @@ public class RecOrgFormFieldDefs_Optionals {
            self.rFieldProp_Col_Name_For_SV_File == nil { return false }
         if self.rOrg_Code_For_SV_File!.isEmpty || self.rFieldProp_IDCode!.isEmpty || self.rFieldProp_Col_Name_For_SV_File!.isEmpty { return false }
         return true
+    }
+    
+    // regionalize the field record if needed
+    private func regionalize() {
+        // only regionalize rFieldProp_Metadatas_Code_For_SV_File entries ###Country and ###Region
+        if AppDelegate.mDeviceRegion.isEmpty { return }
+        if (self.rFieldProp_Metadatas_Code_For_SV_File?.count() ?? 0) > 0 {
+            for codePair in self.rFieldProp_Metadatas_Code_For_SV_File!.mAttributes {
+                if codePair.codeString == "###Country" {
+                    let _ = self.rFieldProp_Metadatas_Code_For_SV_File!.setValue(newValue: AppDelegate.mDeviceRegion, givenCode: "###Country")
+                } else if codePair.codeString == "###Region" {
+                    let _ = self.rFieldProp_Metadatas_Code_For_SV_File!.setValue(newValue: AppDelegate.mDeviceRegion, givenCode: "###Region")
+                }
+            }
+        }
+        
+        // regionalize which subfields are shown for address-full
+        if self.rFieldProp_Row_Type != nil, self.rFieldProp_Row_Type! == .ADDRESS_CONTAINER {
+            switch AppDelegate.mDeviceRegion {
+            case "US":
+                // do nothing
+                break
+            case "CA":
+                self.rFieldProp_Contains_Field_IDCodes = ["FC_AddrStr","FC_AddrCity","FC_AddrSTcode","FC_AddrPostalAlp"]
+                break
+            case "MX":
+                self.rFieldProp_Contains_Field_IDCodes = ["FC_AddrStr","FC_AddrCity","FC_AddrSTcode","FC_AddrPostalAlp"]
+                break
+            case "UK":
+                self.rFieldProp_Contains_Field_IDCodes = ["FC_AddrStr","FC_AddrLocality","FC_AddrCity","FC_AddrPostalAlp"]
+                break
+            case "GB":
+                self.rFieldProp_Contains_Field_IDCodes = ["FC_AddrStr","FC_AddrLocality","FC_AddrCity","FC_AddrPostalAlp"]
+                break
+            default:
+                // do nothing
+                break
+            }
+        }
     }
 }
 

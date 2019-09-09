@@ -904,6 +904,7 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
             workAddressComponentsShown.addrAptSuite.shown = false
             workAddressComponentsShown.addrStreet1.shown = false
             workAddressComponentsShown.addrStreet2.shown = false
+            workAddressComponentsShown.addrLocality.shown = false
             workAddressComponentsShown.addrCity.shown = false
             workAddressComponentsShown.addrStateProv.shown = false
             workAddressComponentsShown.addrPostalCode.shown = false
@@ -954,6 +955,15 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
                             workAddressComponentsShown.addrStreet2.placeholder = subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Placeholder_Shown
                         } else {
                             workAddressComponentsShown.addrStreet2.placeholder = subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Name_Shown
+                        }
+                        break
+                    case "FC_AddrLocality":
+                        workAddressComponentsShown.addrLocality.shown = true
+                        workAddressComponentsShown.addrLocality.tag = String(subFFentry!.mFormFieldRec.rFormField_Index)
+                        if !(subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Placeholder_Shown ?? "").isEmpty {
+                            workAddressComponentsShown.addrLocality.placeholder = subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Placeholder_Shown
+                        } else {
+                            workAddressComponentsShown.addrLocality.placeholder = subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Name_Shown
                         }
                         break
                     case "FC_AddrCity":
@@ -1726,6 +1736,13 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
                                             addrCompRow.addrComponentsShown.addrStreet2.placeholder = subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Name_Shown
                                         }
                                         break
+                                    case "FC_AddrLocality":
+                                        if !(subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Placeholder_Shown ?? "").isEmpty {
+                                            addrCompRow.addrComponentsShown.addrLocality.placeholder = subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Placeholder_Shown
+                                        } else {
+                                            addrCompRow.addrComponentsShown.addrLocality.placeholder = subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Name_Shown
+                                        }
+                                        break
                                     case "FC_AddrCity":
                                         if !(subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Placeholder_Shown ?? "").isEmpty {
                                             addrCompRow.addrComponentsShown.addrCity.placeholder = subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Placeholder_Shown
@@ -2042,8 +2059,8 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
                         optionSetLocaleComposedRec = forFormFieldEntry.mComposedOptionSetLocalesRecs![0]
                     }
                     
-                    // check the chosen RecOptionSetLocales_Composed
-                    if optionSetLocaleComposedRec != nil {
+                    // check the chosen RecOptionSetLocales_Composed; note that there may be NO options founds
+                    if optionSetLocaleComposedRec != nil, optionSetLocaleComposedRec!.rFieldLocProp_Options_Code_For_SV_File != nil {
                         do {
                             try FieldAttributes.compareSync(domain: self.mThrownDomain,
                                                             sv: optionSetLocaleComposedRec!.rFieldLocProp_Options_Code_For_SV_File,
@@ -2091,8 +2108,8 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
                     }
                 }
             } else {
-                if optionSetLocaleComposedRec != nil {
-                    // pull in any found external options
+                if optionSetLocaleComposedRec != nil, optionSetLocaleComposedRec!.rFieldLocProp_Options_Code_For_SV_File != nil {
+                    // pull in any found external options; note that it is possible there are NONE found
                     for oslSVcp in optionSetLocaleComposedRec!.rFieldLocProp_Options_Code_For_SV_File!.mAttributes {
                         let shownString:String = optionSetLocaleComposedRec!.rFieldLocProp_Options_Name_Shown!.findValue(givenCode: oslSVcp.codeString)!
                         controlPairs.append(CodePair(oslSVcp.valueString, shownString))

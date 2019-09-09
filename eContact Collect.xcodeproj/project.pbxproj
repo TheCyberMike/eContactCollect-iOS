@@ -343,7 +343,6 @@
 		D7D87FD521E67B7B002847DE /* ChooserLangRegionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserLangRegionViewController.swift; sourceTree = "<group>"; };
 		D7EB06112296105200D0CA02 /* PopupImportViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupImportViewController.swift; sourceTree = "<group>"; };
 		D7EE5BEB21FB7E0700769CA6 /* App_Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App_Error.swift; sourceTree = "<group>"; };
-		D7FEF3EC231C40BD0074E658 /* Accounts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accounts.framework; path = System/Library/Frameworks/Accounts.framework; sourceTree = SDKROOT; };
 		D903B63921778B110021A80E /* ChooserRatingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooserRatingViewController.swift; sourceTree = "<group>"; };
 		D903B63B21778B2D0021A80E /* PopupEnterCollectorNotesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupEnterCollectorNotesViewController.swift; sourceTree = "<group>"; };
 		D9042EC12176B6DB0088CF7A /* ContactsMgmtViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsMgmtViewController.swift; sourceTree = "<group>"; };
@@ -703,7 +702,6 @@
 		D9EAF0AB21586F7800B4EB2A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				D7FEF3EC231C40BD0074E658 /* Accounts.framework */,
 				D74C3790220CB2BE00A5B23E /* OAuthSwift.xcodeproj */,
 				D7CC2AA422027E4400F39E36 /* mailcore2.xcodeproj */,
 				D7CC2AA222027E0E00F39E36 /* Security.framework */,

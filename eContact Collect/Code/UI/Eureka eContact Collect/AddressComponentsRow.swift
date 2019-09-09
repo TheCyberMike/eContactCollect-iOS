@@ -11,6 +11,7 @@ public struct AddressComponentsValues {
     public var addrAptSuite: String?
     public var addrStreet1: String?
     public var addrStreet2: String?
+    public var addrLocality: String?
     public var addrCity: String?
     public var addrStateProvFull: String?
     public var addrStateProvCode: String?
@@ -29,6 +30,7 @@ public struct AddressComponentsShown {
     public var addrAptSuite = AddrAptSuite()
     public var addrStreet1 = AddrStreet1()
     public var addrStreet2 = AddrStreet2()
+    public var addrLocality = AddrLocality()
     public var addrCity = AddrCity()
     public var addrStateProv = AddrStateProv()
     public var addrPostalCode = AddrPostalCode()
@@ -56,6 +58,12 @@ public struct AddressComponentsShown {
         public var shown:Bool = false
         public var tag:String? = "Street2"
         public var placeholder:String? = "Street addtl"
+        public var formatter:Formatter? = nil
+    }
+    public struct AddrLocality {
+        public var shown:Bool = false
+        public var tag:String? = "Locality"
+        public var placeholder:String? = "Locality"
         public var formatter:Formatter? = nil
     }
     public struct AddrCity {
@@ -88,6 +96,7 @@ public struct AddressComponentsShown {
             self.addrAptSuite.shown != comparedTo.addrAptSuite.shown ||
             self.addrStreet1.shown != comparedTo.addrStreet1.shown ||
             self.addrStreet2.shown != comparedTo.addrStreet2.shown ||
+            self.addrLocality.shown != comparedTo.addrLocality.shown ||
             self.addrCity.shown != comparedTo.addrCity.shown ||
             self.addrStateProv.shown != comparedTo.addrStateProv.shown ||
             self.addrPostalCode.shown != comparedTo.addrPostalCode.shown ||
@@ -176,6 +185,9 @@ open class _AddressComponentsRow : Row<AddressComponentsCell> {
         if self._addrComponentsShown.addrStreet2.shown {
             result[self._addrComponentsShown.addrStreet2.tag ?? "Street2"] = _addrComponentsValues.addrStreet2
         }
+        if self._addrComponentsShown.addrLocality.shown {
+            result[self._addrComponentsShown.addrLocality.tag ?? "Locality"] = _addrComponentsValues.addrLocality
+        }
         if self._addrComponentsShown.addrCity.shown {
             result[self._addrComponentsShown.addrCity.tag ?? "City"] = _addrComponentsValues.addrCity
         }
@@ -199,6 +211,7 @@ open class _AddressComponentsRow : Row<AddressComponentsCell> {
             _addrComponentsValues.addrAptSuite = nil
             _addrComponentsValues.addrStreet1 = nil
             _addrComponentsValues.addrStreet2 = nil
+            _addrComponentsValues.addrLocality = nil
             _addrComponentsValues.addrCity = nil
             _addrComponentsValues.addrStateProvFull = nil
             _addrComponentsValues.addrStateProvCode = nil
@@ -208,6 +221,7 @@ open class _AddressComponentsRow : Row<AddressComponentsCell> {
             _addrComponentsValues.addrAptSuite = values![self._addrComponentsShown.addrAptSuite.tag ?? "Apt/Suite"] as? String
             _addrComponentsValues.addrStreet1 = values![self._addrComponentsShown.addrStreet1.tag ?? "Street1"] as? String
             _addrComponentsValues.addrStreet2 = values![self._addrComponentsShown.addrStreet2.tag ?? "Street2"] as? String
+            _addrComponentsValues.addrLocality = values![self._addrComponentsShown.addrLocality.tag ?? "Locality"] as? String
             _addrComponentsValues.addrCity = values![self._addrComponentsShown.addrCity.tag ?? "City"] as? String
             if self._addrComponentsShown.addrStateProv.asStateCodeChooser {
                 _addrComponentsValues.addrStateProvCode = values![self._addrComponentsShown.addrStateProv.tag ?? "State"] as? String
@@ -228,6 +242,7 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
     @IBOutlet public weak var aptSuiteTextField: UITextField?
     @IBOutlet public weak var street1TextField: UITextField?
     @IBOutlet public weak var street2TextField: UITextField?
+    @IBOutlet public weak var localityTextField: UITextField?
     @IBOutlet public weak var cityTextField: UITextField?
     @IBOutlet public weak var stateProvTextField: UITextField?
     @IBOutlet public weak var postalCodeTextField: UITextField?
@@ -271,7 +286,7 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
         self.titleLabel = self.textLabel
         self.titleLabel?.translatesAutoresizingMaskIntoConstraints = false
         self.titleLabel?.setContentHuggingPriority(UILayoutPriority.hugPriTextLabel, for: .horizontal)
-        self.titleLabel?.setContentCompressionResistancePriority(UILayoutPriority.compressPriMoreLikely, for: .horizontal)
+        self.titleLabel?.setContentCompressionResistancePriority(UILayoutPriority.compressPriLessLikely, for: .horizontal)
         
         let tf1 = UITextField()
         self.countryTextField = tf1
@@ -286,18 +301,21 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
         self.street2TextField = tf4
         
         let tf5 = UITextField()
-        self.cityTextField = tf5
+        self.localityTextField = tf5
         
         let tf6 = UITextField()
-        self.stateProvTextField = tf6
+        self.cityTextField = tf6
         
         let tf7 = UITextField()
-        self.postalCodeTextField = tf7
+        self.stateProvTextField = tf7
+        
+        let tf8 = UITextField()
+        self.postalCodeTextField = tf8
         
         // for convenience place all the fields for now in the tab order
         // pre-setup all the text field's; they can be overriden later by user of in-Form overrides
         self.contentView.addSubview(titleLabel!)
-        self.textFieldTabOrder = [self.countryTextField!, self.aptSuiteTextField!, self.street1TextField!, self.street2TextField!, self.cityTextField!, self.stateProvTextField!, self.postalCodeTextField!]
+        self.textFieldTabOrder = [self.countryTextField!, self.aptSuiteTextField!, self.street1TextField!, self.street2TextField!, self.localityTextField!, self.cityTextField!, self.stateProvTextField!, self.postalCodeTextField!]
         for textField in self.textFieldTabOrder {
             textField.translatesAutoresizingMaskIntoConstraints = false
             textField.setContentHuggingPriority(UILayoutPriority.hugPriStandardField, for: .horizontal)
@@ -321,6 +339,7 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
         if #available(iOSApplicationExtension 10.0, *) {
             self.street1TextField?.textContentType = .streetAddressLine1
             self.street2TextField?.textContentType = .streetAddressLine2
+            self.localityTextField?.textContentType = .addressCity
             self.cityTextField?.textContentType = .addressCity
             self.stateProvTextField?.textContentType = .sublocality
             self.postalCodeTextField?.textContentType = .postalCode
@@ -418,6 +437,12 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
             self.street2TextField?.text = addrRow._addrComponentsValues.addrStreet2
             if !(addrRow._addrComponentsShown.addrStreet2.placeholder ?? "").isEmpty {
                 self.street2TextField?.placeholder = addrRow._addrComponentsShown.addrStreet2.placeholder!
+            }
+        }
+        if addrRow._addrComponentsShown.addrLocality.shown {
+            self.localityTextField?.text = addrRow._addrComponentsValues.addrLocality
+            if !(addrRow._addrComponentsShown.addrLocality.placeholder ?? "").isEmpty {
+                self.localityTextField?.placeholder = addrRow._addrComponentsShown.addrLocality.placeholder!
             }
         }
         if addrRow._addrComponentsShown.addrCity.shown {
@@ -533,6 +558,7 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
 //debugPrint("\(self.cTag).relayout aptSuiteTextField.size=\(self.aptSuiteTextField!.layer.frame.size)")
 //debugPrint("\(self.cTag).relayout street1TextField.size=\(self.street1TextField!.layer.frame.size)")
 //debugPrint("\(self.cTag).relayout street2TextField.size=\(self.street2TextField!.layer.frame.size)")
+//debugPrint("\(self.cTag).relayout localityTextField.size=\(self.localityTextField!.layer.frame.size)")
 //debugPrint("\(self.cTag).relayout cityTextField.size=\(self.cityTextField!.layer.frame.size)")
 //debugPrint("\(self.cTag).relayout stateProvTextField.size=\(self.street2TextField!.layer.frame.size)")
 //debugPrint("\(self.cTag).relayout postalTextField.size=\(self.street2TextField!.layer.frame.size)")
@@ -563,6 +589,12 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
             self.street2TextField?.isEnabled = true
             self.textFieldTabOrder.append(self.street2TextField!)
         } else { self.street2TextField?.isHidden = true; self.street2TextField?.isEnabled = false }
+        if addrRow._addrComponentsShown.addrLocality.shown {
+            if self.localityTextField!.layer.frame.size.height > fieldsHeight { fieldsHeight = self.localityTextField!.layer.frame.size.height }
+            self.localityTextField?.isHidden = false
+            self.localityTextField?.isEnabled = true
+            self.textFieldTabOrder.append(self.localityTextField!)
+        } else { self.localityTextField?.isHidden = true; self.localityTextField?.isEnabled = false }
         if addrRow._addrComponentsShown.addrCity.shown {
             if self.cityTextField!.layer.frame.size.height > fieldsHeight { fieldsHeight = self.cityTextField!.layer.frame.size.height }
             self.cityTextField?.isHidden = false
@@ -646,6 +678,19 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
         }
         
         // possible 4th line
+        if addrRow._addrComponentsShown.addrLocality.shown {
+            if aptSuiteNeeded {
+                newComposedLayout.addControlToCurrentLine(forControl: ComposedLayoutControl(controlName: "localityTextField", control: self.localityTextField!))
+                newComposedLayout.addControlToCurrentLine(forControl: ComposedLayoutControl(controlName: "aptSuiteTextField", control: self.aptSuiteTextField!))
+                newComposedLayout.moveToNextLine()
+                aptSuiteNeeded = false
+            } else {
+                newComposedLayout.addControlToCurrentLine(forControl: ComposedLayoutControl(controlName: "localityTextField", control: self.localityTextField!))
+                newComposedLayout.moveToNextLine()
+            }
+        }
+        
+        // possible 5th line
         if aptSuiteNeeded {
             newComposedLayout.addControlToCurrentLine(forControl: ComposedLayoutControl(controlName: "aptSuiteTextField", control: self.aptSuiteTextField!))
             aptSuiteNeeded = false
@@ -659,7 +704,7 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
         }
         if newComposedLayout.controlsCountCurrentLine() > 1 { newComposedLayout.moveToNextLine() }
         
-        // possible 5th line
+        // possible 6th line
         if !addrRow._addrComponentsShown.addrStateProv.shown {
             if addrRow._addrComponentsShown.addrPostalCode.shown {
                 newComposedLayout.addControlToCurrentLine(forControl: ComposedLayoutControl(controlName: "postalCodeTextField", control: self.postalCodeTextField!))
@@ -731,6 +776,7 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
         if self.aptSuiteTextField!.layer.frame.size.height > fieldsHeight { fieldsHeight = self.aptSuiteTextField!.layer.frame.size.height }
         if self.street1TextField!.layer.frame.size.height > fieldsHeight { fieldsHeight = self.street1TextField!.layer.frame.size.height }
         if self.street2TextField!.layer.frame.size.height > fieldsHeight { fieldsHeight = self.street2TextField!.layer.frame.size.height }
+        if self.localityTextField!.layer.frame.size.height > fieldsHeight { fieldsHeight = self.localityTextField!.layer.frame.size.height }
         if self.cityTextField!.layer.frame.size.height > fieldsHeight { fieldsHeight = self.cityTextField!.layer.frame.size.height }
         if self.stateProvTextField!.layer.frame.size.height > fieldsHeight { fieldsHeight = self.stateProvTextField!.layer.frame.size.height }
         if self.postalCodeTextField!.layer.frame.size.height > fieldsHeight { fieldsHeight = self.postalCodeTextField!.layer.frame.size.height }
@@ -805,6 +851,7 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
                 aptSuiteTextField?.canBecomeFirstResponder == true ||
                 street1TextField?.canBecomeFirstResponder == true ||
                 street2TextField?.canBecomeFirstResponder == true ||
+                localityTextField?.canBecomeFirstResponder == true ||
                 cityTextField?.canBecomeFirstResponder == true ||
                 stateProvTextField?.canBecomeFirstResponder == true ||
                 postalCodeTextField?.canBecomeFirstResponder == true
@@ -820,6 +867,7 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
             && aptSuiteTextField?.resignFirstResponder() ?? true
             && street1TextField?.resignFirstResponder() ?? true
             && street2TextField?.resignFirstResponder() ?? true
+            && localityTextField?.resignFirstResponder() ?? true
             && cityTextField?.resignFirstResponder() ?? true
             && stateProvTextField?.resignFirstResponder() ?? true
             && postalCodeTextField?.resignFirstResponder() ?? true
@@ -957,30 +1005,38 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
             }
             break
             
-        case let field5 where field5 == self.cityTextField:
+        case let field5 where field5 == self.localityTextField:
             if (field5.text ?? "").isEmpty {
-                addrRow._addrComponentsValues.addrCity = nil
+                addrRow._addrComponentsValues.addrLocality = nil
             } else {
-                addrRow._addrComponentsValues.addrCity = field5.text
-            }
-            break
-        
-        case let field6 where field6 == self.stateProvTextField:
-            if (field6.text ?? "").isEmpty {
-                addrRow._addrComponentsValues.addrStateProvFull = nil
-                addrRow._addrComponentsValues.addrStateProvCode = nil
-            } else {
-                if addrRow._addrComponentsShown.addrStateProv.asStateCodeChooser { addrRow._addrComponentsValues.addrStateProvCode = field6.text }
-                else { addrRow._addrComponentsValues.addrStateProvFull = field6.text }
+                addrRow._addrComponentsValues.addrLocality = field5.text
             }
             break
             
-        case let field7 where field7 == self.postalCodeTextField:
+        case let field6 where field6 == self.cityTextField:
+            if (field6.text ?? "").isEmpty {
+                addrRow._addrComponentsValues.addrCity = nil
+            } else {
+                addrRow._addrComponentsValues.addrCity = field6.text
+            }
+            break
+        
+        case let field7 where field7 == self.stateProvTextField:
             if (field7.text ?? "").isEmpty {
+                addrRow._addrComponentsValues.addrStateProvFull = nil
+                addrRow._addrComponentsValues.addrStateProvCode = nil
+            } else {
+                if addrRow._addrComponentsShown.addrStateProv.asStateCodeChooser { addrRow._addrComponentsValues.addrStateProvCode = field7.text }
+                else { addrRow._addrComponentsValues.addrStateProvFull = field7.text }
+            }
+            break
+            
+        case let field8 where field8 == self.postalCodeTextField:
+            if (field8.text ?? "").isEmpty {
                 addrRow._addrComponentsValues.addrPostalCode = nil
             } else {
-                field7.text = field7.text!.uppercased()
-                addrRow._addrComponentsValues.addrPostalCode = field7.text!.uppercased()
+                field8.text = field8.text!.uppercased()
+                addrRow._addrComponentsValues.addrPostalCode = field8.text!.uppercased()
             }
             break
             
@@ -1024,24 +1080,31 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
             }
             break
             
-        case let field5 where field5 == self.cityTextField:
-            if !(field5.text ?? "").isEmpty && addrRow._addrComponentsShown.addrCity.formatter != nil  {
-                formatter = addrRow._addrComponentsShown.addrCity.formatter!
+        case let field5 where field5 == self.localityTextField:
+            if !(field5.text ?? "").isEmpty && addrRow._addrComponentsShown.addrLocality.formatter != nil {
+                formatter = addrRow._addrComponentsShown.addrLocality.formatter!
                 formatter_field = field5
             }
             break
             
-        case let field6 where field6 == self.stateProvTextField:
-            if !(field6.text ?? "").isEmpty && addrRow._addrComponentsShown.addrStateProv.formatter != nil {
-                formatter = addrRow._addrComponentsShown.addrStateProv.formatter!
+        case let field6 where field6 == self.cityTextField:
+            if !(field6.text ?? "").isEmpty && addrRow._addrComponentsShown.addrCity.formatter != nil  {
+                formatter = addrRow._addrComponentsShown.addrCity.formatter!
                 formatter_field = field6
             }
             break
             
-        case let field7 where field7 == self.postalCodeTextField:
-            if !(field7.text ?? "").isEmpty && addrRow._addrComponentsShown.addrPostalCode.formatter != nil  {
-                formatter = addrRow._addrComponentsShown.addrPostalCode.formatter!
+        case let field7 where field7 == self.stateProvTextField:
+            if !(field7.text ?? "").isEmpty && addrRow._addrComponentsShown.addrStateProv.formatter != nil {
+                formatter = addrRow._addrComponentsShown.addrStateProv.formatter!
                 formatter_field = field7
+            }
+            break
+            
+        case let field8 where field8 == self.postalCodeTextField:
+            if !(field8.text ?? "").isEmpty && addrRow._addrComponentsShown.addrPostalCode.formatter != nil  {
+                formatter = addrRow._addrComponentsShown.addrPostalCode.formatter!
+                formatter_field = field8
             }
             break
             
@@ -1077,19 +1140,25 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
                     self.street2TextField!.text = addrRow._addrComponentsValues.addrStreet2
                 } else { addrRow._addrComponentsValues.addrStreet2 = sourceText }
                 break
-            case let field5 where field5 == self.cityTextField:
+            case let field5 where field5 == self.localityTextField:
+                if didFormat {
+                    addrRow._addrComponentsValues.addrLocality = formattedText.pointee as? String
+                    self.localityTextField!.text = addrRow._addrComponentsValues.addrLocality
+                } else { addrRow._addrComponentsValues.addrLocality = sourceText }
+                break
+            case let field6 where field6 == self.cityTextField:
                 if didFormat {
                     addrRow._addrComponentsValues.addrCity = formattedText.pointee as? String
                     self.cityTextField!.text = addrRow._addrComponentsValues.addrCity
                 } else { addrRow._addrComponentsValues.addrCity = sourceText }
                 break
-            case let field6 where field6 == self.stateProvTextField:
+            case let field7 where field7 == self.stateProvTextField:
                 if didFormat {
                     addrRow._addrComponentsValues.addrStateProvFull = formattedText.pointee as? String
                     self.stateProvTextField!.text = addrRow._addrComponentsValues.addrStateProvFull
                 } else { addrRow._addrComponentsValues.addrStateProvFull = sourceText }
                 break
-            case let field7 where field7 == self.postalCodeTextField:
+            case let field8 where field8 == self.postalCodeTextField:
                 if didFormat {
                     addrRow._addrComponentsValues.addrPostalCode = formattedText.pointee as? String
                     self.postalCodeTextField!.text = addrRow._addrComponentsValues.addrPostalCode

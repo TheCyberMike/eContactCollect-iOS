@@ -190,7 +190,7 @@ public struct RulePhone_ECC<T: Equatable>: RuleTypeExt {
         self.id = id
     }
     
-    public var acceptableRegions:[String] = ["NANP","US","CA","MX","UK"]
+    public var acceptableRegions:[String] = ["NANP","US","CA","MX","UK","GB"]
     public var id: String?
     public var validationError:ValidationError = ValidationError(msg: NSLocalizedString("Phone number is invalid", comment:"") + " (NANP)")
     
@@ -218,6 +218,9 @@ public struct RulePhone_ECC<T: Equatable>: RuleTypeExt {
             case "UK":
                 valid = RulePhone_ECC.testIsValid_UK(phoneString: valueString)
                 break
+            case "GB":
+                valid = RulePhone_ECC.testIsValid_UK(phoneString: valueString)
+                break
             case "MX":
                 valid = RulePhone_ECC.testIsValid_MX(phoneString: valueString)
                 break
@@ -242,6 +245,8 @@ public struct RulePhone_ECC<T: Equatable>: RuleTypeExt {
         case "CA":
             return RulePhone_ECC.testIsValid_NANP(phoneString: phoneString)
         case "UK":
+            return RulePhone_ECC.testIsValid_UK(phoneString: phoneString)
+        case "GB":
             return RulePhone_ECC.testIsValid_UK(phoneString: phoneString)
         case "MX":
             return RulePhone_ECC.testIsValid_MX(phoneString: phoneString)
@@ -521,13 +526,29 @@ public class ComposedLayout: Equatable {
             maxLineWidth = maxLineWidth + self.mImageTitleFirstControl!.control.intrinsicContentSize.width
         }
         if self.mTextTitleFirstControl != nil && !self.mMovedToFirst {
-            if self.mTextTitleFirstControl!.control.intrinsicContentSize.height > maxLineHeight {
+            let label:UILabel = self.mTextTitleFirstControl!.control as! UILabel
+            let workingSize = (label.text?.size(withAttributes: [NSAttributedString.Key.font: UIFont(name: label.font.fontName , size: label.font.pointSize)!]))!
+            var height = self.mTextTitleFirstControl!.control.intrinsicContentSize.height
+            if workingSize.height > height { height = workingSize.height }
+            if height > maxLineHeight {
                 maxLineHeight = self.mTextTitleFirstControl!.control.intrinsicContentSize.height
             }
-            maxLineWidth = maxLineWidth + self.mTextTitleFirstControl!.control.intrinsicContentSize.width
+            var width = self.mTextTitleFirstControl!.control.intrinsicContentSize.width
+            if workingSize.width > width { width = workingSize.width }
+            maxLineWidth = maxLineWidth + width
             if self.mImageTitleFirstControl != nil { maxLineWidth = maxLineWidth + self._horiInterItemPad }
         }
         return CGSize(width: maxLineWidth, height: maxLineHeight)
+    }
+    
+    // is the text title width being under calculated?
+    public func hasTextTitleLayoutWidthError() -> Bool {
+        if self.mTextTitleFirstControl != nil && !self.mMovedToFirst {
+            let label:UILabel = self.mTextTitleFirstControl!.control as! UILabel
+            let workingSize = (label.text?.size(withAttributes: [NSAttributedString.Key.font: UIFont(name: label.font.fontName , size: label.font.pointSize)!]))!
+            if workingSize.width > self.mTextTitleFirstControl!.control.intrinsicContentSize.width { return true }
+        }
+        return false
     }
     
     // for the entire TableViewCell, compute its theoretical intrinsic size, including the imageTitle and textTitle if present;
@@ -560,10 +581,14 @@ public class ComposedLayout: Equatable {
             maxLineWidth = maxLineWidth + self.mImageTitleFirstControl!.control.intrinsicContentSize.width
         }
         if self.mTextTitleFirstControl != nil && !self.mMovedToFirst {
+            let label:UILabel = self.mTextTitleFirstControl!.control as! UILabel
+            let workingSize = (label.text?.size(withAttributes: [NSAttributedString.Key.font: UIFont(name: label.font.fontName , size: label.font.pointSize)!]))!
             if self.mTextTitleFirstControl!.control.intrinsicContentSize.height > maxLineHeight {
                 maxLineHeight = self.mTextTitleFirstControl!.control.intrinsicContentSize.height
             }
-            maxLineWidth = maxLineWidth + self.mTextTitleFirstControl!.control.intrinsicContentSize.width
+            var width = self.mTextTitleFirstControl!.control.intrinsicContentSize.width
+            if workingSize.width > width { width = workingSize.width }
+            maxLineWidth = maxLineWidth + width
             if self.mImageTitleFirstControl != nil { maxLineWidth = maxLineWidth + self._horiInterItemPad }
         }
         return CGSize(width: maxLineWidth, height: maxLineHeight)
@@ -618,11 +643,14 @@ public class ComposedLayout: Equatable {
             if ctrlWidth <= 0.0 { ctrlWidth = self.mImageTitleFirstControl!.control.intrinsicContentSize.width + 2.0 }
         }
         if self.mTextTitleFirstControl != nil && !self.mMovedToFirst {
+            let label:UILabel = self.mTextTitleFirstControl!.control as! UILabel
+            let workingSize = (label.text?.size(withAttributes: [NSAttributedString.Key.font: UIFont(name: label.font.fontName , size: label.font.pointSize)!]))!
             var ctrlHeight = self.mTextTitleFirstControl!.control.bounds.size.height
-            if ctrlHeight <= 0.0 { ctrlHeight = self.mTextTitleFirstControl!.control.intrinsicContentSize.height + 2.0 }
+            if ctrlHeight <= 0.0 { ctrlHeight = workingSize.height + 2.0 }
             if ctrlHeight > maxLineHeight { maxLineHeight = ctrlHeight }
             var ctrlWidth = self.mTextTitleFirstControl!.control.bounds.size.width
-            if ctrlWidth <= 0.0 { ctrlWidth = self.mTextTitleFirstControl!.control.intrinsicContentSize.width + 2.0 }
+            if ctrlWidth <= 0.0 { ctrlWidth = workingSize.width + 2.0 }
+            else if ctrlWidth <= workingSize.width + 2.0 { ctrlWidth = workingSize.width + 2.0 }
             if self.mImageTitleFirstControl != nil { maxLineWidth = maxLineWidth + self._horiInterItemPad }
         }
         maxLineWidth = maxLineWidth + self._horiLeadingPad + self._horiTrailingPad
@@ -774,7 +802,7 @@ public class ComposedLayout: Equatable {
         
         // do the generation now if not allowed to move the titles or if the layout sizings are likely false
         if self.mtitleAreaRatioWidthToMove <= 0.0 || noBottomsOrEnds || self.mContentView == nil {
-            let _ = doGenerateDynamicConstraints(contentView: contentView, views: views, dynConstraints: &dynamicConstraints, noBottomsOrEnds: noBottomsOrEnds)
+            let _ = self.doGenerateDynamicConstraints(contentView: contentView, views: views, dynConstraints: &dynamicConstraints, noBottomsOrEnds: noBottomsOrEnds)
             return (views, dynamicConstraints)
         }
 
@@ -782,7 +810,7 @@ public class ComposedLayout: Equatable {
         if self.assessTitleMove(contentView: contentView, noBottomsOrEnds: noBottomsOrEnds) { self.mRow?.baseCell.setNeedsLayout() }
         
         dynamicConstraints = []
-        let _ = doGenerateDynamicConstraints(contentView: contentView, views: views, dynConstraints: &dynamicConstraints, noBottomsOrEnds: noBottomsOrEnds)
+        let _ = self.doGenerateDynamicConstraints(contentView: contentView, views: views, dynConstraints: &dynamicConstraints, noBottomsOrEnds: noBottomsOrEnds)
         return (views, dynamicConstraints)
     }
     
@@ -841,7 +869,7 @@ public class ComposedLayout: Equatable {
                         if self.horiTrailingPad >= 0 { nextHoriSep = nextHoriSep + "\(self.horiTrailingPad)-|" }
                         else { vizH = vizH + "-|" }
                     }
-    //debugPrint("\(self.mCTAG).generateDynamicConstraints.\(self.mRow?.title ?? "") Hori=\(vizH)")
+//debugPrint("\(self.mCTAG).generateDynamicConstraints.\(self.mRow?.title ?? "") Hori=\(vizH)")
                     dynConstraints += NSLayoutConstraint.constraints(withVisualFormat: vizH, options: [], metrics: nil, views: views)
                 }
             }
@@ -852,7 +880,7 @@ public class ComposedLayout: Equatable {
             for line:Int in 0...self.mComposedLayoutArray.count - 1 {
                 if self.mComposedLayoutArray[line].count > 1 {
                     for ctrl in 1...self.mComposedLayoutArray[line].count - 1 {
-    //debugPrint("\(self.mCTAG).generateDynamicConstraints.\(self.mRow?.title ?? "") To-First CenterY: \(self.mComposedLayoutArray[line][ctrl].controlName) to \(self.mComposedLayoutArray[line][0].controlName)")
+//debugPrint("\(self.mCTAG).generateDynamicConstraints.\(self.mRow?.title ?? "") To-First CenterY: \(self.mComposedLayoutArray[line][ctrl].controlName) to \(self.mComposedLayoutArray[line][0].controlName)")
                         dynConstraints += [NSLayoutConstraint(item: self.mComposedLayoutArray[line][ctrl].control, attribute: .centerY, relatedBy: .equal, toItem: self.mComposedLayoutArray[line][0].control, attribute: .centerY, multiplier: 1, constant: 0)]
                     }
                 }

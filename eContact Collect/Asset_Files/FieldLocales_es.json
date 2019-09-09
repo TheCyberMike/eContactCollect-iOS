@@ -136,6 +136,8 @@
                         "fieldlocprop_name_shown":"Calle"},
                     {"fieldprop_idcode":"FC_AddrStr2","fieldlocprop_name_for_collector":"Dirección-Calle2","fieldprop_name_sv_file":"Calle2",
                         "fieldlocprop_name_shown":"Calle adicional"},
+                    {"fieldprop_idcode":"FC_AddrLocality","fieldlocprop_name_for_collector":"Dirección-Aldea","fieldprop_name_sv_file":"Aldea",
+                        "fieldlocprop_name_shown":"Aldea"},
                     {"fieldprop_idcode":"FC_AddrCity","fieldlocprop_name_for_collector":"Dirección-Ciudad","fieldprop_name_sv_file":"Ciudad",
                         "fieldlocprop_name_shown":"Ciudad"},
                     {"fieldprop_idcode":"FC_AddrSTfull","fieldlocprop_name_for_collector":"Dirección-Estado","fieldprop_name_sv_file":"Estado",

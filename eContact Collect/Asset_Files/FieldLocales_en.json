@@ -138,6 +138,8 @@
                         "fieldlocprop_name_shown":"Street Address"},
                     {"fieldprop_idcode":"FC_AddrStr2","fieldlocprop_name_for_collector":"Address-Street2","fieldprop_name_sv_file":"StreetAddress2",
                         "fieldlocprop_name_shown":"2nd Street Addr"},
+                    {"fieldprop_idcode":"FC_AddrLocality","fieldlocprop_name_for_collector":"Address-Locality","fieldprop_name_sv_file":"Locality",
+                        "fieldlocprop_name_shown":"Locality"},
                     {"fieldprop_idcode":"FC_AddrCity","fieldlocprop_name_for_collector":"Address-City","fieldprop_name_sv_file":"City",
                         "fieldlocprop_name_shown":"City"},
                     {"fieldprop_idcode":"FC_AddrSTfull","fieldlocprop_name_for_collector":"Address-State-Prov-Full","fieldprop_name_sv_file":"State/Prov","fieldlocprop_name_shown":"State or Province (full name)"},

@@ -550,8 +550,12 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         do {
             orgRec = RecOrganizationDefs(org_code_sv_file: "Org1", org_title_mode: RecOrganizationDefs.ORG_TITLE_MODE.ONLY_TITLE, org_logo_image_png_blob: nil, org_email_to: nil, org_email_cc: nil, org_email_subject: "Contacts collected from eContact Collect")
             orgRec.rOrg_Visuals.rOrgTitle_Background_Color = UIColor.lightGray
-            let _ = try orgRec.addNewFinalLangRec(forLangRegion: "en")
-            try orgRec.setOrgTitleShown_Editing(langRegion: "en", title: "The Organization's Name")
+            if AppDelegate.mDeviceLanguage != "en" {
+                let _ = try orgRec.addNewFinalLangRec(forLangRegion: "en")
+                try orgRec.setOrgTitleShown_Editing(langRegion: "en", title: "The Organization's Name")
+            } else {
+                try orgRec.setOrgTitleShown_Editing(langRegion: AppDelegate.mDeviceLangRegion, title: "The Organization's Name")
+            }
             orgRec.mOrg_Lang_Recs_are_changed = true
             let _ = try orgRec.saveNewToDB()
         } catch var appError as APP_ERROR {
@@ -573,7 +577,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             // now add all the selected form fields
             var orderSVfile:Int = 10
             var orderShown:Int = 10
-            try FieldHandler.shared.addFieldstoForm(field_IDCodes: ["FC_Name1st","FC_NameLast","FC_Email","FC_PhFull"], forFormRec: formRec, withOrgRec: forOrgRec, orderSVfile: &orderSVfile, orderShown: &orderShown)
+            try FieldHandler.shared.addFieldstoForm(field_IDCodes: ["FC_Name1st","FC_NameLast","FC_Email","FC_AddrAll","FC_PhFull"], forFormRec: formRec, withOrgRec: forOrgRec, orderSVfile: &orderSVfile, orderShown: &orderShown)
         } catch var appError as APP_ERROR {
             appError.prependCallStack(funcName: "\(self.mCTAG).createDefaultForm")
             throw appError

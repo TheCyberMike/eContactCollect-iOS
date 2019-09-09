@@ -51,6 +51,11 @@
                         "optionSetLoc_option_sets":[
                         ]
                     },
+                    {"optionSetLoc_code":"OSLC_StateCode",
+                        "optionSetLoc_code_extension":"GB",
+                        "optionSetLoc_option_sets":[
+                        ]
+                    },
                     {"optionSetLoc_code":"OSLC_CountryCode",
                         "optionSetLoc_code_extension":"",
                         "optionSetLoc_option_sets":[

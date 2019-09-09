@@ -255,10 +255,11 @@ public class FieldHandler {
                             }
                         }
                         
-                        // are there any subfields?
-                        if (jsonFieldDefRec!.rFieldProp_Initial_Field_IDCodes?.count ?? 0) > 0 {
+                        // are there any subfields?;
+                        // note that the list of initial subfields could have been regionalized during initialization of formFieldRecOpt
+                        if (formFieldRecOpt.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
                             // recursive call to immediately add the additional subfields so the sort ordering is correct
-                            try self.addFieldstoForm(field_IDCodes: jsonFieldDefRec!.rFieldProp_Initial_Field_IDCodes!, forFormRec: forFormRec, withOrgRec: withOrgRec, orderSVfile: &orderSVfile, orderShown: &orderShown, asSubfieldsOf: formFieldRec.rFormField_Index)
+                            try self.addFieldstoForm(field_IDCodes: formFieldRecOpt.rFieldProp_Contains_Field_IDCodes!, forFormRec: forFormRec, withOrgRec: withOrgRec, orderSVfile: &orderSVfile, orderShown: &orderShown, asSubfieldsOf: formFieldRec.rFormField_Index)
                         }
                     }
                 }
@@ -556,6 +557,7 @@ public class FieldHandler {
     }
     
     // find a localized file as-named; can be in various places and defaults to english
+    // iOS prefers underscore (rather than dash) to separate language from region
     // returns:  (filePath:String?, defaultedToEnglish:Bool)
     public func locateLocaleFile(named: String, ofType: String, forLangRegion: String) -> (String?, Bool) {
         var jsonPath:String? = nil
@@ -574,7 +576,7 @@ public class FieldHandler {
             }
         }
         
-        // language-specific file not found; now switch to english which should ALWAYS be present
+        // language-specific file not found; now switch to U.S. english which should ALWAYS be present
         if (jsonPath ?? "").isEmpty {
             // load the english version; look first in one of the iOS Localization folders
             jsonPath = Bundle.main.path(forResource: named, ofType: ofType, inDirectory: nil, forLocalization: "en")
@@ -786,7 +788,11 @@ public class FieldHandler {
                         if jsonFieldLocalesRec.rFieldLocProp_Name_Shown != nil { jsonFieldLocalesRec.rFieldLocProp_Name_Shown = "??" + jsonFieldLocalesRec.rFieldLocProp_Name_Shown! }
                         if jsonFieldLocalesRec.rFieldLocProp_Placeholder_Shown != nil { jsonFieldLocalesRec.rFieldLocProp_Placeholder_Shown = "??" + jsonFieldLocalesRec.rFieldLocProp_Placeholder_Shown! }
                         jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = forLangRegion
-                    } else { jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = validationResult.language }
+                    } else if AppDelegate.getLangOnly(fromLangRegion: validationResult.language) == AppDelegate.getLangOnly(fromLangRegion: forLangRegion) {
+                        jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = forLangRegion
+                    } else {
+                        jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = validationResult.language
+                    }
                     
                     
                     // now match this jsonFieldLocalesRec with an existing jsonFieldRec in self.mFields_json
