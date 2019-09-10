@@ -787,6 +787,8 @@ public class FieldHandler {
                         if jsonFieldLocalesRec.rFieldLocProp_Col_Name_For_SV_File != nil { jsonFieldLocalesRec.rFieldLocProp_Col_Name_For_SV_File = "??" + jsonFieldLocalesRec.rFieldLocProp_Col_Name_For_SV_File! }
                         if jsonFieldLocalesRec.rFieldLocProp_Name_Shown != nil { jsonFieldLocalesRec.rFieldLocProp_Name_Shown = "??" + jsonFieldLocalesRec.rFieldLocProp_Name_Shown! }
                         if jsonFieldLocalesRec.rFieldLocProp_Placeholder_Shown != nil { jsonFieldLocalesRec.rFieldLocProp_Placeholder_Shown = "??" + jsonFieldLocalesRec.rFieldLocProp_Placeholder_Shown! }
+                        jsonFieldLocalesRec.rFieldLocProp_Option_Trios = self.tweakNonEnglishJsonAttributes(type: "o", set: jsonFieldLocalesRec.rFieldLocProp_Option_Trios)
+                        jsonFieldLocalesRec.rFieldLocProp_Metadata_Trios = self.tweakNonEnglishJsonAttributes(type: "m", set: jsonFieldLocalesRec.rFieldLocProp_Metadata_Trios)
                         jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = forLangRegion
                     } else if AppDelegate.getLangOnly(fromLangRegion: validationResult.language) == AppDelegate.getLangOnly(fromLangRegion: forLangRegion) {
                         jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = forLangRegion
@@ -828,6 +830,54 @@ public class FieldHandler {
             // now merge in any custom Fields from the database for this forLangRegion
             // ?? FUTURE
         }   // end of forLangRegion for loop
+    }
+    
+    // need to indicate that non-translated attributes were included into a locales record
+    // trios are tag:SV:Shown
+    private func tweakNonEnglishJsonAttributes(type:String, set: [String]?) -> [String]? {
+        if set == nil { return nil }
+        if set!.count == 0 { return [] }
+        var result:[String] = []
+        for trio in set! {
+            if type == "m" {
+                // metadata
+                if trio.prefix(3) == "###" {
+                    result.append(trio)
+                } else if trio.prefix(3) == "***" {
+                    var trioComponents = trio.components(separatedBy: ":")
+                    if trioComponents.count >= 3 {
+                        trioComponents[2] = "??" + trioComponents[2]
+                    } else if trioComponents.count >= 2 {
+                        trioComponents[1] = "??" + trioComponents[1]
+                    }
+                    result.append(trioComponents.joined(separator: ":"))
+                } else {
+                    var trioComponents = trio.components(separatedBy: ":")
+                    if trioComponents.count >= 3 {
+                        trioComponents[1] = "??" + trioComponents[1]
+                        trioComponents[2] = "??" + trioComponents[2]
+                    } else if trioComponents.count >= 2 {
+                        trioComponents[1] = "??" + trioComponents[1]
+                    }
+                    result.append(trioComponents.joined(separator: ":"))
+                }
+            } else {
+                // options
+                if trio.prefix(3) == "***" {
+                    result.append(trio)
+                } else {
+                    var trioComponents = trio.components(separatedBy: ":")
+                    if trioComponents.count >= 3 {
+                        trioComponents[1] = "??" + trioComponents[1]
+                        trioComponents[2] = "??" + trioComponents[2]
+                    } else if trioComponents.count >= 2 {
+                        trioComponents[1] = "??" + trioComponents[1]
+                    }
+                    result.append(trioComponents.joined(separator: ":"))
+                }
+            }
+        }
+        return result
     }
     
     private func loadOptionSetLocalesDefaults(forLangRegion:String, validate:Bool=false) throws {

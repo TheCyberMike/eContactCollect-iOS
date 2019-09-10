@@ -742,7 +742,10 @@ public class OrgFormFieldsEntry {
     }
     public func setOptionShown(value:String, forTag:String, forLangRegion:String) {
         let inx:Int = self.chooseLangRecForEditing(langRegion: forLangRegion)
-        if self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Options_Name_Shown != nil {
+        if self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Options_Name_Shown == nil {
+            self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Options_Name_Shown = FieldAttributes()
+            self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Options_Name_Shown!.append(codeString: forTag, valueString: value)
+        } else {
             let _ = self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Options_Name_Shown!.setValue(newValue: value, givenCode: forTag)
         }
         self.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true
@@ -810,7 +813,10 @@ public class OrgFormFieldsEntry {
     public func setMetadataShown(value:String, forTag:String, forLangRegion:String) {
         if forTag.prefix(3) == "###" { return }     // this metadata type has no shown values
         let inx:Int = self.chooseLangRecForEditing(langRegion: forLangRegion)
-        if self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Metadatas_Name_Shown != nil {
+        if self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Metadatas_Name_Shown == nil {
+            self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Metadatas_Name_Shown = FieldAttributes()
+            self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Metadatas_Name_Shown!.append(codeString: forTag, valueString: value)
+        } else {
             let _ = self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Metadatas_Name_Shown!.setValue(newValue: value, givenCode: forTag)
         }
         self.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true
