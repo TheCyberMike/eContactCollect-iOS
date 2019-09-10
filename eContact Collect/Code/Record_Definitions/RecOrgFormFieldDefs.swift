@@ -536,7 +536,7 @@ public class RecOrgFormFieldDefs {
                 throw appError
             }
             
-            // only check certain phone fields
+            // only check certain fields
             if self.upgradesCummulative(forRec: orgFormFieldRec, forSourceDBver: 2) {
                 var setters:[Setter]
                 do {
@@ -578,6 +578,20 @@ debugPrint("\(self.mCTAG).upgradesCummulative ###Region is added to index# \(for
                     didChange = true
                 }
             }
+            if forRec.rFieldProp_Row_Type == .ADDRESS_COUNTRY_ISO_CODE {
+                if forRec.rFieldProp_Metadatas_Code_For_SV_File == nil {
+                    // missing country code
+debugPrint("\(self.mCTAG).upgradesCummulative ###Country is added to index# \(forRec.rFormField_Index)")
+                    forRec.rFieldProp_Metadatas_Code_For_SV_File = FieldAttributes()
+                    forRec.rFieldProp_Metadatas_Code_For_SV_File!.append(codeString: "###Country", valueString: "-")
+                    didChange = true
+                } else if !forRec.rFieldProp_Metadatas_Code_For_SV_File!.codeExists(givenCode: "###Country") {
+                    // missing country code
+debugPrint("\(self.mCTAG).upgradesCummulative ###Country is added to index# \(forRec.rFormField_Index)")
+                    forRec.rFieldProp_Metadatas_Code_For_SV_File!.append(codeString: "###Country", valueString: "-")
+                    didChange = true
+                }
+            }
         }
         return didChange
     }
@@ -601,6 +615,20 @@ debugPrint("\(self.mCTAG).upgradesCummulative.optionals ###Region is added to in
                     // missing region code
 debugPrint("\(self.mCTAG).upgradesCummulative.optionals ###Region is added to index# \(forOptionalsRec.rFormField_Index ?? -1)")
                     forOptionalsRec.rFieldProp_Metadatas_Code_For_SV_File!.append(codeString: "###Region", valueString: "US")
+                    didChange = true
+                }
+            }
+            if forOptionalsRec.rFieldProp_Row_Type == .ADDRESS_COUNTRY_ISO_CODE {
+                if forOptionalsRec.rFieldProp_Metadatas_Code_For_SV_File == nil {
+                    // missing country code
+debugPrint("\(self.mCTAG).upgradesCummulative.optionals ###Country is added to index# \(forOptionalsRec.rFormField_Index ?? -1)")
+                    forOptionalsRec.rFieldProp_Metadatas_Code_For_SV_File = FieldAttributes()
+                    forOptionalsRec.rFieldProp_Metadatas_Code_For_SV_File!.append(codeString: "###Country", valueString: "-")
+                    didChange = true
+                } else if !forOptionalsRec.rFieldProp_Metadatas_Code_For_SV_File!.codeExists(givenCode: "###Country") {
+                    // missing country code
+debugPrint("\(self.mCTAG).upgradesCummulative.optionals ###Country is added to index# \(forOptionalsRec.rFormField_Index ?? -1)")
+                    forOptionalsRec.rFieldProp_Metadatas_Code_For_SV_File!.append(codeString: "###Country", valueString: "-")
                     didChange = true
                 }
             }

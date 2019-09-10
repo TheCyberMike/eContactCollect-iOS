@@ -904,6 +904,7 @@ class FormEditFormViewController: FormViewController {
                         DispatchQueue.main.async {
                             // must dispatch this so the PushRow's SelectorViewController is dismissed first and the UI is back at the main FormViewController
                             // this triggers multivaluedRowToInsertAt() below
+debugPrint("\(self!.mCTAG).buildForm.mMVS_fields_splitRow.left.onChange.dispatched Triggering tableView.insert")
                             chgRow.cell.formViewController()?.tableView(tableView, commit: .insert, forRowAt: indexPath)
                         }
                     }
@@ -957,6 +958,7 @@ class FormEditFormViewController: FormViewController {
             mvSection.addButtonProvider = { section in
                 return self.mMVS_fields_splitRow! }
             mvSection.multivaluedRowToInsertAt = { [weak self] index in
+debugPrint("\(self!.mCTAG).buildForm.mvs_fields.multivaluedRowToInsertAt STARTED")
                 // an add or and add+paste was selected; must return a row
                 switch self!.mMVS_fields_splitRow!.whichSelected {
                 case .leftSelected:

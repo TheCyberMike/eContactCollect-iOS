@@ -343,10 +343,11 @@ public struct ComposedLayoutControl {
     
     // 'controlName' as would be used in "views" for creating dynamic constraints;
     // 'isFixedWidthOrLess' is for controls that have a constraint that fixes their width, or limits their with (.lessThanOrEqual)
-    init (controlName:String, control:UIView, isFixedWidthOrLess:Bool=false) {
+    init (controlName:String, control:UIView, isFixedWidthOrLess:Bool=false, _noTrail:Bool=false) {
         self.controlName = controlName
         self.control = control
         self.isFixedWidthOrLess = isFixedWidthOrLess
+        self._noTrail = _noTrail
     }
 }
 
@@ -455,8 +456,13 @@ public class ComposedLayout: Equatable {
         self.mCurrentLine = []
     }
     
+    // get the number of Lines in the base non-moved composition
+    public func nonMovedLinesCount() -> Int {
+        return self._mUnmovedComposedLayoutArray.count
+    }
+
     // These methods operate on the active layout (either Unmoved or Moved)
-    // get the number of Line in the composition
+    // get the number of Lines in the composition
     public func linesCount() -> Int {
         return self.mComposedLayoutArray.count
     }
@@ -780,7 +786,7 @@ public class ComposedLayout: Equatable {
         
         if self._mUnmovedComposedLayoutArray.count == 0 && self.mImageTitleFirstControl == nil && self.mTextTitleFirstControl == nil { return (views, dynamicConstraints) }
         
-        // compose the views and assess any Equal or LessThanOrEqual width fields
+        // compose the views and assess any Equal or LessThanOrEqual width fields;
         if self.mImageTitleFirstControl != nil { views[self.mImageTitleFirstControl!.controlName] = self.mImageTitleFirstControl!.control }
         if self.mTextTitleFirstControl != nil { views[self.mTextTitleFirstControl!.controlName] = self.mTextTitleFirstControl!.control }
         if self._mUnmovedComposedLayoutArray.count > 0 {
@@ -795,6 +801,21 @@ public class ComposedLayout: Equatable {
                     if !lineHasVariWidth {
                         let ctrl = self._mUnmovedComposedLayoutArray[line].count - 1
                         self._mUnmovedComposedLayoutArray[line][ctrl]._noTrail = true
+                    }
+                }
+            }
+        }
+        if self._mMovedComposedLayoutArray.count > 0 {
+            for line:Int in 0...self._mMovedComposedLayoutArray.count - 1 {
+                if self._mMovedComposedLayoutArray[line].count > 0 {
+                    var lineHasVariWidth:Bool = false
+                    for ctrl in 0...self._mMovedComposedLayoutArray[line].count - 1 {
+                        if !self._mMovedComposedLayoutArray[line][ctrl].isFixedWidthOrLess { lineHasVariWidth = true }
+                        self._mMovedComposedLayoutArray[line][ctrl]._noTrail = false
+                    }
+                    if !lineHasVariWidth {
+                        let ctrl = self._mMovedComposedLayoutArray[line].count - 1
+                        self._mMovedComposedLayoutArray[line][ctrl]._noTrail = true
                     }
                 }
             }

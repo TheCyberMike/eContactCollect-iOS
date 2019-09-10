@@ -38,6 +38,7 @@ public struct AddressComponentsShown {
     public struct AddrCountryCode {
         public var shown:Bool = true
         public var tag:String? = "Country"
+        public var initialCountryCode:String = "US"
         public var placeholder:String? = "US"
         public var countryCodes:[CodePair]? = nil
         public var retainObject:Any? = nil
@@ -75,6 +76,7 @@ public struct AddressComponentsShown {
     public struct AddrStateProv {
         public var shown:Bool = true
         public var asStateCodeChooser:Bool = true
+        public var defaultCountryCode:String = "US"
         public var tag:String? = "State"
         public var placeholder:String? = "State/Province"
         public var formatter:Formatter? = nil
@@ -798,9 +800,16 @@ public class AddressComponentsCell: Cell<[String:String?]>, CellType, UITextFiel
         }
         if addrRow._addrComponentsShown.addrStateProv.shown {
             if addrRow._addrComponentsShown.addrStateProv.asStateCodeChooser {
+                if self.composedLayout.nonMovedLinesCount() == 1 && !addrRow._addrComponentsShown.addrPostalCode.shown && addrRow._addrComponentsShown.addrCountryCode.shown {
+                    // special case for FC_AddrCntryStCodes
+//debugPrint("\(self.cTag).updateConstraints Width: stateProvTextField<=200")
+                    self.dynamicConstraints += [NSLayoutConstraint(item: self.stateProvTextField!, attribute: .width, relatedBy: .lessThanOrEqual, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 200)]
+                    self.stateProvTextField!.setContentHuggingPriority(UILayoutPriority.hugPriStandardField, for: .horizontal)
+                } else {
 //debugPrint("\(self.cTag).updateConstraints Width: stateProvTextField<=50")
-                self.dynamicConstraints += [NSLayoutConstraint(item: self.stateProvTextField!, attribute: .width, relatedBy: .lessThanOrEqual, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 50)]
-                self.stateProvTextField!.setContentHuggingPriority(UILayoutPriority.hugPriSmallField, for: .horizontal)
+                    self.dynamicConstraints += [NSLayoutConstraint(item: self.stateProvTextField!, attribute: .width, relatedBy: .lessThanOrEqual, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 50)]
+                    self.stateProvTextField!.setContentHuggingPriority(UILayoutPriority.hugPriSmallField, for: .horizontal)
+                }
             } else {
 //debugPrint("\(self.cTag).updateConstraints Width: stateProvTextField>=0.3")
                 self.dynamicConstraints += [NSLayoutConstraint(item: self.stateProvTextField!, attribute: .width, relatedBy: .greaterThanOrEqual, toItem: contentView, attribute: .width, multiplier: 0.3, constant: 0)]

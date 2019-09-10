@@ -797,6 +797,7 @@ public class OrgFormFieldsEntry {
         return self.mFormFieldRec.rFieldProp_Metadatas_Code_For_SV_File?.findValue(givenCode: forTag) ?? nil
     }
     public func getMetadataShown(forTag:String, forLangRegion:String) -> String? {
+        if forTag.prefix(3) == "###" { return nil }     // this metadata type has no shown values
         let inx:Int = self.chooseLangRecForEditing(langRegion: forLangRegion)
         if (self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Metadatas_Name_Shown?.count() ?? 0) == 0 { return nil }
         return self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Metadatas_Name_Shown!.findValue(givenCode: forTag) ?? nil
@@ -807,6 +808,7 @@ public class OrgFormFieldsEntry {
         }
     }
     public func setMetadataShown(value:String, forTag:String, forLangRegion:String) {
+        if forTag.prefix(3) == "###" { return }     // this metadata type has no shown values
         let inx:Int = self.chooseLangRecForEditing(langRegion: forLangRegion)
         if self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Metadatas_Name_Shown != nil {
             let _ = self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Metadatas_Name_Shown!.setValue(newValue: value, givenCode: forTag)
@@ -925,9 +927,12 @@ public class OrgFormFieldsEntryTag {
             // tag did not change or it is metadata, so just update the CodeSVFile and the per-language phrases
             if self.mIsMetadata { into.setMetadataSVFile(value: self.mCodeForSVFile, forTag: self.mTag) }
             else { into.setOptionSVFile(value: self.mCodeForSVFile, forTag: self.mTag) }
-            for (lrCode,shown) in self.mPhraseShownByLang {
-                if self.mIsMetadata { into.setMetadataShown(value: shown, forTag: self.mTag, forLangRegion: lrCode) }
-                else { into.setOptionShown(value: shown, forTag: self.mTag, forLangRegion: lrCode) }
+            if !self.mIsMetadata || self.mTag.prefix(3) != "###" {
+                // this type of option or metadata has a per-language phrase
+                for (lrCode,shown) in self.mPhraseShownByLang {
+                    if self.mIsMetadata { into.setMetadataShown(value: shown, forTag: self.mTag, forLangRegion: lrCode) }
+                    else { into.setOptionShown(value: shown, forTag: self.mTag, forLangRegion: lrCode) }
+                }
             }
             return
         }

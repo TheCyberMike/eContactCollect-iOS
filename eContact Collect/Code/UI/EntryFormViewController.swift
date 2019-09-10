@@ -908,20 +908,31 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
             workAddressComponentsShown.addrCity.shown = false
             workAddressComponentsShown.addrStateProv.shown = false
             workAddressComponentsShown.addrPostalCode.shown = false
+            var workingCountry:String = AppDelegate.mDeviceRegion
             for subFormFieldIDCode in forFormFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes! {
                 let subFFentry:OrgFormFieldsEntry? = self.mEntryVC!.mEFP!.mFormFieldEntries!.findSubfield(forPrimaryIndex: forFormFieldEntry.mFormFieldRec.rFormField_Index, forSubFieldIDCode: subFormFieldIDCode)
                 if subFFentry != nil {
                     switch subFFentry!.mFormFieldRec.rFieldProp_IDCode {
                     case "FC_AddrCntry":
+                        if let metaPairs = self.prepareMetadata(forFormFieldEntry: subFFentry!),
+                           let countryCode:String = CodePair.findValue(pairs: metaPairs, givenCode: "###Country") {
+                            
+                            if countryCode != "-" && countryCode.count == 2 { workingCountry = countryCode }
+                        }
                         workAddressComponentsShown.addrCountryCode.shown = true
                         workAddressComponentsShown.addrCountryCode.tag = String(subFFentry!.mFormFieldRec.rFormField_Index)
-                        workAddressComponentsShown.addrCountryCode.placeholder = AppDelegate.mDeviceRegion
+                        workAddressComponentsShown.addrCountryCode.initialCountryCode = workingCountry
+                        if !(subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Placeholder_Shown ?? "").isEmpty {
+                            workAddressComponentsShown.addrCountryCode.placeholder = subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Placeholder_Shown!
+                        } else {
+                            workAddressComponentsShown.addrCountryCode.placeholder = workingCountry
+                        }
                         if subFFentry!.mComposedOptionSetLocalesRecs != nil {
                              if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry!) {
                                 workAddressComponentsShown.addrCountryCode.countryCodes = subControlCodes
                                 if workAddressComponentsShown.addrCountryCode.countryCodes != nil {
                                     for codeEntry in workAddressComponentsShown.addrCountryCode.countryCodes! {
-                                        if codeEntry.codeString == AppDelegate.mDeviceRegion {
+                                        if codeEntry.codeString == workingCountry {
                                             workAddressComponentsShown.addrCountryCode.countryCodes!.insert(codeEntry, at: 0)
                                             break
                                         }
@@ -976,6 +987,11 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
                         }
                         break
                     case "FC_AddrSTcode":
+                        if let metaPairs = self.prepareMetadata(forFormFieldEntry: subFFentry!),
+                            let countryCode:String = CodePair.findValue(pairs: metaPairs, givenCode: "###Country") {
+                            if countryCode != "-" && countryCode.count == 2 { workAddressComponentsShown.addrStateProv.defaultCountryCode = countryCode }
+                            else { workAddressComponentsShown.addrStateProv.defaultCountryCode = workingCountry }
+                        }
                         workAddressComponentsShown.addrStateProv.shown = true
                         workAddressComponentsShown.addrStateProv.asStateCodeChooser = true
                         workAddressComponentsShown.addrStateProv.tag = String(subFFentry!.mFormFieldRec.rFormField_Index)
@@ -984,7 +1000,8 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
                         } else {
                             workAddressComponentsShown.addrStateProv.placeholder = subFFentry!.mComposedFormFieldLocalesRec.rFieldLocProp_Name_Shown
                         }
-                        if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry!, forExtension: AppDelegate.mDeviceRegion) {
+                        if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry!,
+                                                                     forExtension: workAddressComponentsShown.addrStateProv.defaultCountryCode) {
                             workAddressComponentsShown.addrStateProv.stateProvCodes = subControlCodes
                             workAddressComponentsShown.addrStateProv.retainObject = subFFentry!
                         }
@@ -1035,12 +1052,24 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
                     if row.addrComponentsShown.addrStateProv.shown && row.addrComponentsShown.addrStateProv.asStateCodeChooser {
                         if row.addrComponentsShown.addrStateProv.retainObject != nil {
                             let subFFentry:OrgFormFieldsEntry = row.addrComponentsShown.addrStateProv.retainObject as! OrgFormFieldsEntry
-                            if row.addrComponentsValues.addrCountryCode != nil {
-                                if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry, forExtension: row.addrComponentsValues.addrCountryCode!) {
-                                    row.addrComponentsShown.addrStateProv.stateProvCodes = subControlCodes
+                            if row.addrComponentsShown.addrCountryCode.shown {
+                                // the country code subfield is being shown
+                                if row.addrComponentsValues.addrCountryCode != nil {
+                                    // it has a value
+                                    if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry, forExtension: row.addrComponentsValues.addrCountryCode!) {
+                                        row.addrComponentsShown.addrStateProv.stateProvCodes = subControlCodes
+                                    }
+                                } else {
+                                    // it does not have a value, so use the country code's default
+                                    if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry,
+                                                                                 forExtension: row.addrComponentsShown.addrCountryCode.initialCountryCode) {
+                                        row.addrComponentsShown.addrStateProv.stateProvCodes = subControlCodes
+                                    }
                                 }
                             } else {
-                                if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry, forExtension: AppDelegate.mDeviceRegion) {
+                                // the country code subfield is not being shown; use the state code field's default
+                                if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry,
+                                                                             forExtension: row.addrComponentsShown.addrStateProv.defaultCountryCode) {
                                     row.addrComponentsShown.addrStateProv.stateProvCodes = subControlCodes
                                 }
                             }
@@ -1051,11 +1080,19 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
             break
             
         case FIELD_ROW_TYPE.ADDRESS_COUNTRY_ISO_CODE:
+            var workingCountry:String? = nil
+            let metaPairs:[CodePair]? = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry)
+            if metaPairs != nil, let countryCode:String = CodePair.findValue(pairs: metaPairs!, givenCode: "###Country") {
+                if countryCode != "-" && countryCode.count == 2 { workingCountry = countryCode }
+            }
+            
             if let controlPairs = self.prepareOptions(forFormFieldEntry: forFormFieldEntry),
-               let metaPairs = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry),
                controlPairs.count > 0 {
                 
-                let topTitle:String? = CodePair.findValue(pairs: metaPairs, givenCode: "***TopTitle")
+                var topTitle:String? = nil
+                if metaPairs != nil {
+                    topTitle = CodePair.findValue(pairs: metaPairs!, givenCode: "***TopTitle")
+                }
                 self.mCurrentSection! <<< PushRow<String>(){ row in
                     row.title = rowTitle
                     row.tag = rowTag
@@ -1063,6 +1100,7 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
                     else { row.selectorTitle = NSLocalizedString("Choose one", comment:"") }
                     row.options = controlPairs.map { $0.codeString }
                     row.retainedObject = controlPairs
+                    if !(workingCountry ?? "").isEmpty { row.value = workingCountry }
                     row.displayValueFor = { set in
                         if set == nil { return nil }
                         return CodePair.findValue(pairs: (row.retainedObject as! [CodePair]), givenCode: set!)
@@ -1093,12 +1131,19 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
             break
             
         case FIELD_ROW_TYPE.STATE_PROVINCE_CODE_BY_COUNTRY_ISO_CODE:
-            if let metaPairs = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry),
-               let countryCode:String = CodePair.findValue(pairs: metaPairs, givenCode: "###Country"),
-               let controlPairs = self.prepareOptions(forFormFieldEntry: forFormFieldEntry, forExtension: countryCode),
+            var workingCountry:String = AppDelegate.mDeviceRegion
+            let metaPairs:[CodePair]? = self.prepareMetadata(forFormFieldEntry: forFormFieldEntry)
+            if metaPairs != nil, let countryCode:String = CodePair.findValue(pairs: metaPairs!, givenCode: "###Country") {
+                if countryCode != "-" && countryCode.count == 2 { workingCountry = countryCode }
+            }
+            
+            if let controlPairs = self.prepareOptions(forFormFieldEntry: forFormFieldEntry, forExtension: workingCountry),
                controlPairs.count > 0 {
                 
-                let topTitle:String? = CodePair.findValue(pairs: metaPairs, givenCode: "***TopTitle")
+                var topTitle:String? = nil
+                if metaPairs != nil {
+                    topTitle = CodePair.findValue(pairs: metaPairs!, givenCode: "***TopTitle")
+                }
                 self.mCurrentSection! <<< PushRow<String>(){ row in
                     row.title = rowTitle
                     row.tag = rowTag
@@ -1706,7 +1751,7 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
                                                 addrCompRow.addrComponentsShown.addrCountryCode.countryCodes = subControlCodes
                                                 if addrCompRow.addrComponentsShown.addrCountryCode.countryCodes != nil {
                                                     for codeEntry in addrCompRow.addrComponentsShown.addrCountryCode.countryCodes! {
-                                                        if codeEntry.codeString == AppDelegate.mDeviceRegion {
+                                                        if codeEntry.codeString == addrCompRow.addrComponentsShown.addrCountryCode.initialCountryCode {
                                                             addrCompRow.addrComponentsShown.addrCountryCode.countryCodes!.insert(codeEntry, at: 0)
                                                             break
                                                         }
@@ -1758,12 +1803,18 @@ debugPrint("\(self.mCTAG).noticeNewOrgForm STARTED \(self)")
                                         }
                                         if addrCompRow.addrComponentsShown.addrStateProv.asStateCodeChooser {
                                             addrCompRow.addrComponentsShown.addrStateProv.retainObject = subFFentry!
-                                            if addrCompRow.addrComponentsValues.addrCountryCode != nil {
-                                                if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry!, forExtension: addrCompRow.addrComponentsValues.addrCountryCode!) {
-                                                    addrCompRow.addrComponentsShown.addrStateProv.stateProvCodes = subControlCodes
+                                            if addrCompRow.addrComponentsShown.addrCountryCode.shown {
+                                                if addrCompRow.addrComponentsValues.addrCountryCode != nil {
+                                                    if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry!, forExtension: addrCompRow.addrComponentsValues.addrCountryCode!) {
+                                                        addrCompRow.addrComponentsShown.addrStateProv.stateProvCodes = subControlCodes
+                                                    }
+                                                } else {
+                                                    if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry!, forExtension: addrCompRow.addrComponentsShown.addrCountryCode.initialCountryCode) {
+                                                        addrCompRow.addrComponentsShown.addrStateProv.stateProvCodes = subControlCodes
+                                                    }
                                                 }
                                             } else {
-                                                if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry!, forExtension: AppDelegate.mDeviceRegion) {
+                                                if let subControlCodes = self.prepareOptions(forFormFieldEntry: subFFentry!, forExtension: addrCompRow.addrComponentsShown.addrStateProv.defaultCountryCode) {
                                                     addrCompRow.addrComponentsShown.addrStateProv.stateProvCodes = subControlCodes
                                                 }
                                             }
