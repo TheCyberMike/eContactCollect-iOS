@@ -298,12 +298,13 @@ public enum USER_ERROR_CODE:Int, CustomStringConvertible {
     case ORG_DOES_NOT_EXIST = -30
     case FORM_DOES_NOT_EXIST = -31
     case NOT_AN_EXPORTED_FILE = -32
-    case NO_EMAIL_ACCOUNTS_SETUP = -33
-    case EMAIL_NO_TO_AND_CC = -34
-    case IOS_EMAIL_SUBSYSTEM_DISABLED = -35
-    case INVALID_OR_MISSING_SMTP_PARAMETER = -36
-    case INVALID_OR_MISSING_OAUTH_PARAMETER = -37
-    case INVALID_OAUTH_URL = -38
+    case VERSION_TOO_NEW = -33
+    case NO_EMAIL_ACCOUNTS_SETUP = -34
+    case EMAIL_NO_TO_AND_CC = -35
+    case IOS_EMAIL_SUBSYSTEM_DISABLED = -36
+    case INVALID_OR_MISSING_SMTP_PARAMETER = -37
+    case INVALID_OR_MISSING_OAUTH_PARAMETER = -38
+    case INVALID_OAUTH_URL = -39
     
     // provide a description for the end-user in proper language
     public var localizedDescription:String {
@@ -316,6 +317,8 @@ public enum USER_ERROR_CODE:Int, CustomStringConvertible {
             return NSLocalizedString("Form does not exist", comment:"")
         case .NOT_AN_EXPORTED_FILE:
             return NSLocalizedString("Attempt to import a file not supported by this App", comment:"")
+        case .VERSION_TOO_NEW:
+            return NSLocalizedString("Attempt to import a file with a version higher than this App's version; you need to upgrade this App first", comment:"")
         case .NO_EMAIL_ACCOUNTS_SETUP:
             return NSLocalizedString("No Sending Email Accounts have been setup", comment:"")
         case .EMAIL_NO_TO_AND_CC:
@@ -342,6 +345,8 @@ public enum USER_ERROR_CODE:Int, CustomStringConvertible {
             return "Form does not exist"
         case .NOT_AN_EXPORTED_FILE:
             return "Not an Exported File"
+        case .VERSION_TOO_NEW:
+            return "Attempt to import a file with a version higher than this App's version"
         case .NO_EMAIL_ACCOUNTS_SETUP:
             return "No Sending Email Accounts have been setup"
         case .EMAIL_NO_TO_AND_CC:

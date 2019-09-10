@@ -36,6 +36,7 @@
 "Organization does not exist" = "Organization does not exist";
 "Form does not exist" = "Form does not exist";
 "Attempt to import a file not supported by this App" = "Attempt to import a file not supported by this App";
+"Attempt to import a file with a version higher than this App's version; you need to upgrade this App first" = "Attempt to import a file with a version higher than this App's version; you need to upgrade this App first";
 "No Sending Email Accounts have been setup" = "No Sending Email Accounts have been setup";
 "Email has no To and no CC" = "Email has no To and no CC";
 "iOS is not allowing the App to send email" = "iOS is not allowing the App to send email; either the iOS Mail App is not installed or it has not been setup with email accounts";

@@ -33,7 +33,7 @@ public class DatabaseHandler {
     public static let ThrowErrorDomain:String = NSLocalizedString("Database-Handler", comment:"")
     private let mThrowErrorDomain:String = ThrowErrorDomain
     internal let mDATABASE_NAME:String = "eContactCollect_DB.sqlite"
-    internal var mDATABASE_VERSION:Int64 = 3    // WARNING: changing this value will cause invocation of init_onUpgrade
+    internal static var mDATABASE_VERSION:Int64 = 3    // WARNING: changing this value will cause invocation of init_onUpgrade
 
     // constructor;
     public init() {}
@@ -100,11 +100,11 @@ public class DatabaseHandler {
             }
             
             // now check if it needs an upgrade to the database version this App version neeeds
-            if self.mVersion != self.mDATABASE_VERSION {
+            if self.mVersion != DatabaseHandler.mDATABASE_VERSION {
                 // database version number does not match this App version's expectation of database version; activate the upgrade process to resolve it
                 self.mDBstatus_state = .Obsolete
                 do {
-                    try self.init_onUpgrade(currentVersion: self.mVersion, targetVersion: self.mDATABASE_VERSION)
+                    try self.init_onUpgrade(currentVersion: self.mVersion, targetVersion: DatabaseHandler.mDATABASE_VERSION)
                 } catch {
                     self.mAppError!.prependCallStack(funcName: "\(method):\(self.mCTAG).initialize")
                     AppDelegate.postToErrorLogAndAlert(method: "\(method):\(self.mCTAG).initialize", errorStruct: self.mAppError!, extra: fullPath, noAlert: true)
@@ -155,7 +155,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         
         // all succeeded; set the versioning properly
         do {
-            try self.mDB!.setUserVersion(newVersion: self.mDATABASE_VERSION)
+            try self.mDB!.setUserVersion(newVersion: DatabaseHandler.mDATABASE_VERSION)
         } catch {
             self.mDBstatus_state = .Invalid
             self.mAppError = APP_ERROR(funcName: "\(self.mCTAG).init_onNew", during: "setUserVersion", domain: self.mThrowErrorDomain, error: error, errorCode: .DATABASE_ERROR, userErrorDetails: NSLocalizedString("Create the Database", comment:""), developerInfo: self.mDATABASE_NAME)
@@ -163,7 +163,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         }
         
         // all good; finalize
-        self.mVersion = self.mDATABASE_VERSION
+        self.mVersion = DatabaseHandler.mDATABASE_VERSION
         self.mDBstatus_state = .Valid
     }
     
@@ -1333,7 +1333,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             }
         }
         
-        // it is, so any remaining errors are APP_ERRORS
+        // it is, so most remaining errors are APP_ERRORS, with one exception
         if (result.jsonTopLevel!["apiVersion"] as? String) == nil || (result.jsonTopLevel!["context"] as? String) == nil {
             throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate top level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level is missing 'apiVersion' or 'context'")
         } else if (result.jsonTopLevel!["context"] as! String).isEmpty {
@@ -1354,9 +1354,10 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         result.language = (result.jsonDataLevel!["language"] as! String)
         
         // this logic needs to be revised as the database version grows;
-        // database versions 1 and 2 are safe to import with no modifications
-        if result.databaseVersion > 3 {
-            throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate 'data' level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level 'forDatabaseVersion' is incompatible: \(result.databaseVersion)")
+        // this app can import up-to the indicated database version below
+        if result.databaseVersion > DatabaseHandler.mDATABASE_VERSION {
+            userErrorMsg = NSLocalizedString("File DB version ", comment:"") + String(result.databaseVersion) + NSLocalizedString("> App's DB version ", comment:"") + String(DatabaseHandler.mDATABASE_VERSION)
+            throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .VERSION_TOO_NEW, userErrorDetails: userErrorMsg)
         }
 
         userErrorMsg = NSLocalizedString("Content Error: ", comment:"") + "3rd " + NSLocalizedString("level improperly formatted", comment:"")
