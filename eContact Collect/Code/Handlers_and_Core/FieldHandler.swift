@@ -100,6 +100,11 @@ public class FieldHandler {
                                                       formFields: copyFFs)
     }
     
+    // clear the clipboard
+    public func clearClipboard() {
+        self.mFormFieldClipboard = nil
+    }
+    
     /////////////////////////////////////////////////////////////////////////////////////////
     // methods used to get Language Information from JSON
     /////////////////////////////////////////////////////////////////////////////////////////
@@ -149,9 +154,9 @@ public class FieldHandler {
             self.mAppError!.developerInfo = self.mAppError!.developerInfo! + ": \(jsonPath!)"
             throw self.mAppError!
         }
-        if noSubstitution && validationResult.language != forLangRegion { return nil }
+        if noSubstitution && validationResult.languages[0] != forLangRegion { return nil }
         let jsonLanDefRec:RecJsonLangDefs = RecJsonLangDefs(jsonRecObj: getResult.jsonItemLevel!, forDBversion: validationResult.databaseVersion)
-        jsonLanDefRec.mLang_LangRegionCode = validationResult.language
+        jsonLanDefRec.mLang_LangRegionCode = validationResult.languages[0]
         return jsonLanDefRec
     }
     
@@ -790,10 +795,10 @@ public class FieldHandler {
                         jsonFieldLocalesRec.rFieldLocProp_Option_Trios = self.tweakNonEnglishJsonAttributes(type: "o", set: jsonFieldLocalesRec.rFieldLocProp_Option_Trios)
                         jsonFieldLocalesRec.rFieldLocProp_Metadata_Trios = self.tweakNonEnglishJsonAttributes(type: "m", set: jsonFieldLocalesRec.rFieldLocProp_Metadata_Trios)
                         jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = forLangRegion
-                    } else if AppDelegate.getLangOnly(fromLangRegion: validationResult.language) == AppDelegate.getLangOnly(fromLangRegion: forLangRegion) {
+                    } else if AppDelegate.getLangOnly(fromLangRegion: validationResult.languages[0]) == AppDelegate.getLangOnly(fromLangRegion: forLangRegion) {
                         jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = forLangRegion
                     } else {
-                        jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = validationResult.language
+                        jsonFieldLocalesRec.mFormFieldLoc_LangRegionCode = validationResult.languages[0]
                     }
                     
                     
@@ -942,7 +947,7 @@ public class FieldHandler {
                     self.mAppError = APP_ERROR(funcName: funcName, during: "Validate record level", domain: self.mThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: NSLocalizedString("Load Defaults", comment:""), developerInfo: "Item# \(itemNo) invalid: \(jsonPath3!)")
                     throw self.mAppError!
                 }
-                jsonOptionSetLocaleRec.mOptionSetLoc_LangRegionCode = validationResult.language
+                jsonOptionSetLocaleRec.mOptionSetLoc_LangRegionCode = validationResult.languages[0]
                 self.mOptionSetLocales_json!.append(jsonOptionSetLocaleRec)
                 itemNo = itemNo + 1
             }

@@ -601,7 +601,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
              appVersion
              appBuild
              forDatabaseVersion
-             language
+             languages
              tables {
                 org:{
                     tableName:
@@ -689,6 +689,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         let mydateFormatter = DateFormatter()
         mydateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
         
+        var foundFormLangRegions:[String] = []
         var jsonOrgObj:NSMutableDictionary? = nil
         var jsonOrgLangsObj:NSMutableDictionary? = nil
         var jsonFormsObj:NSMutableDictionary? = nil
@@ -722,7 +723,6 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                         jsonOrgLangsItemsObj.add(jsonOrgLangObj!)
                     }
                 }
-                orgRec = nil    // clean up heap since no longer needed
                 jsonOrgLangsObj = NSMutableDictionary()
                 jsonOrgLangsObj!["items"] = jsonOrgLangsItemsObj
                 jsonOrgLangsObj!["tableName"] = RecOrganizationLangs.TABLE_NAME
@@ -778,6 +778,9 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 let orgFormFieldLocaleRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(row:rowObj)
                 let jsonFormFieldLocaleObj = orgFormFieldLocaleRec.buildJSONObject()
                 jsonFormFieldLocalesItemsObj.add(jsonFormFieldLocaleObj!)
+                if !foundFormLangRegions.contains(orgFormFieldLocaleRec.rFormFieldLoc_LangRegionCode) {
+                    foundFormLangRegions.append(orgFormFieldLocaleRec.rFormFieldLoc_LangRegionCode)
+                }
             }
             jsonFormFieldLocalesObj["items"] = jsonFormFieldLocalesItemsObj
             jsonFormFieldLocalesObj["tableName"] = RecOrgFormFieldLocales.TABLE_NAME
@@ -852,8 +855,13 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         stream!.write(str, maxLength: str.count)
         str = "  \"forDatabaseVersion\":\"\(DatabaseHandler.shared.getVersioning())\",\n"
         stream!.write(str, maxLength: str.count)
-        str = "  \"language\":\"$$\",\n"
-        stream!.write(str, maxLength: str.count)
+        if forFormShortName == nil {
+            str = "  \"languages\":\"" + orgRec!.rOrg_LangRegionCodes_Supported.joined(separator: ",") + "\",\n"
+            stream!.write(str, maxLength: str.count)
+        } else {
+            str = "  \"languages\":\"" + foundFormLangRegions.joined(separator: ",") + "\",\n"
+            stream!.write(str, maxLength: str.count)
+        }
         str = "  \"tables\":{\n"
         stream!.write(str, maxLength: str.count)
 
@@ -1276,7 +1284,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
     // return structure for validateJSONdbFile
     public struct ValidateJSONdbFile_Result {
         public var databaseVersion:Int64 = 0
-        public var language:String = ""
+        public var languages:[String] = []
         
         // top level contains: "apiVersion","method","context","id","data"
         public var jsonTopLevel:[String:Any?]? = nil
@@ -1346,12 +1354,20 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         result.jsonDataLevel = result.jsonTopLevel!["data"] as? [String:Any?]
         if result.jsonDataLevel == nil {
             throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate 'data' level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level is not NSDictionary")
-        } else if (result.jsonDataLevel!["forDatabaseVersion"] as? String) == nil || (result.jsonDataLevel!["language"] as? String) == nil || (result.jsonDataLevel!["tables"] as? [String:Any?]) == nil {
-            throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate 'data' level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level is missing 'forDatabaseVersion', 'language', or 'tables'")
+        } else if (result.jsonDataLevel!["forDatabaseVersion"] as? String) == nil || (result.jsonDataLevel!["tables"] as? [String:Any?]) == nil {
+            throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate 'data' level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level is missing 'forDatabaseVersion', 'tables'")
         }
-        
         result.databaseVersion = Int64((result.jsonDataLevel!["forDatabaseVersion"] as! String)) ?? 0
-        result.language = (result.jsonDataLevel!["language"] as! String)
+        
+        if let hasLang:String = (result.jsonDataLevel!["language"] as? String) {
+            // factory json files as well as older export files (which do not have their languages recorded in the header)
+            if hasLang != "$$" { result.languages.append(hasLang) }
+        } else if let hasLangs:String = (result.jsonDataLevel!["languages"] as? String) {
+            // newer export files
+            result.languages = hasLangs.components(separatedBy: ",")
+        } else {
+            throw APP_ERROR(funcName: "\(self.CTAG)).validateJSONdbFile", during: "Validate 'data' level", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: userErrorMsg, developerInfo: "Level is missing 'language', 'languages'")
+        }
         
         // this logic needs to be revised as the database version grows;
         // this app can import up-to the indicated database version below

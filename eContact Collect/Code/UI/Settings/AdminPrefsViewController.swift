@@ -375,6 +375,12 @@ debugPrint("\(mCTAG).deinit STARTED")
                 
         }
         section3 <<< ButtonRow() {
+            $0.tag = "clear_clipboard"
+            $0.title = NSLocalizedString("Clear the Form FIeld Clipboard", comment:"")
+            }.onCellSelection { cell, row in
+                FieldHandler.shared.clearClipboard()
+        }
+        section3 <<< ButtonRow() {
             $0.tag = "factory_reset"
             $0.title = NSLocalizedString("Factory Reset [everything is wiped]", comment:"")
             }.onCellSelection { [weak self] cell, row in
