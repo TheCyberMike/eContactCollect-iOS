@@ -297,14 +297,15 @@ public enum USER_ERROR_CODE:Int, CustomStringConvertible {
     case NO_ERROR  = 0
     case ORG_DOES_NOT_EXIST = -30
     case FORM_DOES_NOT_EXIST = -31
-    case NOT_AN_EXPORTED_FILE = -32
-    case VERSION_TOO_NEW = -33
-    case NO_EMAIL_ACCOUNTS_SETUP = -34
-    case EMAIL_NO_TO_AND_CC = -35
-    case IOS_EMAIL_SUBSYSTEM_DISABLED = -36
-    case INVALID_OR_MISSING_SMTP_PARAMETER = -37
-    case INVALID_OR_MISSING_OAUTH_PARAMETER = -38
-    case INVALID_OAUTH_URL = -39
+    case NO_MATCHING_LANGREGIONS = -32
+    case NOT_AN_EXPORTED_FILE = -33
+    case VERSION_TOO_NEW = -34
+    case NO_EMAIL_ACCOUNTS_SETUP = -35
+    case EMAIL_NO_TO_AND_CC = -36
+    case IOS_EMAIL_SUBSYSTEM_DISABLED = -37
+    case INVALID_OR_MISSING_SMTP_PARAMETER = -38
+    case INVALID_OR_MISSING_OAUTH_PARAMETER = -39
+    case INVALID_OAUTH_URL = -40
     
     // provide a description for the end-user in proper language
     public var localizedDescription:String {
@@ -315,6 +316,8 @@ public enum USER_ERROR_CODE:Int, CustomStringConvertible {
             return NSLocalizedString("Organization does not exist", comment:"")
         case .FORM_DOES_NOT_EXIST:
             return NSLocalizedString("Form does not exist", comment:"")
+        case .NO_MATCHING_LANGREGIONS:
+            return NSLocalizedString("There are no matching language-Regions between the source and the destination Organization", comment:"")
         case .NOT_AN_EXPORTED_FILE:
             return NSLocalizedString("Attempt to import a file not supported by this App", comment:"")
         case .VERSION_TOO_NEW:
@@ -343,6 +346,8 @@ public enum USER_ERROR_CODE:Int, CustomStringConvertible {
             return "Organization does not exist"
         case .FORM_DOES_NOT_EXIST:
             return "Form does not exist"
+        case .NO_MATCHING_LANGREGIONS:
+            return "There are no matching language-Regions between the source and the destination Organization"
         case .NOT_AN_EXPORTED_FILE:
             return "Not an Exported File"
         case .VERSION_TOO_NEW:

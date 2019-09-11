@@ -37,6 +37,11 @@ public class FieldHandler {
             self.mFrom_Form_Code_For_SV_File = formCode
             self.mFrom_FormFields = formFields
         }
+        
+        // clear the OrgFormFields to help ensure all memory is released
+        public func clear() {
+            self.mFrom_FormFields.removeAll()
+        }
     }
     
     // constructor;
@@ -82,19 +87,24 @@ public class FieldHandler {
         if editedFF == nil { return }
         let copyFFs:OrgFormFields = OrgFormFields()
         
+        // create a deep copy
         let copiedFF = OrgFormFieldsEntry(existingEntry: editedFF!)
         copyFFs.appendNewDuringEditing(copiedFF)
         
         // are there any subfields?
-        if (editedFF!.mDuringEditing_SubFormFields?.count ?? 0) > 0 {
-            // yes; copy them as well as full entries
-            for sFFentry:OrgFormFieldsEntry in editedFF!.mDuringEditing_SubFormFields! {
-                let copiedSubFF = OrgFormFieldsEntry(existingEntry: sFFentry)
-                copyFFs.appendNewSubfieldDuringEditing(copiedSubFF, primary: copiedFF)
+        if (copiedFF.mDuringEditing_SubFormFields?.count ?? 0) > 0 {
+            // yes; deep move them as full entries in the OrgFormFields but only if they are marked as chosen
+            for sFFentry:OrgFormFieldsEntry in copiedFF.mDuringEditing_SubFormFields! {
+                if sFFentry.mDuringEditing_isChosen {
+                    let copiedSubFF = OrgFormFieldsEntry(existingEntry: sFFentry)
+                    copyFFs.appendNewSubfieldDuringEditing(copiedSubFF, primary: copiedFF)
+                }
             }
+            copiedFF.mDuringEditing_SubFormFields = nil     // release the "when editing" array
         }
         
         // remember the copied formfield and its subfields
+        self.mFormFieldClipboard?.clear()
         self.mFormFieldClipboard = FormFieldClipboard(orgCode: editedFF!.mFormFieldRec.rOrg_Code_For_SV_File,
                                                       formCode: editedFF!.mFormFieldRec.rForm_Code_For_SV_File,
                                                       formFields: copyFFs)
@@ -102,11 +112,12 @@ public class FieldHandler {
     
     // clear the clipboard
     public func clearClipboard() {
+        self.mFormFieldClipboard?.clear()
         self.mFormFieldClipboard = nil
     }
     
     /////////////////////////////////////////////////////////////////////////////////////////
-    // methods used to get Language Information from JSON
+    // Language related methods
     /////////////////////////////////////////////////////////////////////////////////////////
 
     // get any information for the langRegion from the json files;
@@ -158,6 +169,210 @@ public class FieldHandler {
         let jsonLanDefRec:RecJsonLangDefs = RecJsonLangDefs(jsonRecObj: getResult.jsonItemLevel!, forDBversion: validationResult.databaseVersion)
         jsonLanDefRec.mLang_LangRegionCode = validationResult.languages[0]
         return jsonLanDefRec
+    }
+    
+    // results of the languages cross-assessment
+    public enum AssessLangRegions_ResultsMode { case NO_CHANGES_NEEDED, MISSINGS_ONLY, BEST_FIT, IMPOSSIBLE }
+    public struct AssessLangRegions_Results {
+        public var mode:AssessLangRegions_ResultsMode = .BEST_FIT
+        public var identicalLangRegions:[String] = []
+        public var bestFitLangRegions:[String:String] = [:]     // maps target langRegion back to its best-fit source
+        public var unmatchedSourceLangRegions:[String] = []
+        public var unmatchedTargetLangRegions:[String] = []
+    }
+    
+    // assess source langRegions from a form-field copy into a destination org and form
+    public static func assessLangRegions(sourceEntries:OrgFormFields, targetOrgRec:RecOrganizationDefs,
+                                         targetFormRec:RecOrgFormDefs) -> AssessLangRegions_Results {
+        // locate all langRegions in the source
+        var foundLangRegions:[String] = []
+        for entry:OrgFormFieldsEntry in sourceEntries {
+            if entry.mFormFieldRec.mFormFieldLocalesRecs != nil {
+                for locale:RecOrgFormFieldLocales in entry.mFormFieldRec.mFormFieldLocalesRecs! {
+                    if !foundLangRegions.contains(locale.rFormFieldLoc_LangRegionCode) {
+                        foundLangRegions.append(locale.rFormFieldLoc_LangRegionCode)
+                    }
+                }
+            }
+            if entry.mDuringEditing_SubFormFields != nil {
+                for subentry:OrgFormFieldsEntry in entry.mDuringEditing_SubFormFields! {
+                    if subentry.mFormFieldRec.mFormFieldLocalesRecs != nil {
+                        for sublocale:RecOrgFormFieldLocales in subentry.mFormFieldRec.mFormFieldLocalesRecs! {
+                            if !foundLangRegions.contains(sublocale.rFormFieldLoc_LangRegionCode) {
+                                foundLangRegions.append(sublocale.rFormFieldLoc_LangRegionCode)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // call the main assessor
+        return self.assessLangRegions(sourcelangRegions: foundLangRegions, targetOrgRec: targetOrgRec, targetFormRec: targetFormRec)
+    }
+    
+    // assess source langRegions from an import or a form-field copy into a destination org and form
+    public static func assessLangRegions(sourcelangRegions:[String], targetOrgRec:RecOrganizationDefs,
+                                         targetFormRec:RecOrgFormDefs) -> AssessLangRegions_Results {
+        
+        // pre-build arrays needed later in the functions
+        var results:AssessLangRegions_Results = AssessLangRegions_Results()
+        var sourceLangs:[String:String] = [:]
+        results.unmatchedSourceLangRegions = sourcelangRegions
+        for sourceLang:String in sourcelangRegions {
+            sourceLangs[AppDelegate.getLangOnly(fromLangRegion: sourceLang)] = sourceLang
+        }
+        
+        // step through all the source langRegions aligning them with the target's langRegions
+        for targetLangRegion:String in targetOrgRec.rOrg_LangRegionCodes_Supported {
+            if sourcelangRegions.contains(targetLangRegion) {
+                // identical match found
+                if !results.identicalLangRegions.contains(targetLangRegion) {
+                    results.identicalLangRegions.append(targetLangRegion)
+                }
+                results.unmatchedSourceLangRegions.removeAll { $0 == targetLangRegion }
+            } else {
+                let targetLang:String = AppDelegate.getLangOnly(fromLangRegion: targetLangRegion)
+                if sourcelangRegions.contains(targetLang) {
+                    // identical language-only match found
+                    if results.bestFitLangRegions[targetLangRegion] == nil {
+                        results.bestFitLangRegions[targetLangRegion] = targetLang
+                    }
+                    results.unmatchedSourceLangRegions.removeAll { $0 == targetLang }
+                } else {
+                    if sourceLangs[targetLang] != nil {
+                        // root-language to root-language match found
+                        if results.bestFitLangRegions[targetLangRegion] == nil {
+                            results.bestFitLangRegions[targetLangRegion] = sourceLangs[targetLang]
+                        }
+                        results.unmatchedSourceLangRegions.removeAll { $0 == sourceLangs[targetLang] }
+                    } else {
+                        // cannot match this target langRegion
+                        if !results.unmatchedTargetLangRegions.contains(targetLangRegion) {
+                            results.unmatchedTargetLangRegions.append(targetLangRegion)
+                        }
+                    }
+                }
+            }
+        }
+        
+        // determine the mode based upon what was found
+        if results.identicalLangRegions.count > 0 {
+            if results.bestFitLangRegions.count == 0 {
+                if results.unmatchedSourceLangRegions.count == 0 && results.unmatchedSourceLangRegions.count == 0 {
+                    results.mode = .NO_CHANGES_NEEDED
+                } else {
+                    results.mode = .MISSINGS_ONLY
+                }
+            } else {
+                results.mode = .BEST_FIT
+            }
+        } else {
+            if results.bestFitLangRegions.count > 0 {
+                results.mode = .BEST_FIT
+            } else {
+                results.mode = .IMPOSSIBLE
+            }
+        }
+        return results
+    }
+    
+    // adjust the langRegions based upon the assessment results
+    public func adjustLangRegions(results:AssessLangRegions_Results, forEntry:OrgFormFieldsEntry, targetOrgRec:RecOrganizationDefs, targetFormRec:RecOrgFormDefs) {
+        switch results.mode {
+        case .NO_CHANGES_NEEDED:
+            return
+            
+        case .MISSINGS_ONLY:
+            // delete any unneeded source languages
+            if results.unmatchedSourceLangRegions.count > 0 {
+                for sourceLangRegion:String in results.unmatchedSourceLangRegions {
+                    forEntry.mFormFieldRec.mFormFieldLocalesRecs?.removeAll { $0.rFormFieldLoc_LangRegionCode ==  sourceLangRegion }
+                    forEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true
+                    if forEntry.mDuringEditing_SubFormFields != nil {
+                        for subEntry:OrgFormFieldsEntry in forEntry.mDuringEditing_SubFormFields! {
+                            subEntry.mFormFieldRec.mFormFieldLocalesRecs?.removeAll { $0.rFormFieldLoc_LangRegionCode ==  sourceLangRegion }
+                            subEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true
+                        }
+                    }
+                }
+            }
+            // create dummy missing target languages
+            if results.unmatchedTargetLangRegions.count > 0 {
+                for targetLangRegion:String in results.unmatchedTargetLangRegions {
+                    let _ = forEntry.chooseLangRecForEditing(langRegion: targetLangRegion)
+                    if forEntry.mDuringEditing_SubFormFields != nil {
+                        for subEntry:OrgFormFieldsEntry in forEntry.mDuringEditing_SubFormFields! {
+                            let _ = subEntry.chooseLangRecForEditing(langRegion: targetLangRegion)
+                        }
+                    }
+                }
+            }
+            break
+            
+        case .BEST_FIT:
+            // need to build a new set of target RecOrgFormFieldLocales based upon mappings into the source set
+            var newSet:[RecOrgFormFieldLocales] = []
+            for targetLangRegion:String in targetOrgRec.rOrg_LangRegionCodes_Supported {
+                if results.identicalLangRegions.contains(targetLangRegion) {
+                    // pull the identical source locale rec
+                    let localeRec:RecOrgFormFieldLocales? = forEntry.getLocaleRecord(forLangRegion: targetLangRegion)
+                    if localeRec != nil { newSet.append(localeRec!) }
+                } else {
+                    let fitLangRegion:String? = results.bestFitLangRegions[targetLangRegion]
+                    if fitLangRegion != nil {
+                        // pull the best fitting source locale rec
+                        let localeRec:RecOrgFormFieldLocales? = forEntry.getLocaleRecord(forLangRegion: fitLangRegion!)
+                        if localeRec != nil {
+                            localeRec!.rFormFieldLoc_LangRegionCode = targetLangRegion
+                            newSet.append(localeRec!)
+                        }
+                    }
+                }
+                
+                if forEntry.mDuringEditing_SubFormFields != nil {
+                    for subEntry:OrgFormFieldsEntry in forEntry.mDuringEditing_SubFormFields! {
+                        var newSet1:[RecOrgFormFieldLocales] = []
+                        if results.identicalLangRegions.contains(targetLangRegion) {
+                            // pull the identical source locale rec
+                            let localeRec1:RecOrgFormFieldLocales? = subEntry.getLocaleRecord(forLangRegion: targetLangRegion)
+                            if localeRec1 != nil { newSet1.append(localeRec1!) }
+                        } else {
+                            let fitLangRegion1:String? = results.bestFitLangRegions[targetLangRegion]
+                            if fitLangRegion1 != nil {
+                                // pull the best fitting source locale rec
+                                let localeRec1:RecOrgFormFieldLocales? = subEntry.getLocaleRecord(forLangRegion: fitLangRegion1!)
+                                if localeRec1 != nil {
+                                    localeRec1!.rFormFieldLoc_LangRegionCode = targetLangRegion
+                                    newSet1.append(localeRec1!)
+                                }
+                            }
+                        }
+                        subEntry.mFormFieldRec.mFormFieldLocalesRecs = newSet1
+                        subEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true
+                    }
+                }
+            }
+            forEntry.mFormFieldRec.mFormFieldLocalesRecs = newSet
+            forEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true
+
+            // create dummy missing target languages
+            if results.unmatchedTargetLangRegions.count > 0 {
+                for targetLangRegion:String in results.unmatchedTargetLangRegions {
+                    let _ = forEntry.chooseLangRecForEditing(langRegion: targetLangRegion)
+                    if forEntry.mDuringEditing_SubFormFields != nil {
+                        for subEntry:OrgFormFieldsEntry in forEntry.mDuringEditing_SubFormFields! {
+                            let _ = subEntry.chooseLangRecForEditing(langRegion: targetLangRegion)
+                        }
+                    }
+                }
+            }
+            break
+            
+        case .IMPOSSIBLE:
+            // do nothing
+            break
+        }
     }
     
     /////////////////////////////////////////////////////////////////////////////////////////

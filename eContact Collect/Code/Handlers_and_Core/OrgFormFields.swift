@@ -141,22 +141,23 @@ public class OrgFormFields:Sequence {
         self.appendNewDuringEditing(entry)
     }
     
-    // append a collection of fields and subfields; this is usually from a Copy during a Paste
+    // append a collection of fields and subfields chosen from the factory json files; these will already be language conformant to the Org
     public func appendNewDuringEditing(fromFormFields:OrgFormFields, forOrgCode:String, forFormCode:String) {
         var orderShown:Int = self.getNextOrderShown()
         var orderSVfile:Int = self.getNextOrderSVfile()
         var subcount:Int = 0
         
         // step thru the primary FormFields; note meta-data FormFields will never be present
-        for newFormFieldEntry in fromFormFields {
+        for newFormFieldEntry:OrgFormFieldsEntry in fromFormFields {
             if !newFormFieldEntry.mFormFieldRec.isSubFormField() {
+                // found a primary field to add; make it conform to the new org and form, then save it into the working set
                 newFormFieldEntry.mFormFieldRec.rOrg_Code_For_SV_File = forOrgCode
                 newFormFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = forFormCode
                 newFormFieldEntry.mFormFieldRec.rFormField_Order_SV_File = orderSVfile
                 newFormFieldEntry.mFormFieldRec.rFormField_Order_Shown = orderShown
                 newFormFieldEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true   // the actual to-be-saved RecOrgFormFieldLocales are within this object
                 
-                newFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = forOrgCode
+                newFormFieldEntry.mComposedFormFieldLocalesRec.rOrg_Code_For_SV_File = forOrgCode
                 newFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = forFormCode
                 
                 let originalIndex:Int64 = newFormFieldEntry.mFormFieldRec.rFormField_Index
@@ -167,17 +168,18 @@ public class OrgFormFields:Sequence {
                 orderSVfile = orderSVfile + 1
 
                 // now handle any potential subFormFields of the current primary FormField
-                for newSubFormFieldEntry in fromFormFields {
+                for newSubFormFieldEntry:OrgFormFieldsEntry in fromFormFields {
                     if newSubFormFieldEntry.mFormFieldRec.isSubFormField() {
                         if newSubFormFieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index == originalIndex {
-                            // found a subfield for the current primary field
+                            // found a subfield and indeed it is for the current primary field;
+                            // make it conform to the new org and form, then save it into the working set
                             newSubFormFieldEntry.mFormFieldRec.rOrg_Code_For_SV_File = forOrgCode
                             newSubFormFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = forFormCode
                             newSubFormFieldEntry.mFormFieldRec.rFormField_Order_SV_File = orderSVfile
                             newSubFormFieldEntry.mFormFieldRec.rFormField_Order_Shown = subcount
                             newSubFormFieldEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true
                             
-                            newSubFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = forOrgCode
+                            newSubFormFieldEntry.mComposedFormFieldLocalesRec.rOrg_Code_For_SV_File = forOrgCode
                             newSubFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = forFormCode
                             
                             self.appendNewSubfieldDuringEditing(newSubFormFieldEntry, primary: newFormFieldEntry)  // this auto-assigns temporary rFormField_Index and for its locale records
@@ -189,6 +191,93 @@ public class OrgFormFields:Sequence {
                 }
             }
         }
+    }
+    
+    // precheck whether the paste is possible given langRegion matching
+    public static func precheckAppendClipboardDuringEditing(usingOrgRec:RecOrganizationDefs, usingFormRec:RecOrgFormDefs) throws {
+        // make an assessment of langRegions between the clipboard source and the destination Org and Form
+        let langRegionAssessResults:FieldHandler.AssessLangRegions_Results = FieldHandler.assessLangRegions(sourceEntries: FieldHandler.shared.mFormFieldClipboard!.mFrom_FormFields, targetOrgRec: usingOrgRec, targetFormRec: usingFormRec)
+        
+        // does the assessment show the paste is impossible?
+        if langRegionAssessResults.mode == .IMPOSSIBLE {
+            let messageStr:String = NSLocalizedString("Source LangRegions: ", comment:"") + langRegionAssessResults.unmatchedSourceLangRegions.joined(separator: ",") + "; " + NSLocalizedString("Org's LangRegions: ", comment:"") + langRegionAssessResults.unmatchedTargetLangRegions.joined(separator: ",")
+            throw USER_ERROR(domain: "FieldHandler.Clipboard", errorCode: .NO_MATCHING_LANGREGIONS, userErrorDetails: messageStr)
+        }
+    }
+    
+    // append the clipboard's copied form field(s); needs to perform deep copies so the clipboard's entries remain as-is;
+    // must perform language adjustments just like an import since can copy from one Org and paste into another
+    public func appendClipboardDuringEditing(usingOrgRec:RecOrganizationDefs, usingFormRec:RecOrgFormDefs) -> OrgFormFieldsEntry  {
+        
+        assert(FieldHandler.shared.mFormFieldClipboard != nil, "\(self.mCTAG).appendClipboardDuringEditing FieldHandler.shared.mFormFieldClipboard == nil")
+        assert(FieldHandler.shared.mFormFieldClipboard!.mFrom_FormFields.count() != 0, "\(self.mCTAG).appendClipboardDuringEditing FieldHandler.shared.mFormFieldClipboard == nil")
+        
+        // make an assessment of langRegions between the clipboard source and the destination Org and Form
+        let langRegionAssessResults:FieldHandler.AssessLangRegions_Results = FieldHandler.assessLangRegions(sourceEntries: FieldHandler.shared.mFormFieldClipboard!.mFrom_FormFields, targetOrgRec: usingOrgRec, targetFormRec: usingFormRec)
+        
+        // the precheck should have ensured that one or more langRegionsare possible to append
+        assert(langRegionAssessResults.identicalLangRegions.count != 0 || langRegionAssessResults.bestFitLangRegions.count != 0, "\(self.mCTAG).appendClipboardDuringEditing langRegionAssessResults.identicalLangRegions & bestFitLangRegions == 0")
+        
+        var orderShown:Int = self.getNextOrderShown()
+        var orderSVfile:Int = self.getNextOrderSVfile()
+        var subcount:Int = 0
+        
+        // step thru the primary FormFields; note meta-data FormFields will never be present
+        var result:OrgFormFieldsEntry = FieldHandler.shared.mFormFieldClipboard!.mFrom_FormFields[0]
+        for newFFEntry:OrgFormFieldsEntry in FieldHandler.shared.mFormFieldClipboard!.mFrom_FormFields {
+            if !newFFEntry.mFormFieldRec.isSubFormField() {
+                // found a primary field to add; make it conform to the new org and form, then save it into the working set
+                let newFormFieldEntry:OrgFormFieldsEntry = OrgFormFieldsEntry(existingEntry: newFFEntry)    // make a deep copy
+                newFormFieldEntry.mFormFieldRec.rOrg_Code_For_SV_File = usingOrgRec.rOrg_Code_For_SV_File
+                newFormFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = usingFormRec.rForm_Code_For_SV_File
+                newFormFieldEntry.mFormFieldRec.rFormField_Order_SV_File = orderSVfile
+                newFormFieldEntry.mFormFieldRec.rFormField_Order_Shown = orderShown
+                newFormFieldEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true   // the actual to-be-saved RecOrgFormFieldLocales are within this object
+                newFormFieldEntry.mDuringEditing_isDeleted = false
+                
+                newFormFieldEntry.mComposedFormFieldLocalesRec.rOrg_Code_For_SV_File = usingOrgRec.rOrg_Code_For_SV_File
+                newFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = usingFormRec.rForm_Code_For_SV_File
+                
+                FieldHandler.shared.adjustLangRegions(results: langRegionAssessResults, forEntry: newFormFieldEntry, targetOrgRec: usingOrgRec, targetFormRec: usingFormRec)
+                
+                let originalIndex:Int64 = newFormFieldEntry.mFormFieldRec.rFormField_Index
+                self.appendNewDuringEditing(newFormFieldEntry)  // this auto-assigns temporary rFormField_Index and for its internal locale records
+                
+                subcount = orderShown + 1
+                orderShown = orderShown + 10
+                orderSVfile = orderSVfile + 1
+                
+                result = newFormFieldEntry
+                
+                // now handle any potential subFormFields of the current primary FormField
+                for newSubFFEntry:OrgFormFieldsEntry in FieldHandler.shared.mFormFieldClipboard!.mFrom_FormFields {
+                    if newSubFFEntry.mFormFieldRec.isSubFormField() {
+                        if newSubFFEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index == originalIndex {
+                            // found a subfield and indeed it is for the current primary field;
+                            // make it conform to the new org and form, then save it into the working set
+                            let newSubFormFieldEntry:OrgFormFieldsEntry = OrgFormFieldsEntry(existingEntry: newSubFFEntry)    // make a deep copy
+                            newSubFormFieldEntry.mFormFieldRec.rOrg_Code_For_SV_File = usingOrgRec.rOrg_Code_For_SV_File
+                            newSubFormFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = usingFormRec.rForm_Code_For_SV_File
+                            newSubFormFieldEntry.mFormFieldRec.rFormField_Order_SV_File = orderSVfile
+                            newSubFormFieldEntry.mFormFieldRec.rFormField_Order_Shown = subcount
+                            newSubFormFieldEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true
+                            newSubFormFieldEntry.mDuringEditing_isDeleted = false
+                            
+                            newSubFormFieldEntry.mComposedFormFieldLocalesRec.rOrg_Code_For_SV_File = usingOrgRec.rOrg_Code_For_SV_File
+                            newSubFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = usingFormRec.rForm_Code_For_SV_File
+                            
+                            FieldHandler.shared.adjustLangRegions(results: langRegionAssessResults, forEntry: newSubFormFieldEntry, targetOrgRec: usingOrgRec, targetFormRec: usingFormRec)
+                            
+                            self.appendNewSubfieldDuringEditing(newSubFormFieldEntry, primary: newFormFieldEntry)  // this auto-assigns temporary rFormField_Index and for its locale records
+                            
+                            subcount = subcount + 1
+                            orderSVfile = orderSVfile + 1
+                        }
+                    }
+                }
+            }
+        }
+        return result
     }
     
     // find the index of a specific FormField index#; return -1 if not found
@@ -687,6 +776,15 @@ public class OrgFormFieldsEntry {
     // getters are also provided for convenience
     /////////////////////////////////////////////////////////////////////////
     
+    // get the desired locale record
+    public func getLocaleRecord(forLangRegion:String) -> RecOrgFormFieldLocales? {
+        if self.mFormFieldRec.mFormFieldLocalesRecs == nil { return nil }
+        for formFieldLocRec:RecOrgFormFieldLocales in self.mFormFieldRec.mFormFieldLocalesRecs! {
+            if formFieldLocRec.rFormFieldLoc_LangRegionCode == forLangRegion { return formFieldLocRec }
+        }
+        return nil
+    }
+    
     public func getShown(forLangRegion:String) -> String? {
         let inx:Int = self.chooseLangRecForEditing(langRegion: forLangRegion)
         return self.mFormFieldRec.mFormFieldLocalesRecs![inx].rFieldLocProp_Name_Shown
@@ -831,8 +929,8 @@ public class OrgFormFieldsEntry {
         }
     }
     
-    // choose the RecOrgFormFieldLocales that will be used
-    private func chooseLangRecForEditing(langRegion:String) -> Int {
+    // choose the RecOrgFormFieldLocales that will be used; auto-creates a RecOrgFormFieldLocales if needed
+    public func chooseLangRecForEditing(langRegion:String) -> Int {
         if self.mFormFieldRec.mFormFieldLocalesRecs == nil { self.mFormFieldRec.mFormFieldLocalesRecs = [] }
         
         var inx:Int = 0

@@ -921,8 +921,13 @@ debugPrint("\(self!.mCTAG).buildForm.mMVS_fields_splitRow.left.onChange.dispatch
                         // just one primary formfield was copied, so do a normal MVS insert
                         guard let tableView = selCell.formViewController()?.tableView else { return }
                         guard let indexPath = self!.mMVS_fields_splitRow!.indexPath else { return }
-                        self!.mMVS_fields_splitRow!.whichSelected = .rightSelected
-                        selCell.formViewController()?.tableView(tableView, commit: .insert, forRowAt: indexPath)
+                        do {
+                            try OrgFormFields.precheckAppendClipboardDuringEditing(usingOrgRec: self!.mFormEditVC!.mReference_orgRec!, usingFormRec: self!.mFormEditVC!.mWorking_orgFormRec!)
+                            self!.mMVS_fields_splitRow!.whichSelected = .rightSelected
+                            selCell.formViewController()?.tableView(tableView, commit: .insert, forRowAt: indexPath)
+                        } catch {
+                            AppDelegate.showAlertDialog(vc: self!, title: NSLocalizedString("User Error", comment:""), errorStruct: error, buttonText: NSLocalizedString("Okay", comment:""))
+                        }
                     } else {
                         // multiple primary formfields are present, so must insert in-bulk and reload the Fields MVS
                         // ?? !! FUTURE feature
@@ -1021,13 +1026,10 @@ debugPrint("\(self!.mCTAG).buildForm.mvs_fields.multivaluedRowToInsertAt STARTED
                     assert(FieldHandler.shared.mFormFieldClipboard != nil, "\(self!.mCTAG).buildForm.MultivaluedSection.FormFields.multivaluedRowToInsertAt.right FieldHandler.shared.mFormFieldClipboard == nil")
                     
                     // add the primary field and its subfield's (if any); orderShown is fully re-synced and compacted when the changes are saved
-                    self!.mFormEditVC!.mWorking_formFieldEntries!.appendNewDuringEditing(
-                        fromFormFields: FieldHandler.shared.mFormFieldClipboard!.mFrom_FormFields,
-                        forOrgCode: self!.mFormEditVC!.mWorking_orgFormRec!.rOrg_Code_For_SV_File,
-                        forFormCode: self!.mFormEditVC!.mWorking_orgFormRec!.rForm_Code_For_SV_File)
+                    let newEntry:OrgFormFieldsEntry =  self!.mFormEditVC!.mWorking_formFieldEntries!.appendClipboardDuringEditing(usingOrgRec: self!.mFormEditVC!.mReference_orgRec!, usingFormRec: self!.mFormEditVC!.mWorking_orgFormRec!)
                     
                     // create a new ButtonRow based upon the new entry
-                    let newRow:ButtonRow = self!.makeFieldsButtonRow(forFormFieldEntry: FieldHandler.shared.mFormFieldClipboard!.mFrom_FormFields[0])
+                    let newRow:ButtonRow = self!.makeFieldsButtonRow(forFormFieldEntry: newEntry)
                     return newRow               // self.rowsHaveBeenAdded() will get invoked after this point
                 }
             }
@@ -1544,7 +1546,7 @@ class FormEditFieldFormViewController: FormViewController, RowControllerType {
     
     // Copy button was tapped
     @objc func tappedCopy(_ barButtonItem: UIBarButtonItem) {
-        FieldHandler.shared.copyToClipboardOneEdited(editedFF: self.mWorking_FormFieldEntry)
+        FieldHandler.shared.copyToClipboardOneEdited(editedFF: self.mWorking_FormFieldEntry)    // performs a deep copy
     }
     
     // Done button was tapped

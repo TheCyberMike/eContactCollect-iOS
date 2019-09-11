@@ -35,6 +35,7 @@
 "User Error" = "User Error";
 "Organization does not exist" = "Organization does not exist";
 "Form does not exist" = "Form does not exist";
+"There are no matching language-Regions between the destination Organization and the source" = "There are no matching language-Regions between the destination Organization and the source";
 "Attempt to import a file not supported by this App" = "Attempt to import a file not supported by this App";
 "Attempt to import a file with a version higher than this App's version; you need to upgrade this App first" = "Attempt to import a file with a version higher than this App's version; you need to upgrade this App first";
 "No Sending Email Accounts have been setup" = "No Sending Email Accounts have been setup";
@@ -62,11 +63,13 @@
 "Never" = "Never";
 "Severe error has occured; see error.log for details" = "Severe error has occured; see error.log for details";
 
-// FieldHandler.swift
+// FieldHandler.swift & OrgFormFields.Swift
 "Field-Handler" = "Field-Handler";
 "Load" = "Load";
 "Load Defaults" = "Load Defaults";
 "Verification" = "Verification";
+"Source LangRegions: " = "Source LangRegions: ";
+"Org's LangRegions: " = "Org's LangRegions: ";
 
 // SVFilesHandler.swift
 "SVFiles-Handler" = "SVFiles-Handler";

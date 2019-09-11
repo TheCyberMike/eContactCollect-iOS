@@ -1052,6 +1052,9 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             }
         }
         
+        // ??? for form-only imports, need to adjust for languages in one of three modes:
+        // ???                          add-missing-languages, best-effort-match-languages; drop-missing-languages
+        
         // start importing; is this an entire Org import?
         var inx:Int = 1
         if !formOnlyMode {
