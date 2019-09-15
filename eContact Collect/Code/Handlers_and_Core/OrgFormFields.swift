@@ -119,6 +119,17 @@ public class OrgFormFields:Sequence {
         self.mOrgFormFields.append(entry)
     }
     
+    // append a locale record into its proper existing OrgFormField entry
+    public func includeLocaleFromDatabase(rec: RecOrgFormFieldLocales) {
+        for entry in self.mOrgFormFields {
+            if entry.mFormFieldRec.rFormField_Index == rec.rFormField_Index {
+                if entry.mFormFieldRec.mFormFieldLocalesRecs == nil { entry.mFormFieldRec.mFormFieldLocalesRecs = [] }
+                entry.mFormFieldRec.mFormFieldLocalesRecs!.append(rec)
+                return
+            }
+        }
+    }
+    
     // append a new OrgFormFieldsEntry with auto-temporary indexing
     public func appendNewDuringEditing(_ entry:OrgFormFieldsEntry) {
         entry.mFormFieldRec.rFormField_Index = OrgFormFields.mNextTemporaryFFindex
@@ -141,15 +152,15 @@ public class OrgFormFields:Sequence {
         self.appendNewDuringEditing(entry)
     }
     
-    // append a collection of fields and subfields chosen from the factory json files; these will already be language conformant to the Org
+    // append a collection of fields and subfields chosen from the factory json files or an import; may also include metadata fields if from an import
     public func appendNewDuringEditing(fromFormFields:OrgFormFields, forOrgCode:String, forFormCode:String) {
         var orderShown:Int = self.getNextOrderShown()
         var orderSVfile:Int = self.getNextOrderSVfile()
         var subcount:Int = 0
         
-        // step thru the primary FormFields; note meta-data FormFields will never be present
+        // step thru the primary FormFields, skipping for now any metadata fields
         for newFormFieldEntry:OrgFormFieldsEntry in fromFormFields {
-            if !newFormFieldEntry.mFormFieldRec.isSubFormField() {
+            if !newFormFieldEntry.mFormFieldRec.isMetaData() && !newFormFieldEntry.mFormFieldRec.isSubFormField() {
                 // found a primary field to add; make it conform to the new org and form, then save it into the working set
                 newFormFieldEntry.mFormFieldRec.rOrg_Code_For_SV_File = forOrgCode
                 newFormFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = forFormCode
@@ -189,6 +200,24 @@ public class OrgFormFields:Sequence {
                         }
                     }
                 }
+            }
+        }
+        
+        // now process metadata fields so they are placed last at-the-end of the shown; note that the SVFile ordering should not be changed
+        for newFormFieldEntry:OrgFormFieldsEntry in fromFormFields {
+            if newFormFieldEntry.mFormFieldRec.isMetaData() {
+                // found a metadata field to add
+                newFormFieldEntry.mFormFieldRec.rOrg_Code_For_SV_File = forOrgCode
+                newFormFieldEntry.mFormFieldRec.rForm_Code_For_SV_File = forFormCode
+                newFormFieldEntry.mFormFieldRec.rFormField_Order_Shown = orderShown
+                newFormFieldEntry.mFormFieldRec.mFormFieldLocalesRecs_are_changed = true   // the actual to-be-saved RecOrgFormFieldLocales are within this object
+                
+                newFormFieldEntry.mComposedFormFieldLocalesRec.rOrg_Code_For_SV_File = forOrgCode
+                newFormFieldEntry.mComposedFormFieldLocalesRec.rForm_Code_For_SV_File = forFormCode
+                
+                self.appendNewDuringEditing(newFormFieldEntry)  // this auto-assigns temporary rFormField_Index and for its internal locale records
+                
+                orderShown = orderShown + 10
             }
         }
     }

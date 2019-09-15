@@ -156,6 +156,11 @@
 "The Form configuration file is missing its stored Form name" = "The Form configuration file is missing its stored Form name";
 "A Form configuration file cannot be imported if you have no Organizations defined" = "A Form configuration file cannot be imported if you have no Organizations defined";
 "The Org configuration file is missing its stored Org name" = "The Org configuration file is missing its stored Org name";
+"Add All to Org" = "Add All to Org";
+"Add Missing to Org" = "Add Missing to Org";
+"Best-Fit" = "Best-Fit";
+"Import cannot proceed per the warning below unless you authorize that all the Form's languages be ADDED to the Organization's supported languages." = "Import cannot proceed per the warning below unless you authorize that all the Form's languages be ADDED to the Organization's supported languages.";
+"Per the warning below, you can either ADD those of the Form's missing languages to the Organization's supported languages (which preserves the entire import), or you can BEST-FIT just those Form languages that match in some manner with the Organization's existing languages." = "Per the warning below, you can either ADD those of the Form's missing languages to the Organization's supported languages (which preserves the entire import), or you can BEST-FIT just those Form languages that match in some manner with the Organization's existing languages.";
 "The Form configuration file was successfully imported." = "The Form configuration file was successfully imported.";
 "The Organization configuration file was successfully imported." = "The Organization configuration file was successfully imported.";
 "Import Error" = "Import Error";
@@ -164,8 +169,11 @@
 "As Form" = "As Form";
 "As Organization" = "As Organization";
 "Contains Forms" = "Contains Forms";
+"Language/Regions" = "Language/Regions";
 "WARNING: There is a Form already in the database for the chosen Org with the same name; if you import then the existing Form will be replaced with this file's form" = "WARNING: There is a Form already in the database for the chosen Org with the same name; if you import then the existing Form will be replaced with this file's form";
 "WARNING: There is an Org already in the database with the same name; if you import then all the existing Org's setting and forms will be replaced with this file's new configurations" = "WARNING: There is an Org already in the database with the same name; if you import then all the existing Org's setting and forms will be replaced with this file's new configurations";
+"WARNING: The import Form's language/regions are not well aligned with the Into-Organization's language/regions" = "WARNING: The import Form's language/regions are not well aligned with the Into-Organization's language/regions";
+"WARNING!!: There are no matching langage/regions between the import Form and the Into-Organization" = "WARNING!!: There are no matching langage/regions between the import Form and the Into-Organization";
 
 // AdminPINViewController.swift
 "Must enter a PIN" = "Must enter a PIN";

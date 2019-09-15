@@ -950,6 +950,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
     }
     
     // return structure for importOrgOrForm
+    public enum ImportOrgOrFormLangMode { case NO_CHANGES_NEEDED, APPEND_MISSING_LANGS_TO_ORG, BEST_FIT }
     public struct ImportOrgOrForm_Result {
         public var wasFormOnly:Bool = false
         public var wasOrgShortName:String = ""
@@ -965,7 +966,7 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
     // - Form-only:   intoOrgShortName can override the file's Org name, it is required if the file is a Sample Form;
     //                asFormShortName can override the file's Form name
     // throws exceptions for all errors (does not post them to error.log nor alert)
-    public static func importOrgOrForm(fromFileAtPath:String, intoOrgShortName:String?, asFormShortName:String?) throws -> ImportOrgOrForm_Result {
+    public static func importOrgOrForm(fromFileAtPath:String, intoOrgShortName:String?, asFormShortName:String?, langMode:ImportOrgOrFormLangMode) throws -> ImportOrgOrForm_Result {
         var result:ImportOrgOrForm_Result = ImportOrgOrForm_Result()
         var funcString:String = "\(self.CTAG).importOrgOrForm"
         
@@ -986,7 +987,6 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
         
         // validate the import type
         var userMsg:String = NSLocalizedString("Content Error: ", comment:"") + "1st " + NSLocalizedString("level improperly formatted", comment:"")
-        var existingOrgRec:RecOrganizationDefs? = nil
         var formOnlyMode:Bool = false
         if methodStr == "eContactCollect.db.org.export" {
             // do nothing
@@ -1034,31 +1034,14 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
             // this is a user problem to resolve and should not be posted into the error.log
             throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Into Organization short code has not been specified", comment:""))
         }
-        if formOnlyMode {
-            if result.wasFormShortName.isEmpty {
-                // this is a user problem to resolve and should not be posted into the error.log
-                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .FORM_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("As Form short code has not been specified", comment:""))
-            }
-            
-            do {
-                existingOrgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: result.wasOrgShortName)
-            } catch var appError as APP_ERROR {
-                appError.prependCallStack(funcName: funcString)
-                throw appError
-            } catch { throw error }
-            if existingOrgRec == nil {
-                // this is a user problem to resolve and should not be posted into the error.log
-                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Organization for the Form must pre-exist: ", comment:"") + result.wasOrgShortName)
-            }
-        }
-        
-        // ??? for form-only imports, need to adjust for languages in one of three modes:
-        // ???                          add-missing-languages, best-effort-match-languages; drop-missing-languages
-        
+
         // start importing; is this an entire Org import?
         var inx:Int = 1
         if !formOnlyMode {
-            // yes, import first the single Org record
+            ///////////////////////////////
+            // yes entire Org and its Forms
+            ///////////////////////////////
+            // import first the single Org record
             do {
                 let getResult1:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "org", forTableName: RecOrganizationDefs.TABLE_NAME, needsItem: true, priorResult: validationResult)
                 userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult1.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
@@ -1136,8 +1119,148 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 appError.prependCallStack(funcName: funcString)
                 throw appError
             } catch { throw error }
+            
+            // now all FormField records; note that all subfields need to be re-linked to the primary field's new index# so do this in two passes
+            var remappingFFI:[Int64:Int64] = [:]
+            do {
+                let getResult4:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "formFields", forTableName: RecOrgFormFieldDefs.TABLE_NAME, needsItem: false, priorResult: validationResult)
+                userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult4.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
+                // first add all primary formfields
+                inx = 1
+                for jsonItemObj in getResult4.jsonItemsLevel! {
+                    let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
+                    if jsonItem != nil {
+                        let newFormFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRecObj: jsonItem!, context: validationResult)
+                        newFormFieldRecOpt.rOrg_Code_For_SV_File = result.wasOrgShortName
+                        if formOnlyMode { newFormFieldRecOpt.rForm_Code_For_SV_File = result.wasFormShortName }
+                        if !newFormFieldRecOpt.validate() {
+                            var developer_error_message = "Validate \(getResult4.tableName) 'table' entries; ; record \(inx) did not validate"
+                            if newFormFieldRecOpt.rFormField_Index != nil {
+                                developer_error_message = developer_error_message + "; for \(newFormFieldRecOpt.rFormField_Index!)"
+                            }
+                            throw APP_ERROR(funcName: funcString, during: "Validate \(getResult4.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
+                        }
+                        let newFormFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(existingRec: newFormFieldRecOpt)
+                        if !newFormFieldRec.isSubFormField() {
+                            let originalIndex = newFormFieldRec.rFormField_Index
+                            newFormFieldRec.rFormField_Index = -1
+                            newFormFieldRec.rFormField_Index = try newFormFieldRec.saveNewToDB()
+                            remappingFFI[originalIndex] = newFormFieldRec.rFormField_Index
+                        }
+                    }
+                    inx = inx + 1
+                }
+                // now add all subfields since the remapping of the primary fields is complete
+                inx = 1
+                for jsonItemObj in getResult4.jsonItemsLevel! {
+                    let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
+                    if jsonItem != nil {
+                        let newFormFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRecObj: jsonItem!, context: validationResult)
+                        newFormFieldRecOpt.rOrg_Code_For_SV_File = result.wasOrgShortName
+                        if formOnlyMode { newFormFieldRecOpt.rForm_Code_For_SV_File = result.wasFormShortName }
+                        if !newFormFieldRecOpt.validate() {
+                            var developer_error_message = "record \(inx) did not validate"
+                            if newFormFieldRecOpt.rFormField_Index != nil {
+                                developer_error_message = developer_error_message + "; for \(newFormFieldRecOpt.rFormField_Index!)"
+                            }
+                            throw APP_ERROR(funcName: funcString, during: "Validate \(getResult4.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
+                        }
+                        let newFormFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(existingRec: newFormFieldRecOpt)
+                        if newFormFieldRec.isSubFormField() {
+                            newFormFieldRec.rFormField_SubField_Within_FormField_Index = remappingFFI[newFormFieldRec.rFormField_SubField_Within_FormField_Index!]
+                            let originalIndex = newFormFieldRec.rFormField_Index
+                            newFormFieldRec.rFormField_Index = -1
+                            newFormFieldRec.rFormField_Index = try newFormFieldRec.saveNewToDB()
+                            remappingFFI[originalIndex] = newFormFieldRec.rFormField_Index
+                        }
+                    }
+                    inx = inx + 1
+                }
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: funcString)
+                throw appError
+            } catch { throw error }
+            
+            // now all FormFieldLocale records; note that every record needs to be re-linked to its corresponding RecOrgFormFieldDefs
+            do {
+                let getResult5:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "formFieldLocales", forTableName: RecOrgFormFieldLocales.TABLE_NAME, needsItem: false, priorResult: validationResult)
+                userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult5.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
+                inx = 1
+                for jsonItemObj in getResult5.jsonItemsLevel! {
+                    let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
+                    if jsonItem != nil {
+                        let newFormFieldLocaleOptRec:RecOrgFormFieldLocales_Optionals = RecOrgFormFieldLocales_Optionals(jsonObj: jsonItem!, context: validationResult)
+                        newFormFieldLocaleOptRec.rOrg_Code_For_SV_File = result.wasOrgShortName
+                        if formOnlyMode { newFormFieldLocaleOptRec.rForm_Code_For_SV_File = result.wasFormShortName }
+                        if !newFormFieldLocaleOptRec.validate() {
+                            var developer_error_message = "record \(inx) did not validate"
+                            if newFormFieldLocaleOptRec.rFormFieldLoc_Index != nil {
+                                developer_error_message = developer_error_message + "; for \(newFormFieldLocaleOptRec.rFormFieldLoc_Index!)"
+                            }
+                            throw APP_ERROR(funcName: funcString, during: "Validate \(getResult5.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
+                        }
+                        let newFormFieldLocaleRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(existingRec: newFormFieldLocaleOptRec)
+                        newFormFieldLocaleRec.rFormField_Index = remappingFFI[newFormFieldLocaleRec.rFormField_Index] ?? -1
+                        newFormFieldLocaleRec.rFormFieldLoc_Index = -1
+                        newFormFieldLocaleRec.rFormFieldLoc_Index = try newFormFieldLocaleRec.saveNewToDB()
+                    }
+                    inx = inx + 1
+                }
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: funcString)
+                throw appError
+            } catch { throw error }
+            
+            // now all custom OptionSetLocale records;
+            // ?? since these are not tagged by Organization there could be conflicts
+            do {
+                let getResult6:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "optionSetLocales", forTableName: RecOptionSetLocales.TABLE_NAME, needsItem: false, priorResult: validationResult)
+                userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult6.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
+                inx = 1
+                for jsonItemObj in getResult6.jsonItemsLevel! {
+                    let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
+                    if jsonItem != nil {
+                        let newOSLoptRec:RecOptionSetLocales_Optionals = RecOptionSetLocales_Optionals(jsonObj: jsonItem!, context: validationResult)
+                        if !newOSLoptRec.validate() {
+                            let developer_error_message = "record \(inx) did not validate"
+                            throw APP_ERROR(funcName: funcString, during: "Validate \(getResult6.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
+                        }
+                        let newOSLrec:RecOptionSetLocales = try RecOptionSetLocales(existingRec: newOSLoptRec)
+                        let _ = try newOSLrec.saveNewToDB()
+                    }
+                    inx = inx + 1
+                }
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: funcString)
+                throw appError
+            } catch { throw error }
+            
+            // ?? custom tables
         } else {
-            // import the single form record
+            ///////////////////////////////////
+            // import just a single form record
+            ///////////////////////////////////
+            // is the import possible?
+            if result.wasFormShortName.isEmpty {
+                // this is a user problem to resolve and should not be posted into the error.log
+                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .FORM_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("As Form short code has not been specified", comment:""))
+            }
+            
+            // find the target Organization's record
+            var existingOrgRec:RecOrganizationDefs? = nil
+            do {
+                existingOrgRec = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: result.wasOrgShortName)
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: funcString)
+                throw appError
+            } catch { throw error }
+            if existingOrgRec == nil {
+                // this is a user problem to resolve and should not be posted into the error.log
+                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .ORG_DOES_NOT_EXIST, userErrorDetails: NSLocalizedString("Organization for the Form must pre-exist: ", comment:"") + result.wasOrgShortName)
+            }
+            
+            // import first the single Form record; do not save it yet as later code has throws
+            var newFormRec:RecOrgFormDefs
             do {
                 let getResult1:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "form", forTableName: RecOrgFormDefs.TABLE_NAME, needsItem: true, priorResult: validationResult)
                 userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult1.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
@@ -1153,134 +1276,151 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                     }
                     throw APP_ERROR(funcName: funcString, during: "Validate \(getResult1.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
                 }
-                let newFormRec:RecOrgFormDefs = try RecOrgFormDefs(existingRec: newFormRecOpt)
-
-                // first delete the Form record if it pre-exists and its linked entries in every other table
+                newFormRec = try RecOrgFormDefs(existingRec: newFormRecOpt)
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: funcString)
+                throw appError
+            } catch { throw error }
+            
+            // now build up an OrgFormFields of all Form Fields and their Locales; these are not yet saved into the database; this will include the meta fields
+            let sourceFormFields:OrgFormFields = OrgFormFields()
+            do {
+                let getResult4:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "formFields", forTableName: RecOrgFormFieldDefs.TABLE_NAME, needsItem: false, priorResult: validationResult)
+                userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult4.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
+                // first retain all formfields; they retain their index# integrity from the origin form at this stage
+                inx = 1
+                for jsonItemObj in getResult4.jsonItemsLevel! {
+                    let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
+                    if jsonItem != nil {
+                        let newFormFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRecObj: jsonItem!, context: validationResult)
+                        newFormFieldRecOpt.rOrg_Code_For_SV_File = result.wasOrgShortName
+                        if formOnlyMode { newFormFieldRecOpt.rForm_Code_For_SV_File = result.wasFormShortName }
+                        if !newFormFieldRecOpt.validate() {
+                            var developer_error_message = "Validate \(getResult4.tableName) 'table' entries; ; record \(inx) did not validate"
+                            if newFormFieldRecOpt.rFormField_Index != nil {
+                                developer_error_message = developer_error_message + "; for \(newFormFieldRecOpt.rFormField_Index!)"
+                            }
+                            throw APP_ERROR(funcName: funcString, during: "Validate \(getResult4.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
+                        }
+                        let newFormFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(existingRec: newFormFieldRecOpt)
+                        let entry:OrgFormFieldsEntry = OrgFormFieldsEntry(formFieldRec: newFormFieldRec, composedFormFieldLocalesRec: RecOrgFormFieldLocales_Composed(), composedOptionSetLocalesRecs: nil)
+                        sourceFormFields.appendFromDatabase(entry)
+                    }
+                    inx = inx + 1
+                }
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: funcString)
+                throw appError
+            } catch { throw error }
+            
+            // now all FormFieldLocale records; note that every record needs to be inserted into its corresponding RecOrgFormFieldDefs
+            do {
+                let getResult5:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "formFieldLocales", forTableName: RecOrgFormFieldLocales.TABLE_NAME, needsItem: false, priorResult: validationResult)
+                userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult5.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
+                inx = 1
+                for jsonItemObj in getResult5.jsonItemsLevel! {
+                    let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
+                    if jsonItem != nil {
+                        let newFormFieldLocaleOptRec:RecOrgFormFieldLocales_Optionals = RecOrgFormFieldLocales_Optionals(jsonObj: jsonItem!, context: validationResult)
+                        newFormFieldLocaleOptRec.rOrg_Code_For_SV_File = result.wasOrgShortName
+                        if formOnlyMode { newFormFieldLocaleOptRec.rForm_Code_For_SV_File = result.wasFormShortName }
+                        if !newFormFieldLocaleOptRec.validate() {
+                            var developer_error_message = "record \(inx) did not validate"
+                            if newFormFieldLocaleOptRec.rFormFieldLoc_Index != nil {
+                                developer_error_message = developer_error_message + "; for \(newFormFieldLocaleOptRec.rFormFieldLoc_Index!)"
+                            }
+                            throw APP_ERROR(funcName: funcString, during: "Validate \(getResult5.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
+                        }
+                        let newFormFieldLocaleRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(existingRec: newFormFieldLocaleOptRec)
+                        sourceFormFields.includeLocaleFromDatabase(rec: newFormFieldLocaleRec)
+                    }
+                    inx = inx + 1
+                }
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: funcString)
+                throw appError
+            } catch { throw error }
+            
+            // now make all the source form fields into new target form fields by assigning temporary index#s plus all the subfield cross-linking
+            let newTargetFormFields:OrgFormFields = OrgFormFields()
+            newTargetFormFields.appendNewDuringEditing(fromFormFields: sourceFormFields, forOrgCode: existingOrgRec!.rOrg_Code_For_SV_File, forFormCode: newFormRec.rForm_Code_For_SV_File)
+            
+            // now make a first assessment of languages
+            var langResults:FieldHandler.AssessLangRegions_Results = FieldHandler.assessLangRegions(sourceEntries: newTargetFormFields, targetOrgRec: existingOrgRec!, targetFormRec: newFormRec)
+            if langResults.mode == .IMPOSSIBLE && langMode != .APPEND_MISSING_LANGS_TO_ORG {
+                throw USER_ERROR(domain: DatabaseHandler.ThrowErrorDomain, errorCode: .NO_MATCHING_LANGREGIONS, userErrorDetails: NSLocalizedString("Import File", comment:""))
+            }
+            if langMode == .APPEND_MISSING_LANGS_TO_ORG && langResults.mode != .NO_CHANGES_NEEDED && langResults.unmatchedSourceLangRegions.count > 0 {
+                do {
+                    // add missing source languages into the Org record
+                    for langRegion in langResults.unmatchedSourceLangRegions {
+                        let _ = try existingOrgRec!.addNewFinalLangRec(forLangRegion: langRegion)
+                    }
+                    // save the updated Org record into the database
+                    let _ = try existingOrgRec!.saveChangesToDB(originalOrgRec: existingOrgRec!)
+                } catch var appError as APP_ERROR {
+                    appError.prependCallStack(funcName: funcString)
+                    throw appError
+                } catch { throw error }
+                
+                // re-assess now that Org has all the necessary languages
+                langResults = FieldHandler.assessLangRegions(sourceEntries: newTargetFormFields, targetOrgRec: existingOrgRec!, targetFormRec: newFormRec)
+            }
+            
+            // now perform language changes if needed
+            assert(langResults.mode != .IMPOSSIBLE, "langResults.mode == .IMPOSSIBLE")
+            if langResults.mode != .NO_CHANGES_NEEDED {
+                for formFieldEntry in newTargetFormFields {
+                    FieldHandler.shared.adjustLangRegions(results: langResults, forEntry: formFieldEntry, targetOrgRec: existingOrgRec!, targetFormRec: newFormRec)
+                }
+            }
+            
+            // store the Form record itself into the database;
+            // first delete the Form record if it pre-exists and its linked entries in every other table
+            do {
                 let _ = try RecOrgFormDefs.orgFormDeleteRec(formShortName: newFormRec.rForm_Code_For_SV_File, forOrgShortName: newFormRec.rOrg_Code_For_SV_File)
                 let _ = try newFormRec.saveNewToDB(withOrgRec: nil)    // do not auto-include the meta-data fields
             } catch var appError as APP_ERROR {
                 appError.prependCallStack(funcName: funcString)
                 throw appError
             } catch { throw error }
+            
+            // then store all the form-fields and their locales into the database
+            for formFieldEntry in newTargetFormFields {
+                do {
+                    let _ = try formFieldEntry.mFormFieldRec.saveNewToDB()     // this will auto-save all retained RecOrgFormFieldLocales
+                } catch var appError as APP_ERROR {
+                    appError.prependCallStack(funcName: funcString)
+                    throw appError
+                } catch { throw error }
+            }
+            
+            // now all custom OptionSetLocale records;
+            // ?? since these are not tagged by Organization there could be conflicts; language conflicts as well
+            do {
+                let getResult6:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "optionSetLocales", forTableName: RecOptionSetLocales.TABLE_NAME, needsItem: false, priorResult: validationResult)
+                userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult6.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
+                inx = 1
+                for jsonItemObj in getResult6.jsonItemsLevel! {
+                    let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
+                    if jsonItem != nil {
+                        let newOSLoptRec:RecOptionSetLocales_Optionals = RecOptionSetLocales_Optionals(jsonObj: jsonItem!, context: validationResult)
+                        if !newOSLoptRec.validate() {
+                            let developer_error_message = "record \(inx) did not validate"
+                            throw APP_ERROR(funcName: funcString, during: "Validate \(getResult6.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
+                        }
+                        let newOSLrec:RecOptionSetLocales = try RecOptionSetLocales(existingRec: newOSLoptRec)
+                        let _ = try newOSLrec.saveNewToDB()
+                    }
+                    inx = inx + 1
+                }
+            } catch var appError as APP_ERROR {
+                appError.prependCallStack(funcName: funcString)
+                throw appError
+            } catch { throw error }
+            
+            // ?? custom tables
         }
-        
-        // now all FormField records; note that all subfields need to be re-linked to the primary field's new index# so do this in two passes
-        var remappingFFI:[Int64:Int64] = [:]
-        do {
-            let getResult4:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "formFields", forTableName: RecOrgFormFieldDefs.TABLE_NAME, needsItem: false, priorResult: validationResult)
-            userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult4.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
-            // first add all primary formfields
-            inx = 1
-            for jsonItemObj in getResult4.jsonItemsLevel! {
-                let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
-                if jsonItem != nil {
-                    let newFormFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRecObj: jsonItem!, context: validationResult)
-                    newFormFieldRecOpt.rOrg_Code_For_SV_File = result.wasOrgShortName
-                    if formOnlyMode { newFormFieldRecOpt.rForm_Code_For_SV_File = result.wasFormShortName }
-                    if !newFormFieldRecOpt.validate() {
-                        var developer_error_message = "Validate \(getResult4.tableName) 'table' entries; ; record \(inx) did not validate"
-                        if newFormFieldRecOpt.rFormField_Index != nil {
-                            developer_error_message = developer_error_message + "; for \(newFormFieldRecOpt.rFormField_Index!)"
-                        }
-                        throw APP_ERROR(funcName: funcString, during: "Validate \(getResult4.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
-                    }
-                    let newFormFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(existingRec: newFormFieldRecOpt)
-                    if !newFormFieldRec.isSubFormField() {
-                        let originalIndex = newFormFieldRec.rFormField_Index
-                        newFormFieldRec.rFormField_Index = -1
-                        newFormFieldRec.rFormField_Index = try newFormFieldRec.saveNewToDB()
-                        remappingFFI[originalIndex] = newFormFieldRec.rFormField_Index
-                    }
-                }
-                inx = inx + 1
-            }
-            // now add all subfields since the remapping of the primary fields is complete
-            inx = 1
-            for jsonItemObj in getResult4.jsonItemsLevel! {
-                let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
-                if jsonItem != nil {
-                    let newFormFieldRecOpt:RecOrgFormFieldDefs_Optionals = RecOrgFormFieldDefs_Optionals(jsonRecObj: jsonItem!, context: validationResult)
-                    newFormFieldRecOpt.rOrg_Code_For_SV_File = result.wasOrgShortName
-                    if formOnlyMode { newFormFieldRecOpt.rForm_Code_For_SV_File = result.wasFormShortName }
-                    if !newFormFieldRecOpt.validate() {
-                        var developer_error_message = "record \(inx) did not validate"
-                        if newFormFieldRecOpt.rFormField_Index != nil {
-                            developer_error_message = developer_error_message + "; for \(newFormFieldRecOpt.rFormField_Index!)"
-                        }
-                        throw APP_ERROR(funcName: funcString, during: "Validate \(getResult4.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
-                    }
-                    let newFormFieldRec:RecOrgFormFieldDefs = try RecOrgFormFieldDefs(existingRec: newFormFieldRecOpt)
-                    if newFormFieldRec.isSubFormField() {
-                        newFormFieldRec.rFormField_SubField_Within_FormField_Index = remappingFFI[newFormFieldRec.rFormField_SubField_Within_FormField_Index!]
-                        let originalIndex = newFormFieldRec.rFormField_Index
-                        newFormFieldRec.rFormField_Index = -1
-                        newFormFieldRec.rFormField_Index = try newFormFieldRec.saveNewToDB()
-                        remappingFFI[originalIndex] = newFormFieldRec.rFormField_Index
-                    }
-                }
-                inx = inx + 1
-            }
-        } catch var appError as APP_ERROR {
-            appError.prependCallStack(funcName: funcString)
-            throw appError
-        } catch { throw error }
-        
-        // now all FormFieldLocale records; note that every record needs to be re-linked to its corresponding RecOrgFormFieldDefs
-        do {
-            let getResult5:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "formFieldLocales", forTableName: RecOrgFormFieldLocales.TABLE_NAME, needsItem: false, priorResult: validationResult)
-            userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult5.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
-            inx = 1
-            for jsonItemObj in getResult5.jsonItemsLevel! {
-                let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
-                if jsonItem != nil {
-                    let newFormFieldLocaleOptRec:RecOrgFormFieldLocales_Optionals = RecOrgFormFieldLocales_Optionals(jsonObj: jsonItem!, context: validationResult)
-                    newFormFieldLocaleOptRec.rOrg_Code_For_SV_File = result.wasOrgShortName
-                    if formOnlyMode { newFormFieldLocaleOptRec.rForm_Code_For_SV_File = result.wasFormShortName }
-                    if !newFormFieldLocaleOptRec.validate() {
-                        var developer_error_message = "record \(inx) did not validate"
-                        if newFormFieldLocaleOptRec.rFormFieldLoc_Index != nil {
-                            developer_error_message = developer_error_message + "; for \(newFormFieldLocaleOptRec.rFormFieldLoc_Index!)"
-                        }
-                        throw APP_ERROR(funcName: funcString, during: "Validate \(getResult5.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
-                    }
-                    let newFormFieldLocaleRec:RecOrgFormFieldLocales = try RecOrgFormFieldLocales(existingRec: newFormFieldLocaleOptRec)
-                    newFormFieldLocaleRec.rFormField_Index = remappingFFI[newFormFieldLocaleRec.rFormField_Index] ?? -1
-                    newFormFieldLocaleRec.rFormFieldLoc_Index = -1
-                    newFormFieldLocaleRec.rFormFieldLoc_Index = try newFormFieldLocaleRec.saveNewToDB()
-                }
-                inx = inx + 1
-            }
-        } catch var appError as APP_ERROR {
-            appError.prependCallStack(funcName: funcString)
-            throw appError
-        } catch { throw error }
-        
-        // now all custom OptionSetLocale records;
-        // ?? since these are not tagged by Organization there could be conflicts
-        do {
-            let getResult6:DatabaseHandler.GetJSONdbFileTable_Result = try DatabaseHandler.getJSONdbFileTable(forTableCode: "optionSetLocales", forTableName: RecOptionSetLocales.TABLE_NAME, needsItem: false, priorResult: validationResult)
-            userMsg = NSLocalizedString("Content Error: ", comment:"") + "\(getResult6.tableName): " + "4th " + NSLocalizedString("level improperly formatted record", comment:"")
-            inx = 1
-            for jsonItemObj in getResult6.jsonItemsLevel! {
-                let jsonItem:NSDictionary? = jsonItemObj as? NSDictionary
-                if jsonItem != nil {
-                    let newOSLoptRec:RecOptionSetLocales_Optionals = RecOptionSetLocales_Optionals(jsonObj: jsonItem!, context: validationResult)
-                    if !newOSLoptRec.validate() {
-                        let developer_error_message = "record \(inx) did not validate"
-                        throw APP_ERROR(funcName: funcString, during: "Validate \(getResult6.tableName) 'table' entries", domain: DatabaseHandler.ThrowErrorDomain, errorCode: .DID_NOT_VALIDATE, userErrorDetails: "\(userMsg) \(inx)", developerInfo: developer_error_message)
-                    }
-                    let newOSLrec:RecOptionSetLocales = try RecOptionSetLocales(existingRec: newOSLoptRec)
-                    let _ = try newOSLrec.saveNewToDB()
-                }
-                inx = inx + 1
-            }
-        } catch var appError as APP_ERROR {
-            appError.prependCallStack(funcName: funcString)
-            throw appError
-        } catch { throw error }
-
-        // ?? custom tables
-        
         return result
     }
     

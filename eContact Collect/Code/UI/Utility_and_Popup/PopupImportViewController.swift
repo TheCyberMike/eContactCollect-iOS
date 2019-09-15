@@ -29,6 +29,7 @@ class PopupImportViewController: UIViewController {
     internal var mStoreAsOrgName:String? = nil
     internal var mStoreAsFormName:String? = nil
     internal var mOrgShortNames:[String] = []
+    internal var mFormLanguages:String? = nil
     internal var mPreImportErrors:[String] = []
     
     // member constants and other static content
@@ -49,7 +50,35 @@ class PopupImportViewController: UIViewController {
             }
             AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Entry Error", comment:""), message: message, buttonText: NSLocalizedString("Okay", comment:""))
         } else {
-            self.importConfigFile()
+            let warningMsg:String? = self.precheckLanguages()
+            if warningMsg == nil {
+                self.importConfigFile(langMode:  .NO_CHANGES_NEEDED)
+            } else {
+                if warningMsg!.contains("!!") {
+                    AppDelegate.showYesNoDialog(vc: self, title: NSLocalizedString("Action Confirmation", comment:""), message: NSLocalizedString("Import cannot proceed per the warning below unless you authorize that all the Form's languages be ADDED to the Organization's supported languages.", comment:""), buttonYesText: NSLocalizedString("Add All to Org", comment:""), buttonNoText: NSLocalizedString("Cancel", comment:""), callbackAction: 1, callbackString1: nil, callbackString2: nil, completion: {[weak self] (vc:UIViewController, theResult:Bool, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
+                        // callback from the yes/no dialog upon one of the buttons being pressed
+                        if theResult && callbackAction == 1  {
+                            // answer was Yes; import by adding all missing languages to Org first
+                            self!.importConfigFile(langMode: .APPEND_MISSING_LANGS_TO_ORG)
+                        }
+                        return  // from callback
+                    })
+                } else {
+                    AppDelegate.show3ButtonDialog(vc: self, title: NSLocalizedString("Action Confirmation", comment:""), message: NSLocalizedString("Per the warning below, you can either ADD those of the Form's missing languages to the Organization's supported languages (which preserves the entire import), or you can Best-Fit just those Form languages that match in some manner with the Organization's existing languages.", comment:""), button1Text: NSLocalizedString("Add Missing to Org", comment:""), button2Text: NSLocalizedString("Best-Fit", comment:""), button3Text: NSLocalizedString("Cancel", comment:""), callbackAction: 1, callbackString1: nil, callbackString2: nil, completion: {[weak self] (vc:UIViewController, theChoice:Int, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
+                        // callback from the yes/no/cancel dialog upon one of the buttons being pressed
+                        if callbackAction == 1  {
+                            if theChoice == 1 {
+                                // answer was Yes; import by adding all missing languages to Org first
+                                self!.importConfigFile(langMode: .APPEND_MISSING_LANGS_TO_ORG)
+                            } else if theChoice == 2 {
+                                // answer was Yes; perform a best-fit import
+                                self!.importConfigFile(langMode: .BEST_FIT)
+                            }
+                        }
+                        return  // from callback
+                    })
+                }
+            }
         }
     }
     @IBOutlet weak var button_import: UIButton!
@@ -95,9 +124,9 @@ class PopupImportViewController: UIViewController {
             return
         }
         stream!.open()
-        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: 257)    // must be one higher than the read length
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: 513)    // must be one higher than the read length
         buffer.initialize(to: 0)
-        let qty = stream!.read(buffer, maxLength: 256)
+        let qty = stream!.read(buffer, maxLength: 512)
         stream!.close()
         if qty == 0 {
             self.mPreImportErrors.append(NSLocalizedString("The selected file was empty", comment: ""))
@@ -152,9 +181,9 @@ class PopupImportViewController: UIViewController {
             self.mPreImportErrors.append(NSLocalizedString("The selected file was not one of this App's configuration files", comment: ""))
             return
         }
+
         self.mStoreAsOrgName = self.mFileOrgName
         self.mStoreAsFormName = self.mFile1stFormName
-        buffer.deallocate()
         
         // Additional checks
         if self.mFormOnly {
@@ -175,13 +204,22 @@ class PopupImportViewController: UIViewController {
                     self.mFileOrgName = nil
                 }
             }
+            // get the form's languages
+            if let langRange1 = bufferString.range(of: "\"languages\":\"") {
+                let langPos1:String.Index = bufferString.index(langRange1.upperBound, offsetBy: 0)
+                if let langRange2:Range = bufferString[langPos1...].range(of: "\"") {
+                    let langPos2:String.Index = bufferString.index(langRange2.lowerBound, offsetBy: -1)
+                    self.mFormLanguages = String(bufferString[langPos1...langPos2])
+                }
+            }
         } else {
             // Org and Forms file
             if (self.mFileOrgName ?? "").isEmpty {
                 self.mPreImportErrors.append(NSLocalizedString("The Org configuration file is missing its stored Org name", comment: ""))
             }
         }
-        
+        buffer.deallocate()
+
         if !self.mPreImportErrors.isEmpty { self.button_import.isHidden = true }
     }
     
@@ -198,10 +236,34 @@ class PopupImportViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    // perform the actual import
-    private func importConfigFile() {
+    
+    // precheck the import form's languages against the Org's languages; return warning string if there is a problem
+    public func precheckLanguages() -> String? {
+        if (self.mStoreAsOrgName ?? "").isEmpty { return nil }
+        if (self.mFormLanguages ?? "").isEmpty { return nil }
+        
         do {
-            let result:DatabaseHandler.ImportOrgOrForm_Result = try DatabaseHandler.importOrgOrForm(fromFileAtPath: self.mFileURL!.path, intoOrgShortName: self.mStoreAsOrgName, asFormShortName: self.mStoreAsFormName)
+            let orgRec:RecOrganizationDefs? = try RecOrganizationDefs.orgGetSpecifiedRecOfShortName(orgShortName: self.mStoreAsOrgName!)
+            if orgRec == nil { return nil }
+            let result:FieldHandler.AssessLangRegions_Results = FieldHandler.assessLangRegions(sourcelangRegions: self.mFormLanguages!.components(separatedBy: ","), targetOrgRec: orgRec!)
+            switch result.mode {
+            case .NO_CHANGES_NEEDED:
+                break
+            case .MISSINGS_ONLY:
+                return NSLocalizedString("WARNING: The import Form's language/regions are not well aligned with the Into-Organization's language/regions", comment:"") + ": " + orgRec!.rOrg_LangRegionCodes_Supported.joined(separator: ",")
+            case .BEST_FIT:
+                return NSLocalizedString("WARNING: The import Form's language/regions are not well aligned with the Into-Organization's language/regions", comment:"") + ": " + orgRec!.rOrg_LangRegionCodes_Supported.joined(separator: ",")
+            case .IMPOSSIBLE:
+                return NSLocalizedString("WARNING!!: There are no matching langage/regions between the import Form and the Into-Organization", comment:"") + ": " + orgRec!.rOrg_LangRegionCodes_Supported.joined(separator: ",")
+            }
+        } catch {}
+        return nil
+    }
+    
+    // perform the actual import
+    private func importConfigFile(langMode:DatabaseHandler.ImportOrgOrFormLangMode) {
+        do {
+            let result:DatabaseHandler.ImportOrgOrForm_Result = try DatabaseHandler.importOrgOrForm(fromFileAtPath: self.mFileURL!.path, intoOrgShortName: self.mStoreAsOrgName, asFormShortName: self.mStoreAsFormName, langMode: langMode)
             if self.mFormOnly {
                 // Form-only import was performed
                 AppDelegate.showAlertDialog(vc: self, title: NSLocalizedString("Success", comment:""), message: NSLocalizedString("The Form configuration file was successfully imported.", comment:""), buttonText: NSLocalizedString("Okay", comment:""), completion: { self.dismiss(animated: true, completion: {
@@ -374,6 +436,17 @@ class PopupImportFormViewController: FormViewController {
                                 else { wr!.hidden = true }
                                 wr!.evaluateHidden()
                             }
+                            
+                            // are there language mis-match issues?
+                            let wr1 = self!.form.rowBy(tag: "languageWarning")
+                            if wr1 != nil {
+                                if let hasWarning:String = self!.mParentVC!.precheckLanguages() {
+                                    wr1!.title = hasWarning
+                                    wr1!.hidden = false
+                                } else { wr1!.hidden = true }
+                                wr1!.evaluateHidden()
+                                wr1!.updateCell()
+                            }
                         }
                 }
             }
@@ -413,6 +486,27 @@ class PopupImportFormViewController: FormViewController {
                 }.cellUpdate { cell, row in
                     cell.textLabel!.numberOfLines = 0
                     cell.textLabel!.font = .systemFont(ofSize: 14.0)
+            }
+            if !(self.mParentVC!.mFormLanguages ?? "").isEmpty {
+                let section4 = Section(NSLocalizedString("Language/Regions", comment:""))
+                form +++ section4
+                section4 <<< LabelRow() {
+                    $0.tag = "formLanguages"
+                    $0.title = NSLocalizedString("Source LangRegions: ", comment:"") + self.mParentVC!.mFormLanguages!
+                    }.cellUpdate { cell, row in
+                        cell.textLabel!.numberOfLines = 0
+                        cell.textLabel!.font = .systemFont(ofSize: 14.0)
+                }
+                section4 <<< LabelRow() {
+                    $0.tag = "languageWarning"
+                    if let hasWarning:String = self.mParentVC!.precheckLanguages() {
+                        $0.title = hasWarning
+                        $0.hidden = false
+                    } else { $0.hidden = true }
+                    }.cellUpdate { cell, row in
+                        cell.textLabel!.numberOfLines = 0
+                        cell.textLabel!.font = .systemFont(ofSize: 14.0)
+                }
             }
         } else {
             

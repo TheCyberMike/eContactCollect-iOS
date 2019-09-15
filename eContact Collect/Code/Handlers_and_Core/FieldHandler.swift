@@ -213,7 +213,7 @@ public class FieldHandler {
     
     // assess source langRegions from an import or a form-field copy into a destination org and form
     public static func assessLangRegions(sourcelangRegions:[String], targetOrgRec:RecOrganizationDefs,
-                                         targetFormRec:RecOrgFormDefs) -> AssessLangRegions_Results {
+                                         targetFormRec:RecOrgFormDefs?=nil) -> AssessLangRegions_Results {
         
         // pre-build arrays needed later in the functions
         var results:AssessLangRegions_Results = AssessLangRegions_Results()
@@ -259,7 +259,7 @@ public class FieldHandler {
         // determine the mode based upon what was found
         if results.identicalLangRegions.count > 0 {
             if results.bestFitLangRegions.count == 0 {
-                if results.unmatchedSourceLangRegions.count == 0 && results.unmatchedSourceLangRegions.count == 0 {
+                if results.unmatchedSourceLangRegions.count == 0 && results.unmatchedTargetLangRegions.count == 0 {
                     results.mode = .NO_CHANGES_NEEDED
                 } else {
                     results.mode = .MISSINGS_ONLY
