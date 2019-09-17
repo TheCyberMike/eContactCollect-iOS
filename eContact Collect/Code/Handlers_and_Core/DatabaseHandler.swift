@@ -1385,10 +1385,23 @@ debugPrint("\(mCTAG).initialize DATABASE successfully upgraded to version \(self
                 throw appError
             } catch { throw error }
             
-            // then store all the form-fields and their locales into the database
+            // then store all the form-fields and their locales into the database; make sure to re-link any subFormFields
             for formFieldEntry in newTargetFormFields {
                 do {
-                    let _ = try formFieldEntry.mFormFieldRec.saveNewToDB()     // this will auto-save all retained RecOrgFormFieldLocales
+                    if !formFieldEntry.mFormFieldRec.isSubFormField() {
+                        let origPrimeIndexNum:Int64 = formFieldEntry.mFormFieldRec.rFormField_Index
+                        let newPrimeIndexNum:Int64 = try formFieldEntry.mFormFieldRec.saveNewToDB()     // this will auto-save all retained RecOrgFormFieldLocales
+                        if (formFieldEntry.mFormFieldRec.rFieldProp_Contains_Field_IDCodes?.count ?? 0) > 0 {
+                            for formSubFieldEntry in newTargetFormFields {
+                                if formSubFieldEntry.mFormFieldRec.isSubFormField() {
+                                    if formSubFieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index == origPrimeIndexNum {
+                                        formSubFieldEntry.mFormFieldRec.rFormField_SubField_Within_FormField_Index = newPrimeIndexNum
+                                        let _ = try formSubFieldEntry.mFormFieldRec.saveNewToDB()     // this will auto-save all retained RecOrgFormFieldLocales
+                                    }
+                                }
+                            }
+                        }
+                    }
                 } catch var appError as APP_ERROR {
                     appError.prependCallStack(funcName: funcString)
                     throw appError
