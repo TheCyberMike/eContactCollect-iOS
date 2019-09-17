@@ -329,6 +329,7 @@
 		D7576B4A230F2E1D00F1DEEC /* FieldLocales_es.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = FieldLocales_es.json; sourceTree = "<group>"; };
 		D7576B4C230F2EFC00F1DEEC /* OptionSetLocales_en.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = OptionSetLocales_en.json; sourceTree = "<group>"; };
 		D7576B4E230F2F1700F1DEEC /* OptionSetLocales_es.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = OptionSetLocales_es.json; sourceTree = "<group>"; };
+		D798EDFD2330B046005DD93F /* cloc */ = {isa = PBXFileReference; lastKnownFileType = text; path = cloc; sourceTree = "<group>"; };
 		D7B1EB332319F2EE005C0AC8 /* CommonSampleFormsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonSampleFormsViewController.swift; sourceTree = "<group>"; };
 		D7BA6B3621EED9BC00F45AFC /* Eureka.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Eureka.xcodeproj; path = "../SubModules/Eureka-master/Eureka.xcodeproj"; sourceTree = "<group>"; };
 		D7BA6B4821EEDA4F00F45AFC /* SQLite.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SQLite.xcodeproj; path = "../SubModules/SQLite.swift-master/SQLite.xcodeproj"; sourceTree = "<group>"; };
@@ -628,6 +629,7 @@
 				D9EAF0B2215870F300B4EB2A /* Record_Definitions */,
 				D7CC2AC222027F4400F39E36 /* Project-Name-Bridging-Header.h */,
 				D94CFCF02155A6D8009CE207 /* AppDelegate.swift */,
+				D798EDFD2330B046005DD93F /* cloc */,
 				D94CFCF62155A6D8009CE207 /* Main.storyboard */,
 				D97ED56F2156E20C000D5647 /* eContact Collect.entitlements */,
 				D94CFCFB2155A6E0009CE207 /* LaunchScreen.storyboard */,

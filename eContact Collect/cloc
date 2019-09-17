@@ -1,0 +1,3 @@
+#!/bin/bash
+cd "/Volumes/NE3D1V2_Data/Users_Data/Dev/Development/Mobile/MultiPlatform/eContactCollect/iOS/eContact Collect Module/eContact Collect"
+perl /usr/local/bin/cloc.pl ./

@@ -155,10 +155,10 @@
 "The selected file's 'context' is improperly formatted" = "The selected file's 'context' is improperly formatted";
 "The Form configuration file is missing its stored Form name" = "The Form configuration file is missing its stored Form name";
 "Add All to Org" = "Add All to Org";
-"Add Missing to Org" = "Add Missing to Org";
-"Best-Fit" = "Best-Fit";
-"Import cannot proceed per the warning below unless you authorize that all the Form's languages be ADDED to the Organization's supported languages." = "Import cannot proceed per the warning below unless you authorize that all the Form's languages be ADDED to the Organization's supported languages.";
-"Per the warning below, you can either ADD those of the Form's missing languages to the Organization's supported languages (which preserves the entire import), or you can BEST-FIT just those Form languages that match in some manner with the Organization's existing languages." = "Per the warning below, you can either ADD those of the Form's missing languages to the Organization's supported languages (which preserves the entire import), or you can BEST-FIT just those Form languages that match in some manner with the Organization's existing languages.";
+"Add Missing then Best-Fit" = "Add Missing then Best-Fit";
+"Best-Fit Only" = "Best-Fit Only";
+"Import cannot proceed per the warning below unless you authorize that all the Form's missing languages be ADDED to the Organization's supported languages; this has implications for all the Organization's existing Forms." = "Import cannot proceed per the warning below unless you authorize that all the Form's missing languages be ADDED to the Organization's supported languages; this has implications for all the Organization's existing Forms.";
+"Per the warning below, you can either BEST-FIT just those Form languages that match in some manner with the Organization's existing languages; or you can first ADD those of the Form's missing languages to the Organization's supported languages (which preserves the entire import) but has implications for all the Organization's existing Forms." = "Per the warning below, you can either BEST-FIT just those Form languages that match in some manner with the Organization's existing languages; or you can first ADD those of the Form's missing languages to the Organization's supported languages (which preserves the entire import) but has implications for all the Organization's existing Forms.";
 "A Form configuration file cannot be imported if you have no Organizations defined" = "A Form configuration file cannot be imported if you have no Organizations defined";
 "The Org configuration file is missing its stored Org name" = "The Org configuration file is missing its stored Org name";
 "The Form configuration file was successfully imported." = "The Form configuration file was successfully imported.";

@@ -55,7 +55,7 @@ class PopupImportViewController: UIViewController {
                 self.importConfigFile(langMode:  .NO_CHANGES_NEEDED)
             } else {
                 if warningMsg!.contains("!!") {
-                    AppDelegate.showYesNoDialog(vc: self, title: NSLocalizedString("Action Confirmation", comment:""), message: NSLocalizedString("Import cannot proceed per the warning below unless you authorize that all the Form's languages be ADDED to the Organization's supported languages.", comment:""), buttonYesText: NSLocalizedString("Add All to Org", comment:""), buttonNoText: NSLocalizedString("Cancel", comment:""), callbackAction: 1, callbackString1: nil, callbackString2: nil, completion: {[weak self] (vc:UIViewController, theResult:Bool, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
+                    AppDelegate.showYesNoDialog(vc: self, title: NSLocalizedString("Action Confirmation", comment:""), message: NSLocalizedString("Import cannot proceed per the warning below unless you authorize that all the Form's missing languages be ADDED to the Organization's supported languages; this has implications for all the Organization's existing Forms.", comment:""), buttonYesText: NSLocalizedString("Add All to Org", comment:""), buttonNoText: NSLocalizedString("Cancel", comment:""), callbackAction: 1, callbackString1: nil, callbackString2: nil, completion: {[weak self] (vc:UIViewController, theResult:Bool, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
                         // callback from the yes/no dialog upon one of the buttons being pressed
                         if theResult && callbackAction == 1  {
                             // answer was Yes; import by adding all missing languages to Org first
@@ -64,15 +64,15 @@ class PopupImportViewController: UIViewController {
                         return  // from callback
                     })
                 } else {
-                    AppDelegate.show3ButtonDialog(vc: self, title: NSLocalizedString("Action Confirmation", comment:""), message: NSLocalizedString("Per the warning below, you can either ADD those of the Form's missing languages to the Organization's supported languages (which preserves the entire import), or you can Best-Fit just those Form languages that match in some manner with the Organization's existing languages.", comment:""), button1Text: NSLocalizedString("Add Missing to Org", comment:""), button2Text: NSLocalizedString("Best-Fit", comment:""), button3Text: NSLocalizedString("Cancel", comment:""), callbackAction: 1, callbackString1: nil, callbackString2: nil, completion: {[weak self] (vc:UIViewController, theChoice:Int, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
+                    AppDelegate.show3ButtonDialog(vc: self, title: NSLocalizedString("Action Confirmation", comment:""), message: NSLocalizedString("Per the warning below, you can either BEST-FIT just those Form languages that match in some manner with the Organization's existing languages; or you can first ADD those of the Form's missing languages to the Organization's supported languages (which preserves the entire import) but has implications for all the Organization's existing Forms.", comment:""), button1Text: NSLocalizedString("Best-Fit Only", comment:""), button2Text: NSLocalizedString("Add Missing then Best-Fit", comment:""), button3Text: NSLocalizedString("Cancel", comment:""), callbackAction: 1, callbackString1: nil, callbackString2: nil, completion: {[weak self] (vc:UIViewController, theChoice:Int, callbackAction:Int, callbackString1:String?, callbackString2:String?) -> Void in
                         // callback from the yes/no/cancel dialog upon one of the buttons being pressed
                         if callbackAction == 1  {
                             if theChoice == 1 {
-                                // answer was Yes; import by adding all missing languages to Org first
-                                self!.importConfigFile(langMode: .APPEND_MISSING_LANGS_TO_ORG)
-                            } else if theChoice == 2 {
-                                // answer was Yes; perform a best-fit import
+                                // answer was Yes; perform only a best-fit import
                                 self!.importConfigFile(langMode: .BEST_FIT)
+                            } else if theChoice == 2 {
+                                // answer was Yes; import by adding first all missing languages to Org, then perform a best-fit
+                                self!.importConfigFile(langMode: .APPEND_MISSING_LANGS_TO_ORG)
                             }
                         }
                         return  // from callback
